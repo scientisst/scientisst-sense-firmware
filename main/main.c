@@ -8,6 +8,7 @@
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
 #define ACQ_PRIORITY_TASK 10
 #define I2C_ACQ_PRIORITY_TASK 1
+#define ola
 
 void IRAM_ATTR btTask();
 void IRAM_ATTR acqAdc1Task();
