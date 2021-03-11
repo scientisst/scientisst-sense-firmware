@@ -1,0 +1,18 @@
+CPU0 é o unico CPU que manda cenas por Bluetooth
+Ambos os CPUs fazem adc, CP0 tem o adc2 e o CPU1 tem o adc1, e os canais adquiridos são igualmente distribuidos pelos dois
+Há um barreira no final da aquisição que deteta quando as duas tasks acabaram de adquirir todos os seus canais
+Para inter process communication, utilizo quase exclusivamente ulTaskNotifyTake que é bastante eficiente
+
+
+
+//CENAS A VER:
+-Será que a acquiring_1_task é melhor estare pinned ao core 1? Será melhor criar uma task para a interrupção pinned to core 1 
+e uma task partilhável para adquirir o adc 1?
+
+//ERROS:
+Disconectar durante live mode e voltar a conectar
+
+//TESTES EXPERIMENTAIS
+-Perda de pacotes (incoêrencia de seq) e pacotes inválidos (erro no CRC):
+10h, 1000Hz e todos os canais: 1 erro CRC e 1 erro no seq, apenas no primeiro pacote de todos
+

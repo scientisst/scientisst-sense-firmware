@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "gpio.h"
+
+
+//TODO: Meter os pins SPI3_MISO, U2RXD, U2TXD, SDA0, SCL0 a pull up
+
+/* About this example
+ * 1. Start with initializing LEDC module:
+ *    a. Set the timer of LEDC first, this determines the frequency
+ *       and resolution of PWM.
+ *    b. Then set the LEDC channel you want to use,
+ *       and bind with one of the timers.
+ * 2. You need first to install a default fade function,
+ *    then you can use fade APIs.
+ * 3. You can also set a target duty directly without fading.
+ */
+
+void configLedC(void){
+    /*
+     * Prepare and set configuration of timers
+     * that will be used by LED Controller
+     */
+    ledc_timer_config_t ledc_timer = {
+        .duty_resolution = LEDC_TIMER_10_BIT,   // resolution of PWM duty
+        .freq_hz = LEDC_IDLE_PWM_FREQ,          // frequency of PWM signal
+        .speed_mode = LEDC_SPEED_MODE_USED,          // timer mode
+        .timer_num = LEDC_LS_TIMER,             // timer index
+        .clk_cfg = LEDC_AUTO_CLK,               // Auto select the source clock
+    };
+    // Set configuration of timer0 for low speed channels
+    ledc_timer_config(&ledc_timer);
+
+    /*
+     * Prepare individual configuration
+     * for each channel of LED Controller
+     * by selecting:
+     * - controller's channel number
+     * - output duty cycle, set initially to 0
+     * - GPIO number where LED is connected to
+     * - speed mode, either high or low
+     * - timer servicing selected channel
+     *   Note: if different channels use one timer,
+     *         then frequency and bit_num of these channels
+     *         will be the same
+     */
+    ledc_channel_config_t ledc_channel = {
+        .channel    = LEDC_CHANNEL_0,
+        .duty       = 0,
+        .gpio_num   = STATE_LED_IO,
+        .speed_mode = LEDC_SPEED_MODE_USED,
+        .hpoint     = 0,
+        .timer_sel  = LEDC_LS_TIMER
+    };
+
+    // Set LED Controller with previously prepared configuration
+    ledc_channel_config(&ledc_channel);
+    
+    // Initialize fade service.
+    //ledc_fade_func_install(0);
+
+    ledc_set_duty(ledc_channel.speed_mode, ledc_channel.channel, LEDC_DUTY);
+    ledc_update_duty(ledc_channel.speed_mode, ledc_channel.channel);
+}
+
+void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en){
+    gpio_config_t io_conf;
+
+    //config pin direction (output/input)
+    io_conf.mode = mode;
+    //config interrupt (disable/what type of interrupt)
+    io_conf.intr_type = intr_type;
+    //bit mask of the pins that you want to set,e.g.GPIO18/19
+    io_conf.pin_bit_mask = pin_bit_mask;
+    //config pull-down mode (enable/disable)
+    io_conf.pull_down_en = pull_down_en;
+    //config pull-up mode (enable/disable)
+    io_conf.pull_up_en = pull_up_en;
+
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+}
+
+void gpioInit(){
+    //TODO: Tirar IO_21: só está aqui para dar ground ao ads
+    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< O1_IO) | (1ULL<< STATE_LED_IO) | (1ULL<< GPIO_NUM_21)), 0, 0);
+    configLedC();
+}
