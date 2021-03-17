@@ -44,13 +44,13 @@ void processRcv(uint8_t* buff, int buff_size){
             
             live_mode = 1;
         }else if(cmd == 0b11){                                  //Configuration command
-            if((buff[0] & 0b00111111) == 0){                      //Set sample rate
+            if(((buff[0] >> 2) & 0b001111) == 0){                      //Set sample rate
                 setSampleRate(buff);
-            }else if(((buff[0] >> 2) & 0b00000011) == 0b10){    //Send device status
+            }else if(((buff[0] >> 2) & 0b000011) == 0b10){    //Send device status
                 sendStatusPacket();
-            }else if(((buff[0] >> 2) & 0b00000011) == 0b01){    //Send firmware version string
+            }else if(((buff[0] >> 2) & 0b000011) == 0b01){    //Send firmware version string
                 sendFirmwareVersionPacket();
-            }else if((buff[0] & 0b00110000) >> 4){              //Change API mode
+            }else if(buff[0] & 0b00110000){              //Change API mode
                 changeAPI((buff[0] & 0b00110000) >> 4);
             }
 
@@ -83,7 +83,6 @@ uint8_t getPacketSize(){
 
     if(api_config.api_mode == API_MODE_BITALINO){
         _packet_size = packet_size_num_chs[num_intern_active_chs];
-        _packet_size += 2;  //for the I/Os and seq+crc bytes
 
     }else if(api_config.api_mode == API_MODE_EXTENDED){
         //Add 24bit channel's contributuion to pakcet size
@@ -102,7 +101,7 @@ uint8_t getPacketSize(){
         _packet_size = strlen(json_str) + 1;
         free((void *)json_str);
     }
-
+    DEBUG_PRINT_I("getPacketSize", "Packet size is %d bytes", _packet_size);
     
     return _packet_size;
 }

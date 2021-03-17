@@ -180,6 +180,7 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     uint8_t frame_next_wr = 0;
     char ch_str[10];
     char value_str[10];
+    cJSON *item;
     
     //Clean frame from previous acquisition
     memset(frame, 0, packet_size);
@@ -206,10 +207,14 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     for(i = num_intern_active_chs-1; i >= 0; i--){
         sprintf(value_str, "%04d", adc_internal_res[i]);
         sprintf(ch_str, "AI%d", active_internal_chs[i]+1);
+        item = cJSON_GetObjectItemCaseSensitive(json, ch_str);
+        strcpy(item->valuestring, value_str);
     }
 
     for(i = num_extern_active_chs-1; i >= 0; i--){
         sprintf(value_str, "%08d", adc_external_res[i]);
         sprintf(ch_str, "AX%d", active_ext_chs[i]+1-6);
+        item = cJSON_GetObjectItemCaseSensitive(json, ch_str);
+        strcpy(item->valuestring, value_str);
     }
 }
