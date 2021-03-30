@@ -118,3 +118,13 @@ void IRAM_ATTR timerGrp1Isr(){
     use and may be called portEND_SWITCHING_ISR(). */
     portYIELD_FROM_ISR();
 }
+
+
+/*If bluetooth throughput is too high, either acquring task (CPU1) or sending task (CP0) may starve other tasks of CPU. Hence, sampling rate or
+number of channels need to be decreased. When that starvation happens, the Task Watchdog Timer (TWDT) will trigger and
+this handler will be called and livemode will be stop on its own.
+*/
+void esp_task_wdt_isr_user_handler(){
+    stopAcquisition();
+    esp_restart();
+}

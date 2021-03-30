@@ -54,6 +54,10 @@ extern Api_Config api_config;
 extern uint8_t active_ext_chs[EXT_ADC_CHANNELS];
 extern uint8_t num_extern_active_chs;
 extern cJSON *json;
+extern DRAM_ATTR const uint8_t sin10Hz[100];
+extern uint8_t sim_flag;
+extern uint8_t sin_i;
+extern uint8_t gpio_out_state[2];
 
 extern unsigned int packet_cnt;         //TODO                     
 

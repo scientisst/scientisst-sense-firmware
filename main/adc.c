@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "main.h"
 #include "cJSON.h"
+#include "gpio.h"
 
 #define DEFAULT_VREF 1100
 
@@ -68,6 +69,7 @@ void initAdc(uint8_t adc_resolution){
 //Acquires and stores into frame the channel acquisitions
 void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
     uint16_t adc_res[6] = {0, 0, 0, 0, 0, 0};
+    uint8_t io_state = 0;
     uint8_t i;
     uint8_t crc = 0;
     
@@ -75,9 +77,22 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
     memset(frame, 0, packet_size);
 
     for(i = 0; i < num_intern_active_chs; i++){
-        adc_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]) >> 2;         //>> 2 because adc resolution is 12bits
+        if(sim_flag){
+            adc_res[i] = sin10Hz[sin_i % 100];
+        }else{
+            adc_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]) >> 2;         //>> 2 because adc resolution is 12bits
+        }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_res)A%d=%d", active_internal_chs[i], adc_res[i]);
     }
+    sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
+
+    //Get the IO states
+    io_state = gpio_get_level(I0_IO) << 7;
+    io_state |= gpio_get_level(I1_IO) << 6;
+    io_state |= gpio_out_state[0] << 5;
+    io_state |= gpio_out_state[1] << 4;
+
+    frame[packet_size-2] = io_state;
 
     *(uint16_t*)(frame+packet_size-3) |= adc_res[num_intern_active_chs-1] << 2;
     if(num_intern_active_chs > 1)
@@ -113,6 +128,7 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
 void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[2] = {0, 0};
+    uint8_t io_state = 0;
     int i;
     uint8_t crc = 0;
     spi_transaction_t *ads_rtrans;
@@ -124,9 +140,21 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
     memset(frame, 0, packet_size);
 
     for(i = 0; i < num_intern_active_chs; i++){
-        adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+        if(sim_flag){
+            adc_internal_res[i] = sin10Hz[sin_i % 100];
+        }else{
+            adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+        }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
+
+    //Get the IO states
+    io_state = gpio_get_level(I0_IO) << 7;
+    io_state |= gpio_get_level(I1_IO) << 6;
+    io_state |= gpio_out_state[0] << 5;
+    io_state |= gpio_out_state[1] << 4;
+
+    frame[packet_size-2] = io_state;
 
     //Can be a huge bottleneck
     spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
@@ -134,10 +162,16 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
 
     //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     for(i = 0; i < num_extern_active_chs; i++){
-        adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+        if(sim_flag){
+            adc_external_res[i] = sin10Hz[sin_i % 100];
+        }else{
+            adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+        }
         *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
         frame_next_wr += 3;
     }
+
+    sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
     //Store values of internal channels into frame
     for(i = 0; i < num_intern_active_chs; i++){
@@ -150,7 +184,6 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
             frame_next_wr += 2;
             wr_mid_byte_flag = 0;
         }
-        
     }
 
     //Calculate CRC & SEQ Number---------------------------------------------------------
@@ -177,7 +210,6 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     int i;
     spi_transaction_t *ads_rtrans;
     uint8_t* recv_ads;
-    uint8_t frame_next_wr = 0;
     char ch_str[10];
     char value_str[10];
     cJSON *item;
@@ -185,25 +217,49 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     //Clean frame from previous acquisition
     memset(frame, 0, packet_size);
 
-    for(i = 0; i < num_intern_active_chs; i++){
-        adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+   for(i = 0; i < num_intern_active_chs; i++){
+        if(sim_flag){
+            adc_internal_res[i] = sin10Hz[sin_i % 100];
+        }else{
+            adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+        }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
 
-    //Can be a huge bottleneck
+    //Get and store the IO states into json
+    sprintf(value_str, "%01d", gpio_get_level(I0_IO));
+    item = cJSON_GetObjectItemCaseSensitive(json, "I1");
+    strcpy(item->valuestring, value_str);
+    
+    sprintf(value_str, "%01d", gpio_get_level(I1_IO));
+    item = cJSON_GetObjectItemCaseSensitive(json, "I2");
+    strcpy(item->valuestring, value_str);
+    
+    sprintf(value_str, "%01d", gpio_out_state[0]);
+    item = cJSON_GetObjectItemCaseSensitive(json, "O1");
+    strcpy(item->valuestring, value_str);
+    
+    sprintf(value_str, "%01d", gpio_out_state[1]);
+    item = cJSON_GetObjectItemCaseSensitive(json, "O2");
+    strcpy(item->valuestring, value_str);
+    
+
+    //Get external adc values - Can be a huge bottleneck
     spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
     recv_ads = ads_rtrans->rx_buffer;
 
     //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     for(i = 0; i < num_extern_active_chs; i++){
-        adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
-        *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
-        frame_next_wr += 3;
+        if(sim_flag){
+            adc_external_res[i] = sin10Hz[sin_i % 100];
+        }else{
+            adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+        }
     }
 
-    //FIQUEI AQUI. FALTA FAZER O UPDATE DOS CAMPOS DO JSON
+    sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
-    //Store values of channels into frame
+    //Store values of channels into JSON object
     for(i = num_intern_active_chs-1; i >= 0; i--){
         sprintf(value_str, "%04d", adc_internal_res[i]);
         sprintf(ch_str, "AI%d", active_internal_chs[i]+1);

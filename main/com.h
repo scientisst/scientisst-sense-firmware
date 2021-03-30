@@ -35,6 +35,8 @@ void sendFirmwareVersionPacket();
 void changeAPI(uint8_t mode);
 void selectChsFromMaskExtendedJson(uint8_t* buff);
 void setSampleRate(uint8_t* buff);
+void actionGpio(uint8_t *buff);
+void actionPWM(uint8_t *buff);
 
 /*          MASK CONFIGURATION EXAMPLE
 *                       bits

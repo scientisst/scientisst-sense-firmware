@@ -50,7 +50,12 @@ uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
 uint8_t live_mode = 0;                                  //Flag that indicastes if live mode (acquiring) is on    
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;    
-esp_adc_cal_characteristics_t adc1_chars;     
+esp_adc_cal_characteristics_t adc1_chars;    
+uint8_t gpio_out_state[2] = {0, 0};                 //Output of 01 & O2 (O0 & O1)
+
+DRAM_ATTR const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
+uint8_t sim_flag = 0;
+uint8_t sin_i = 0;
 
 //I2C
 I2c_Sensor_State i2c_sensor_values;
@@ -109,8 +114,6 @@ void IRAM_ATTR acqAdc1Task(){
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION);
     gpioInit();
-    //TODO: Tirar IO_21: só está aqui para dar ground ao ads
-    gpio_set_level(GPIO_NUM_21, 0);
 
     //24 status bits + 24 bits x 2 channels = 9bytes required. But DMA buffer needs to be 32bit aligned
     rx_data_ads = heap_caps_malloc(3*sizeof(uint32_t), MALLOC_CAP_DMA);  
@@ -127,11 +130,10 @@ void IRAM_ATTR acqAdc1Task(){
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-            //acquireAdc1Channels(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
 
-            if(api_config.api_mode != API_MODE_BITALINO){
+            /*if(api_config.api_mode != API_MODE_BITALINO){
                 spi_device_queue_trans(ads_spi_handler, &ads_trans, portMAX_DELAY);
-            }
+            }*/
             api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
 
             //spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);

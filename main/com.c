@@ -13,10 +13,17 @@
 //Processes the buffer recieved in the bluetooth event
 void processRcv(uint8_t* buff, int buff_size){
     uint8_t cmd = buff[0] & 0b00000011;
-
+    
     //Live mode with 0 channels selected
-    if(buff[0] == 1){
+    if((api_config.api_mode == API_MODE_BITALINO && buff[0] == 1) || (api_config.api_mode != API_MODE_BITALINO && buff[0] == 1 && buff[1] == 0)){
         return;
+    }
+
+    //Check action command - it's regardeless of the current mode
+    if(buff[0] & 0b10110011){                    //Action command - Set output GPIO levels
+        actionGpio(buff);
+    }else if(buff[0] & 0b10100011){
+        actionPWM(buff);
     }
 
     if(live_mode){
@@ -24,9 +31,10 @@ void processRcv(uint8_t* buff, int buff_size){
             stopAcquisition();
         }
     }else{                                                      //If in idle mode
-        if(cmd == 0b01){                                        //Set live mode
+        if(cmd == 0b01 || cmd == 0b10){                                        //Set live mode
             //Get channels from mask
             api_config.select_ch_mask_func(buff);
+            
             //Clear send buffs, because of potential previous live mode
             bt_curr_buff = 0;
             acq_curr_buff = 0;
@@ -41,10 +49,18 @@ void processRcv(uint8_t* buff, int buff_size){
             ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
             //Start external
             adsStart();
+
+            if(cmd == 0b10){
+                sim_flag = 1;
+                DEBUG_PRINT_W("processRcv", "Simulation mode");
+            }else{
+                sim_flag = 0;
+            }
             
             live_mode = 1;
         }else if(cmd == 0b11){                                  //Configuration command
-            if(((buff[0] >> 2) & 0b001111) == 0){                      //Set sample rate
+
+            if((buff[0] & 0b00111100) == 0){                      //Set sample rate
                 setSampleRate(buff);
             }else if(((buff[0] >> 2) & 0b000011) == 0b10){    //Send device status
                 sendStatusPacket();
@@ -58,6 +74,18 @@ void processRcv(uint8_t* buff, int buff_size){
 
         }
     }
+}
+
+void actionGpio(uint8_t *buff){
+    gpio_set_level(O0_IO, (buff[0] & 0b00001000) >> 3);
+    gpio_out_state[0] = (buff[0] & 0b00001000) >> 3;
+    gpio_set_level(O1_IO, (buff[0] & 0b00000100) >> 2);
+    gpio_out_state[1] = (buff[0] & 0b00000100) >> 2;
+}
+
+void actionPWM(uint8_t *buff){
+    //FIQUEI AQUI -> FALTA LER E ADICIONAR NAS TRAMAS DE AQUISIÇÃO OS ESTADOS DOS GPIO
+    //FALTA ACABAR O PWM AQUI
 }
 
 void changeAPI(uint8_t mode){
@@ -75,6 +103,8 @@ void changeAPI(uint8_t mode){
         api_config.aquire_func = &acquireChannelsJson;
         api_config.select_ch_mask_func = &selectChsFromMaskExtendedJson;
     }
+
+    DEBUG_PRINT_W("changeAPI", "API changed to %d", mode);
        
 }
 
@@ -85,7 +115,7 @@ uint8_t getPacketSize(){
         _packet_size = packet_size_num_chs[num_intern_active_chs];
 
     }else if(api_config.api_mode == API_MODE_EXTENDED){
-        //Add 24bit channel's contributuion to pakcet size
+        //Add 24bit channel's contributuion to packet size
         _packet_size += 3*num_extern_active_chs;
 
         //Add 12bit channel's contributuion to packet size 
@@ -128,7 +158,7 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
                 num_intern_active_chs++;
             }
             
-            DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number-1);
+            DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number-1);
         }
         channel_number--;
     }
@@ -151,6 +181,13 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
             sprintf(aux_str, "AX%d", active_ext_chs[j]+1-6);
             cJSON_AddStringToObject(json, aux_str, value_str);
         }
+
+        //Add IO state json objects
+        cJSON_AddStringToObject(json, "I1", "0");
+        cJSON_AddStringToObject(json, "I2", "0");
+        cJSON_AddStringToObject(json, "O1", "0");
+        cJSON_AddStringToObject(json, "O2", "0");
+
     }
     packet_size = getPacketSize();
 }
@@ -169,11 +206,18 @@ void setSampleRate(uint8_t* buff){
     //The other APIs need 3 bits for the sample rate (hence the extra byte in the set sample rate config)
     }else{
         coded_3bit_sr = *(uint16_t*)(buff) >> 6;
-        aux = 2000 + (coded_3bit_sr & 0b011)*2000;
+        if(coded_3bit_sr <= 0b011){
+            for(i = 0; i < (buff[0] >> 6); i++){
+                aux *= 10;
+            }
+        }else{
+            aux = 2000 + (coded_3bit_sr & 0b011)*2000;
+        }
     }
 
     sample_rate = aux;
-    
+    //sample_rate = (*(uint16_t*)(buff+1) & 0xFFFF);
+
     DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", sample_rate);
     if(sample_rate >= 100){
         send_threshold = MAX_BUFFER_SIZE-10;
@@ -208,6 +252,21 @@ void stopAcquisition(void){
     live_mode = 0;
     crc_seq = 0;
     adsStop();
+
+    vTaskDelay(100/portTICK_PERIOD_MS);
+
+    //Reset simulation's signal iterator
+    sin_i = 0;
+
+    //Clean send buffers
+    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
+        memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
+        snd_buff_idx[i] = 0;
+    }
+
+    bt_curr_buff = 0;
+    acq_curr_buff = 0;
+    bt_write_busy = 0;
 }
 
 void sendStatusPacket(){
