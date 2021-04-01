@@ -26,6 +26,13 @@
 #define A4_ADC_CH   ADC1_CHANNEL_6  //GPIO34
 #define A5_ADC_CH   ADC1_CHANNEL_7  //GPIO35
 
+#define A0_IO   GPIO_NUM_36
+#define A1_IO   GPIO_NUM_39
+#define A2_IO   GPIO_NUM_32
+#define A3_IO   GPIO_NUM_33
+#define A4_IO   GPIO_NUM_34
+#define A5_IO   GPIO_NUM_35
+
 #define MAX_BUFFER_SIZE ESP_SPP_MAX_MTU
 /*#if (MAX_BUFFER_SIZE > 256)
     #error "MAX_BUFFER_SIZE needs to be less or equal than 256 because of iterators (uint8_t i) are just 8bit long"

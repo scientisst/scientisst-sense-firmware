@@ -2,7 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "gpio.h"
-
+#include "adc.h"
+#include "macros.h"
 
 //TODO: Meter os pins SPI3_MISO, U2RXD, U2TXD, SDA0, SCL0 a pull up
 
@@ -67,6 +68,11 @@ void configLedC(void){
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en){
     gpio_config_t io_conf;
 
+    if(pull_down_en && pull_up_en){
+        DEBUG_PRINT_E("gpioConfig", "Pin cannot have both pull up and pull down enabled");
+        return;
+    }
+
     //config pin direction (output/input)
     io_conf.mode = mode;
     //config interrupt (disable/what type of interrupt)
@@ -83,8 +89,8 @@ void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_ma
 }
 
 void gpioInit(){
-    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO)), 0, 0);
-    gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 0, 0);
-
+    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO)), 0, 0);       //The 2 IO outputs and state LED
+    gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 1, 0);                                //The 2 IO inputs
+    gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< A2_IO) | (1ULL<< A3_IO) | (1ULL<< A4_IO)), 1, 0);                            
     configLedC();
 }
