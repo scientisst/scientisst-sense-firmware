@@ -38,6 +38,7 @@ idf.py flash
 #Export idf.py
 ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
 . $ESP_LOCATION/esp-idf/export.sh
+
 #Serial monitor
 cd scientisst-sense-firmware 
 idf.py monitor
