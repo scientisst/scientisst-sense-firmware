@@ -1,2 +1,0 @@
-SImulated mode: 16kHz gets some loss packets at 6min
-                - 14kHz, loss packets at 30min
