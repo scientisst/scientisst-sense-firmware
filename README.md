@@ -23,6 +23,11 @@ git clone https://github.com/scientisst/scientisst-sense-firmware.git
 
 ## Flash Firmware (Linux/MacOS)
 ```sh
+#Export idf.py
+ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
+. $ESP_LOCATION/esp-idf/export.sh
+
+#Flash Firmware
 cd scientisst-sense-firmware 
 idf.py flash
 ```
@@ -30,6 +35,10 @@ idf.py flash
 
 ## Serial Monitor (Linux/MacOS)
 ```sh
+#Export idf.py
+ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
+. $ESP_LOCATION/esp-idf/export.sh
+#Serial monitor
 cd scientisst-sense-firmware 
 idf.py monitor
 ```
