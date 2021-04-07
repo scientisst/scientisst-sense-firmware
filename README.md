@@ -6,9 +6,7 @@ The firmware for the Scientisst - Sense development board
 ## Repository structure
 
 ```
-- main
-  - main.cpp        : A test example source file that uses the scientisst class to perform a live mode acquisition
-  - scientisst.cpp  : The scientisst class source file
+- main              : Firmware Source Files
 - sdkconfig         : ESP32 Hardware Configurations
 ```
 ## Dependencies
@@ -24,7 +22,7 @@ git clone https://github.com/scientisst/scientisst-sense-firmware.git
 ## Flash Firmware (Linux/MacOS)
 ```sh
 #Export idf.py
-ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
+ESP_LOCATION= #Insert here your esp-idf installation location. Example: ESP_LOCATION=~/esp
 . $ESP_LOCATION/esp-idf/export.sh
 
 #Flash Firmware
@@ -36,7 +34,7 @@ idf.py flash
 ## Serial Monitor (Linux/MacOS)
 ```sh
 #Export idf.py
-ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
+ESP_LOCATION= #Insert here your esp-idf installation location. Example: ESP_LOCATION=~/esp
 . $ESP_LOCATION/esp-idf/export.sh
 
 #Serial monitor
