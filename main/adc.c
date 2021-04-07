@@ -200,7 +200,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
 
     //store CRC and Seq in the last byte of the packet
     frame[packet_size-1] = crc;
-
+    
     crc_seq++;
 }
 

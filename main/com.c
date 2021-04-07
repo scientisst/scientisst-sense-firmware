@@ -219,7 +219,7 @@ void setSampleRate(uint8_t* buff){
     //sample_rate = (*(uint16_t*)(buff+1) & 0xFFFF);
 
     DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", sample_rate);
-    if(sample_rate >= 100){
+    if(sample_rate > 100){
         send_threshold = MAX_BUFFER_SIZE-10;
     }else{
         send_threshold = DEFAULT_SEND_THRESHOLD;
