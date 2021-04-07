@@ -157,7 +157,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
     frame[packet_size-2] = io_state;
 
     //Can be a huge bottleneck
-    spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+    /*spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
     recv_ads = ads_rtrans->rx_buffer;
 
     //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
@@ -169,7 +169,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
         }
         *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
         frame_next_wr += 3;
-    }
+    }*/
 
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 

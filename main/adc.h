@@ -19,19 +19,19 @@
 #define A6 6
 #define A7 7
 
-#define A0_ADC_CH   ADC1_CHANNEL_0  //GPIO36
-#define A1_ADC_CH   ADC1_CHANNEL_3  //GPIO39
-#define A2_ADC_CH   ADC1_CHANNEL_4  //GPIO32
-#define A3_ADC_CH   ADC1_CHANNEL_5  //GPIO33
-#define A4_ADC_CH   ADC1_CHANNEL_6  //GPIO34
-#define A5_ADC_CH   ADC1_CHANNEL_7  //GPIO35
+#define A0_ADC_CH   ADC1_CHANNEL_0  //AI1, GPIO36
+#define A1_ADC_CH   ADC1_CHANNEL_3  //AI2, GPIO39
+#define A2_ADC_CH   ADC1_CHANNEL_4  //AI3, GPIO32
+#define A3_ADC_CH   ADC1_CHANNEL_5  //AI4, GPIO33
+#define A4_ADC_CH   ADC1_CHANNEL_6  //AI5, GPIO34
+#define A5_ADC_CH   ADC1_CHANNEL_7  //AI6, GPIO35
 
-#define A0_IO   GPIO_NUM_36
-#define A1_IO   GPIO_NUM_39
-#define A2_IO   GPIO_NUM_32
-#define A3_IO   GPIO_NUM_33
-#define A4_IO   GPIO_NUM_34
-#define A5_IO   GPIO_NUM_35
+#define A0_IO   GPIO_NUM_36         //AI1
+#define A1_IO   GPIO_NUM_39         //AI2
+#define A2_IO   GPIO_NUM_32         //AI3
+#define A3_IO   GPIO_NUM_33         //AI4
+#define A4_IO   GPIO_NUM_34         //AI5
+#define A5_IO   GPIO_NUM_35         //AI6
 
 #define MAX_BUFFER_SIZE ESP_SPP_MAX_MTU
 /*#if (MAX_BUFFER_SIZE > 256)
