@@ -34,7 +34,7 @@ idf.py flash
 ## Serial Monitor (Linux/MacOS)
 ```sh
 #Export idf.py
-ESP_LOCATION= #Insert here your esp-idf installation location. Example: ~/esp
+ESP_LOCATION= #Insert here your esp-idf installation location. Example: ESP_LOCATION=~/esp
 . $ESP_LOCATION/esp-idf/export.sh
 
 #Serial monitor
