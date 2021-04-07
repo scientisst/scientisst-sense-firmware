@@ -6,9 +6,7 @@ The firmware for the Scientisst - Sense development board
 ## Repository structure
 
 ```
-- main
-  - main.cpp        : A test example source file that uses the scientisst class to perform a live mode acquisition
-  - scientisst.cpp  : The scientisst class source file
+- main              : Firmware Source Files
 - sdkconfig         : ESP32 Hardware Configurations
 ```
 ## Dependencies
