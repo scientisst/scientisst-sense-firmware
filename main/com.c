@@ -267,6 +267,10 @@ void stopAcquisition(void){
     bt_curr_buff = 0;
     acq_curr_buff = 0;
     bt_write_busy = 0;
+
+    //Reset previous active chs
+    num_intern_active_chs = 0;
+    num_extern_active_chs = 0;
 }
 
 void sendStatusPacket(){
