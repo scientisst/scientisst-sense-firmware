@@ -157,20 +157,22 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
 
     frame[packet_size-2] = io_state;
 
-    //Can be a huge bottleneck
-    /*spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
-    recv_ads = ads_rtrans->rx_buffer;
+    if(adc_ext_en){
+        //Can be a huge bottleneck
+        spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+        recv_ads = ads_rtrans->rx_buffer;
 
-    //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-    for(i = 0; i < num_extern_active_chs; i++){
-        if(sim_flag){
-            adc_external_res[i] = sin10Hz[sin_i % 100];
-        }else{
-            adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+        //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
+        for(i = 0; i < num_extern_active_chs; i++){
+            if(sim_flag){
+                adc_external_res[i] = sin10Hz[sin_i % 100];
+            }else{
+                adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+            }
+            *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
+            frame_next_wr += 3;
         }
-        *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
-        frame_next_wr += 3;
-    }*/
+    }
 
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
@@ -241,17 +243,18 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     item = cJSON_GetObjectItemCaseSensitive(json, "O2");
     strcpy(item->valuestring, value_str);
     
+    if(adc_ext_en){
+        //Get external adc values - Can be a huge bottleneck
+        spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+        recv_ads = ads_rtrans->rx_buffer;
 
-    //Get external adc values - Can be a huge bottleneck
-    spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
-    recv_ads = ads_rtrans->rx_buffer;
-
-    //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-    for(i = 0; i < num_extern_active_chs; i++){
-        if(sim_flag){
-            adc_external_res[i] = sin10Hz[sin_i % 100];
-        }else{
-            adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+        //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
+        for(i = 0; i < num_extern_active_chs; i++){
+            if(sim_flag){
+                adc_external_res[i] = sin10Hz[sin_i % 100];
+            }else{
+                adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+            }
         }
     }
 
@@ -265,10 +268,12 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
         strcpy(item->valuestring, value_str);
     }
 
-    for(i = num_extern_active_chs-1; i >= 0; i--){
-        sprintf(value_str, "%08d", adc_external_res[i]);
-        sprintf(ch_str, "AX%d", active_ext_chs[i]+1-6);
-        item = cJSON_GetObjectItemCaseSensitive(json, ch_str);
-        strcpy(item->valuestring, value_str);
+    if(adc_ext_en){
+        for(i = num_extern_active_chs-1; i >= 0; i--){
+            sprintf(value_str, "%08d", adc_external_res[i]);
+            sprintf(ch_str, "AX%d", active_ext_chs[i]+1-6);
+            item = cJSON_GetObjectItemCaseSensitive(json, ch_str);
+            strcpy(item->valuestring, value_str);
+        }
     }
 }

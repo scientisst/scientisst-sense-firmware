@@ -52,6 +52,7 @@ uint8_t live_mode = 0;                                  //Flag that indicastes i
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;    
 esp_adc_cal_characteristics_t adc1_chars;    
 uint8_t gpio_out_state[2] = {0, 0};                 //Output of 01 & O2 (O0 & O1)
+uint8_t adc_ext_en = 0;                             //Flag which indicates if external adc is being used in current live mode
 
 DRAM_ATTR const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
 uint8_t sim_flag = 0;
@@ -62,9 +63,6 @@ I2c_Sensor_State i2c_sensor_values;
 
 //SPI
 spi_device_handle_t ads_spi_handler;
-
-//TODO: DEBUG ONLY VARIABLES!
-struct timeval begin, end;
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -172,7 +170,6 @@ void acqI2cTask(){
     /*uint16_t heart_rate;
     uint16_t oxygen;
     uint8_t confidence;*/
-    uint32_t test;
 
     i2cMasterInit();
     MAX32664_Init();    
@@ -187,14 +184,6 @@ void acqI2cTask(){
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
             
-            gettimeofday(&begin, NULL); 
-            while((end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0) < 0.08){
-                gettimeofday(&end, NULL);
-                test++;
-                vTaskDelay(10/portTICK_RATE_MS);
-            }
-            //printf("Time elapsed %f s\n", ((end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0)));
-
             /*MLX90614_GetTempObj(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_obj), &(i2c_sensor_values.temp_obj_int));
             MLX90614_GetTempAmb(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_amb), &(i2c_sensor_values.temp_amb_int));
             MAX32664_GetBPM(&heart_rate, &oxygen, &confidence, &(i2c_sensor_values.status));

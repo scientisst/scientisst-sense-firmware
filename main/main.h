@@ -58,7 +58,6 @@ extern DRAM_ATTR const uint8_t sin10Hz[100];
 extern uint8_t sim_flag;
 extern uint8_t sin_i;
 extern uint8_t gpio_out_state[2];
-
-extern unsigned int packet_cnt;         //TODO                     
+extern uint8_t adc_ext_en;
 
 #endif

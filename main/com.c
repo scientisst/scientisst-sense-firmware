@@ -145,6 +145,7 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
+    adc_ext_en = 0;
 
     //Select the channels that are activated (with corresponding bit equal to 1)
     for(i = 1 << (DEFAULT_ADC_CHANNELS+2-1); i > 0; i >>= 1){
@@ -153,6 +154,7 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
             if(i == 1 << (DEFAULT_ADC_CHANNELS+2-1) || i == 1 << (DEFAULT_ADC_CHANNELS+2-2)){
                 active_ext_chs[num_extern_active_chs] = channel_number-1;
                 num_extern_active_chs++;
+                adc_ext_en = 1;
             }else{
                 active_internal_chs[num_intern_active_chs] = channel_number-1;
                 num_intern_active_chs++;
@@ -272,6 +274,7 @@ void stopAcquisition(void){
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
+    adc_ext_en = 0;
 }
 
 void sendStatusPacket(){
