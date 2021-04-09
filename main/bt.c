@@ -40,6 +40,8 @@ void IRAM_ATTR sendData(){
     
     bt_write_busy = 1;
     esp_spp_write(bt_client, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+
+    //The buffer changing and clearing tasks are done after the ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in esp_spp_cb()
 }
 
 static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
@@ -99,16 +101,23 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         }
         break;
         
-    case ESP_SPP_WRITE_EVT:                         //write operation completed (quando um envio foi completado)
+    case ESP_SPP_WRITE_EVT:                         //write operation status changed
+        //Completed successfuly send---------------------------------------------------------  
         if(param->write.status == ESP_SPP_SUCCESS){
-            //Complete send---------------------------------------------------------            
             xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
                 bt_buffs_to_send[bt_curr_buff] = 0;
             xSemaphoreGive(bt_buffs_to_send_mutex);
+
+            //Clear recently sent buffer
+            memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
+            snd_buff_idx[bt_curr_buff] = 0;
+
+            //Change send buffer
             bt_curr_buff = (bt_curr_buff+1)%4;
+
             //Try to send next buff
-            if(param->write.cong == 0){                     
-                sendData();                             //bt write is free
+            if(param->write.cong == 0){         //bt write is free   
+                sendData();                             
             }else{
                 bt_write_busy = SEND_AFTER_C0NG;
             }

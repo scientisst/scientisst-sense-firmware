@@ -203,16 +203,17 @@ void setSampleRate(uint8_t* buff){
             aux *= 10;
         }
     
-    //The other APIs need 3 bits for the sample rate (hence the extra byte in the set sample rate config)
+    //The other APIs need more bits for the sample rate
     }else{
-        coded_3bit_sr = *(uint16_t*)(buff) >> 6;
+        /*coded_3bit_sr = *(uint16_t*)(buff) >> 6;
         if(coded_3bit_sr <= 0b011){
             for(i = 0; i < (buff[0] >> 6); i++){
                 aux *= 10;
             }
         }else{
             aux = 2000 + (coded_3bit_sr & 0b011)*2000;
-        }
+        }*/
+        aux = (*(uint16_t*)(buff+1) & 0xFFFF);
     }
 
     sample_rate = aux;
@@ -329,9 +330,14 @@ void sendFirmwareVersionPacket(){
 
     memcpy(snd_buff[bt_curr_buff], FIRMWARE_VERSION_STR, strlen(FIRMWARE_VERSION_STR)+1);
 
-    //----------------------------Store packet size-------------------------------------
     snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_VERSION_STR)+1;
 
+    //Send ADC1 configurations for raw2voltage precision conversions
+    if(api_config.api_mode != API_MODE_BITALINO){
+        memcpy(snd_buff[bt_curr_buff]+snd_buff_idx[bt_curr_buff], &adc1_chars, 6*sizeof(int));      //We don't want to send the 2 last pointers of adc1_chars struct
+        snd_buff_idx[bt_curr_buff] += 6*sizeof(int);
+    }
+    
     sendData();   
     send_threshold = true_send_threshold;
 }

@@ -36,6 +36,7 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel){
 
 void initAdc(uint8_t adc_resolution){
     uint8_t i;
+    esp_adc_cal_value_t val_type;
     
 
     //Check if TP is burned into eFuse
@@ -61,9 +62,15 @@ void initAdc(uint8_t adc_resolution){
     }
 
     //Characterize ADC
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_10, DEFAULT_VREF, &adc1_chars);
+    val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, DEFAULT_VREF, &adc1_chars);
 
-
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
+    } else {
+        DEBUG_PRINT_E("ADC1 Calibration type: Default");
+    }
 }
 
 //Acquires and stores into frame the channel acquisitions
@@ -73,9 +80,6 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
     uint8_t i;
     uint8_t crc = 0;
     
-    //Clean frame from previous acquisition
-    memset(frame, 0, packet_size);
-
     for(i = 0; i < num_intern_active_chs; i++){
         if(sim_flag){
             adc_res[i] = sin10Hz[sin_i % 100];
@@ -135,9 +139,6 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
     uint8_t* recv_ads;
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
-    
-    //Clean frame from previous acquisition
-    memset(frame, 0, packet_size);
 
     for(i = 0; i < num_intern_active_chs; i++){
         if(sim_flag){
@@ -213,9 +214,6 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     char ch_str[10];
     char value_str[10];
     cJSON *item;
-    
-    //Clean frame from previous acquisition
-    memset(frame, 0, packet_size);
 
    for(i = 0; i < num_intern_active_chs; i++){
         if(sim_flag){

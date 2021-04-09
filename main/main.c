@@ -28,7 +28,7 @@ char bt_device_name[17] = BT_DEFAULT_DEVICE_NAME;
 uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];         //Data structure to hold the data to be sent through bluetooth        
 uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0};      //It contains, for each buffer, the index of the first free element in the respective buffer 
 uint8_t bt_buffs_to_send[NUM_BUFFERS] = {0, 0, 0, 0};               //If element 0 is set to 1, bt task has to send snd_buff[0]
-uint8_t bt_curr_buff = 0;
+uint8_t bt_curr_buff = 0;                               //Index of the buffer that bt task is currently sending
 uint8_t acq_curr_buff = 0;                              //Index of the buffer that adc task is currently using
 
 uint8_t packet_size = 0;                //Current packet size (dependent on number of channels used)
@@ -67,7 +67,6 @@ spi_device_handle_t ads_spi_handler;
 struct timeval begin, end;
 
 void app_main(void){ 
-
     // Create a mutex type semaphore
     if((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL){
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
@@ -162,9 +161,6 @@ void IRAM_ATTR acqAdc1Task(){
 
                 //Next buffer is free, change buffer
                 acq_curr_buff = (acq_curr_buff+1)%4;
-                //Clear this new buffer
-                //memset(snd_buff[acq_curr_buff], 0, snd_buff_idx[acq_curr_buff]);
-                snd_buff_idx[acq_curr_buff] = 0;
             }
         }else{
             DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
