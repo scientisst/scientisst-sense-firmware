@@ -19,7 +19,7 @@
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL_USED       LEDC_CHANNEL_0
 #define LEDC_LIVE_DUTY          512                     //Half the LEDC_TIMER_10_BIT duty_resolution resolution
-#define LEDC_IDLE_DUTY          102                     //10% the LEDC_TIMER_10_BIT duty_resolution resolution
+#define LEDC_IDLE_DUTY          50                     //10% the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_LIVE_PWM_FREQ      4
 #define LEDC_IDLE_PWM_FREQ      1
 
