@@ -48,7 +48,7 @@ void processRcv(uint8_t* buff, int buff_size){
             //Set led state to blink at live mode frequency
             ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
             //Set live mode duty cycle for state led
-            ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
+            ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
             ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
             //Start external
             adsStart();
