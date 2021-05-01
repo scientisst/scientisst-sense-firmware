@@ -52,7 +52,6 @@ uint8_t live_mode = 0;                                  //Flag that indicastes i
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;    
 esp_adc_cal_characteristics_t adc1_chars;    
 uint8_t gpio_out_state[2] = {0, 0};                 //Output of 01 & O2 (O0 & O1)
-uint8_t adc_ext_en = 0;                             //Flag which indicates if external adc is being used in current live mode
 
 DRAM_ATTR const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
 uint8_t sim_flag = 0;
@@ -63,6 +62,7 @@ I2c_Sensor_State i2c_sensor_values;
 
 //SPI
 spi_device_handle_t ads_spi_handler;
+spi_transaction_t ads_trans;
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -102,7 +102,6 @@ void IRAM_ATTR btTask(){
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
 void IRAM_ATTR acqAdc1Task(){
     uint8_t* rx_data_ads = NULL;
-    spi_transaction_t ads_trans;
     
 
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
@@ -114,11 +113,11 @@ void IRAM_ATTR acqAdc1Task(){
 
     //24 status bits + 24 bits x 2 channels = 9bytes required. But DMA buffer needs to be 32bit aligned
     rx_data_ads = heap_caps_malloc(3*sizeof(uint32_t), MALLOC_CAP_DMA);  
-    memset(rx_data_ads, 0, 9);
+    memset(rx_data_ads, 0, 3*sizeof(uint32_t));
     adsInit();
     adsSetupRoutine();
     adsSetSamplingRate(250);
-    adsConfigureChannels(1);
+    adsConfigureChannels(3);
     memset(&ads_trans, 0, sizeof(ads_trans));   //zero out the transaction
     ads_trans.length = 72;                   //send nothing
     ads_trans.rxlength = 72;                //24 status bits + 24 bits x 2 channels
@@ -127,16 +126,22 @@ void IRAM_ATTR acqAdc1Task(){
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-
-            /*if(api_config.api_mode != API_MODE_BITALINO){
+            //Send sample request to the external adc, if there're external chs active
+            if(num_extern_active_chs){
                 spi_device_queue_trans(ads_spi_handler, &ads_trans, portMAX_DELAY);
-            }*/
-            api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
+            }
 
-            //spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
-            //uint8_t* recv_ads = ads_rtrans->rx_buffer;
-            //int swag = (recv_ads[3] << 16) | ((uint8_t)recv_ads[4] << 8) | (recv_ads[5]);
-            //printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
+            api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
+            /*spi_transaction_t *ads_rtrans;
+            spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+            uint8_t* recv_ads = ads_rtrans->rx_buffer;
+            int swag = (recv_ads[3] << 16) | ((uint8_t)recv_ads[4] << 8) | (recv_ads[5]);
+            printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
+            for(int i = 0; i < 3*sizeof(uint32_t); i++){
+                printf("%d, ", recv_ads[i]);
+            }
+            printf("\n");*/
+
 
             snd_buff_idx[acq_curr_buff] += packet_size;
 

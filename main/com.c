@@ -38,7 +38,7 @@ void processRcv(uint8_t* buff, int buff_size){
             //Clear send buffs, because of potential previous live mode
             bt_curr_buff = 0;
             acq_curr_buff = 0;
-            //Clean send buff, because of send status and send firmware stringC
+            //Clean send buff, because of send status and send firmware string
             bt_write_busy = 0;
             memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
             snd_buff_idx[bt_curr_buff] = 0;
@@ -47,6 +47,9 @@ void processRcv(uint8_t* buff, int buff_size){
             timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
             //Set led state to blink at live mode frequency
             ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+            //Set live mode duty cycle for state led
+            ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
+            ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
             //Start external
             adsStart();
 
@@ -145,7 +148,6 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
-    adc_ext_en = 0;
 
     //Select the channels that are activated (with corresponding bit equal to 1)
     for(i = 1 << (DEFAULT_ADC_CHANNELS+2-1); i > 0; i >>= 1){
@@ -154,7 +156,6 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
             if(i == 1 << (DEFAULT_ADC_CHANNELS+2-1) || i == 1 << (DEFAULT_ADC_CHANNELS+2-2)){
                 active_ext_chs[num_extern_active_chs] = channel_number-1;
                 num_extern_active_chs++;
-                adc_ext_en = 1;
             }else{
                 active_internal_chs[num_intern_active_chs] = channel_number-1;
                 num_intern_active_chs++;
@@ -196,7 +197,6 @@ void selectChsFromMaskExtendedJson(uint8_t* buff){
 
 void setSampleRate(uint8_t* buff){
     uint32_t aux = 1;
-    uint16_t coded_3bit_sr;
     uint8_t i;
 
     //API mode bitalino only needs the 2 bits for the sample rate.
@@ -252,6 +252,10 @@ void selectChsFromMask(uint8_t* buff){
 void stopAcquisition(void){
     timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
+
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
+
     live_mode = 0;
     crc_seq = 0;
     adsStop();
@@ -274,7 +278,6 @@ void stopAcquisition(void){
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
-    adc_ext_en = 0;
 }
 
 void sendStatusPacket(){

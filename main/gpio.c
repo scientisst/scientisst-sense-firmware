@@ -47,7 +47,7 @@ void configLedC(void){
      *         will be the same
      */
     ledc_channel_config_t ledc_channel = {
-        .channel    = LEDC_CHANNEL_0,
+        .channel    = LEDC_CHANNEL_USED,
         .duty       = 0,
         .gpio_num   = STATE_LED_IO,
         .speed_mode = LEDC_SPEED_MODE_USED,
@@ -61,7 +61,7 @@ void configLedC(void){
     // Initialize fade service.
     //ledc_fade_func_install(0);
 
-    ledc_set_duty(ledc_channel.speed_mode, ledc_channel.channel, LEDC_DUTY);
+    ledc_set_duty(ledc_channel.speed_mode, ledc_channel.channel, LEDC_IDLE_DUTY);
     ledc_update_duty(ledc_channel.speed_mode, ledc_channel.channel);
 }
 

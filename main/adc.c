@@ -157,7 +157,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
 
     frame[packet_size-2] = io_state;
 
-    if(adc_ext_en){
+    if(num_extern_active_chs){
         //Can be a huge bottleneck
         spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
         recv_ads = ads_rtrans->rx_buffer;
@@ -167,12 +167,14 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
             if(sim_flag){
                 adc_external_res[i] = sin10Hz[sin_i % 100];
             }else{
-                adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+                adc_external_res[i] = (*(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)))) & 0x00FFFFFF;
+                //printf("%u\n", adc_external_res[i]);
             }
-            *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i] & 0x00FFFFFF;
+            *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
             frame_next_wr += 3;
         }
     }
+
 
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
@@ -243,7 +245,7 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     item = cJSON_GetObjectItemCaseSensitive(json, "O2");
     strcpy(item->valuestring, value_str);
     
-    if(adc_ext_en){
+    if(num_extern_active_chs){
         //Get external adc values - Can be a huge bottleneck
         spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
         recv_ads = ads_rtrans->rx_buffer;
@@ -253,7 +255,7 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
             if(sim_flag){
                 adc_external_res[i] = sin10Hz[sin_i % 100];
             }else{
-                adc_external_res[i] = *(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)));
+                adc_external_res[i] = (*(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)))) & 0x00FFFFFF;
             }
         }
     }
@@ -268,7 +270,7 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
         strcpy(item->valuestring, value_str);
     }
 
-    if(adc_ext_en){
+    if(num_extern_active_chs){
         for(i = num_extern_active_chs-1; i >= 0; i--){
             sprintf(value_str, "%08d", adc_external_res[i]);
             sprintf(ch_str, "AX%d", active_ext_chs[i]+1-6);
