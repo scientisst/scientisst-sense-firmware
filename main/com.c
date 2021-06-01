@@ -51,7 +51,9 @@ void processRcv(uint8_t* buff, int buff_size){
             ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
             ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
             //Start external
-            adsStart();
+            if(num_extern_active_chs){
+                adsStart();
+            }
 
             if(cmd == 0b10){
                 sim_flag = 1;

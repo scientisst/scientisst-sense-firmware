@@ -7,6 +7,7 @@
 #include "timer.h"
 #include "main.h"
 #include "macros.h"
+#include "gpio.h"
 
 /*
  * Initialize selected timer of the specified timer group 

@@ -11,12 +11,6 @@
 
 #define MAX_TRANSFER_SIZE 0
 
-#define SPI3_MISO_IO    GPIO_NUM_19
-#define SPI3_MOSI_IO    GPIO_NUM_23
-#define SPI3_SCLK_IO    GPIO_NUM_18
-//#define SPI3_QUADWP_IO  GPIO_NUM_22
-//#define SPI3_QUADHD_IO  GPIO_NUM_21
-#define SPI3_CS0_IO     GPIO_NUM_5
 #define DMA_CHAN        2
 
 #define ADC_EXT_SLCK_HZ 1*1000*1000           //Clock out at 1 MHz, divisors of 80MHz
@@ -59,7 +53,7 @@ void adsInit(){
         .clock_speed_hz = ADC_EXT_SLCK_HZ,
         .mode = 1,                                //SPI mode 1: (CPOL) = 0 and the clock phase (CPHA) = 1. 
         .spics_io_num = SPI3_CS0_IO,               //CS pin
-        .queue_size = 2,                          //We want to be able to queue 7 transactions at a time
+        .queue_size = 1,                          //We want to be able to queue 1 transactions at a time
         //.pre_cb = lcd_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
     //Initialize the SPI bus

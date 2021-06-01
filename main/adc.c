@@ -24,9 +24,9 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel){
     esp_err_t ret;
     
     if(adc_index == 1){
-        adc1_config_channel_atten(adc_channel, ADC_ATTEN_DB_11);        //Atennuation to get a input voltage of 0 to 2.6V
+        adc1_config_channel_atten(adc_channel, ADC_ATTENUATION);        //Atennuation to get a input voltage of 0 to 2.6V
     }else if(adc_index == 2){
-        adc2_config_channel_atten(adc_channel, ADC_ATTEN_DB_11);
+        adc2_config_channel_atten(adc_channel, ADC_ATTENUATION);
         ret = adc2_get_raw(adc_channel, ADC_RESOLUTION, &dummy);
         if (ret == ESP_ERR_TIMEOUT){
             DEBUG_PRINT_E("configAdc", "CAN'T USE ADC2, WIFI IS ENABLED");
@@ -62,7 +62,7 @@ void initAdc(uint8_t adc_resolution){
     }
 
     //Characterize ADC
-    val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, DEFAULT_VREF, &adc1_chars);
+    val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
 
     if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
         DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
@@ -168,7 +168,6 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
                 adc_external_res[i] = sin10Hz[sin_i % 100];
             }else{
                 adc_external_res[i] = (*(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)))) & 0x00FFFFFF;
-                //printf("%u\n", adc_external_res[i]);
             }
             *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
             frame_next_wr += 3;

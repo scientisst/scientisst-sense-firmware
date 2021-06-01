@@ -8,7 +8,8 @@
 #include "cJSON.h"
 
 #define ADC_RESOLUTION ADC_WIDTH_BIT_12
-#define ADC_RES_VALUE 10                    //ADC Resolution Value: Tem que ser o valor indicado por ADC_RESOLUTION
+#define ADC_ATTENUATION ADC_ATTEN_DB_0
+#define ADC_RES_VALUE 12                    //ADC Resolution Value: Tem que ser o valor indicado por ADC_RESOLUTION
 
 #define A0 0
 #define A1 1

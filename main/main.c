@@ -62,7 +62,7 @@ I2c_Sensor_State i2c_sensor_values;
 
 //SPI
 spi_device_handle_t ads_spi_handler;
-spi_transaction_t ads_trans;
+
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -102,6 +102,7 @@ void IRAM_ATTR btTask(){
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
 void IRAM_ATTR acqAdc1Task(){
     uint8_t* rx_data_ads = NULL;
+    spi_transaction_t ads_trans;
     
 
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
@@ -128,21 +129,23 @@ void IRAM_ATTR acqAdc1Task(){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
             //Send sample request to the external adc, if there're external chs active
             if(num_extern_active_chs){
+                memset(ads_trans.rx_buffer, 0, 3*sizeof(uint32_t));
                 spi_device_queue_trans(ads_spi_handler, &ads_trans, portMAX_DELAY);
             }
 
             api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
+
             /*spi_transaction_t *ads_rtrans;
             spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
             uint8_t* recv_ads = ads_rtrans->rx_buffer;
             int swag = (recv_ads[3] << 16) | ((uint8_t)recv_ads[4] << 8) | (recv_ads[5]);
             printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
-            for(int i = 0; i < 3*sizeof(uint32_t); i++){
-                printf("%d, ", recv_ads[i]);
+            for(int i = 0; i < 3*sizeof(uint32_t); i += 3){
+                uint32_t byte = (*(uint32_t*)recv_ads+i);
+                printf("%d, ", byte);
             }
             printf("\n");*/
-
-
+            
             snd_buff_idx[acq_curr_buff] += packet_size;
 
             //Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send acq_curr_buff, we need to update it
