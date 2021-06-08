@@ -11,7 +11,7 @@
 
 #define MAX_TRANSFER_SIZE 0
 
-#define DMA_CHAN        2
+#define DMA_CHAN        0		//No DMA
 
 #define ADC_EXT_SLCK_HZ 1*1000*1000           //Clock out at 1 MHz, divisors of 80MHz
 
@@ -64,7 +64,7 @@ void adsInit(){
     ESP_ERROR_CHECK(ret);
 }
 
-void adsSendCmd(uint8_t cmd) {
+void adsSendCmd(uint8_t cmd){
 	spi_transaction_t transaction;
 
     memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
@@ -124,7 +124,8 @@ void adsWriteRegister(uint8_t address, uint8_t data) {
     transaction.rx_buffer = NULL; // skip read phase
     spi_device_polling_transmit(ads_spi_handler, &transaction);  //Transmit!
 
-	vTaskDelay(10/portTICK_PERIOD_MS);
+	//vTaskDelay(10/portTICK_PERIOD_MS);
+	vTaskDelay(40/portTICK_PERIOD_MS);
 }
 
 void adsSetupRoutine(){

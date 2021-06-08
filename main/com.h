@@ -37,6 +37,7 @@ void selectChsFromMaskExtendedJson(uint8_t* buff);
 void setSampleRate(uint8_t* buff);
 void actionGpio(uint8_t *buff);
 void actionPWM(uint8_t *buff);
+void startAcquisition(uint8_t *buff, uint8_t cmd);
 
 /*          MASK CONFIGURATION EXAMPLE
 *                       bits

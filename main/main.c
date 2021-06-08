@@ -101,7 +101,7 @@ void IRAM_ATTR btTask(){
  
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
 void IRAM_ATTR acqAdc1Task(){
-    uint8_t* rx_data_ads = NULL;
+    uint8_t rx_data_ads[9];
     spi_transaction_t ads_trans;
     
 
@@ -113,8 +113,8 @@ void IRAM_ATTR acqAdc1Task(){
     gpioInit();
 
     //24 status bits + 24 bits x 2 channels = 9bytes required. But DMA buffer needs to be 32bit aligned
-    rx_data_ads = heap_caps_malloc(3*sizeof(uint32_t), MALLOC_CAP_DMA);  
-    memset(rx_data_ads, 0, 3*sizeof(uint32_t));
+    //rx_data_ads = heap_caps_malloc(3*sizeof(uint32_t), MALLOC_CAP_DMA);  
+    //memset(rx_data_ads, 0, 3*sizeof(uint32_t));
     adsInit();
     adsSetupRoutine();
     adsSetSamplingRate(250);
@@ -124,27 +124,35 @@ void IRAM_ATTR acqAdc1Task(){
     ads_trans.rxlength = 72;                //24 status bits + 24 bits x 2 channels
     ads_trans.tx_buffer = NULL;             //skip write phase
     ads_trans.rx_buffer = rx_data_ads;
+    //ads_trans.flags = 0;
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
             //Send sample request to the external adc, if there're external chs active
             if(num_extern_active_chs){
-                memset(ads_trans.rx_buffer, 0, 3*sizeof(uint32_t));
+                //memset(ads_trans.rx_buffer, 0, 3*sizeof(uint32_t));
                 spi_device_queue_trans(ads_spi_handler, &ads_trans, portMAX_DELAY);
             }
 
-            api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
-
-            /*spi_transaction_t *ads_rtrans;
+            //api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
+            
+            spi_transaction_t *ads_rtrans;
             spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
             uint8_t* recv_ads = ads_rtrans->rx_buffer;
-            int swag = (recv_ads[3] << 16) | ((uint8_t)recv_ads[4] << 8) | (recv_ads[5]);
-            printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
+            uint32_t swag = (((uint32_t)recv_ads[0] << 16) | ((uint32_t)recv_ads[1] << 8) | (recv_ads[2])) & 0xFFFFFF;
+            //printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
+
+            //swag = SPI_SWAP_DATA_RX(*(uint32_t*)recv_ads, 24) & 0xFFFFFF;
+            printf("%d, ", swag);
+            swag = (((uint32_t)recv_ads[3] << 16) | ((uint32_t)recv_ads[4] << 8) | (recv_ads[5])) & 0xFFFFFF;
+            printf("%d, ", swag);
+            swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8])) & 0xFFFFFF;
+            printf("%d", swag);
             for(int i = 0; i < 3*sizeof(uint32_t); i += 3){
                 uint32_t byte = (*(uint32_t*)recv_ads+i);
-                printf("%d, ", byte);
+                //printf("%d, ", byte);
             }
-            printf("\n");*/
+            printf("\n");
             
             snd_buff_idx[acq_curr_buff] += packet_size;
 

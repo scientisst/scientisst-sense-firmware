@@ -32,39 +32,8 @@ void processRcv(uint8_t* buff, int buff_size){
         }
     }else{                                                      //If in idle mode
         if(cmd == 0b01 || cmd == 0b10){                                        //Set live mode
-            //Get channels from mask
-            api_config.select_ch_mask_func(buff);
-            
-            //Clear send buffs, because of potential previous live mode
-            bt_curr_buff = 0;
-            acq_curr_buff = 0;
-            //Clean send buff, because of send status and send firmware string
-            bt_write_busy = 0;
-            memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
-            snd_buff_idx[bt_curr_buff] = 0;
-            bt_buffs_to_send[bt_curr_buff] = 0;
-            //Init timer for adc task top start
-            timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
-            //Set led state to blink at live mode frequency
-            ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
-            //Set live mode duty cycle for state led
-            ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
-            ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
-            //Start external
-            if(num_extern_active_chs){
-                adsStart();
-            }
-
-            if(cmd == 0b10){
-                sim_flag = 1;
-                DEBUG_PRINT_W("processRcv", "Simulation mode");
-            }else{
-                sim_flag = 0;
-            }
-            
-            live_mode = 1;
+            startAcquisition(buff, cmd);
         }else if(cmd == 0b11){                                  //Configuration command
-
             if((buff[0] & 0b00111100) == 0){                      //Set sample rate
                 setSampleRate(buff);
             }else if(((buff[0] >> 2) & 0b000011) == 0b10){    //Send device status
@@ -249,6 +218,40 @@ void selectChsFromMask(uint8_t* buff){
         channel_number--;
     }
     packet_size = getPacketSize();
+}
+
+void startAcquisition(uint8_t *buff, uint8_t cmd){
+    //Get channels from mask
+    api_config.select_ch_mask_func(buff);
+    
+    //Clear send buffs, because of potential previous live mode
+    bt_curr_buff = 0;
+    acq_curr_buff = 0;
+    //Clean send buff, because of send status and send firmware string
+    bt_write_busy = 0;
+    memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
+    snd_buff_idx[bt_curr_buff] = 0;
+    bt_buffs_to_send[bt_curr_buff] = 0;
+    //Init timer for adc task top start
+    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+    //Set led state to blink at live mode frequency
+    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+    //Set live mode duty cycle for state led
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
+    //Start external
+    if(num_extern_active_chs){
+        adsStart();
+    }
+
+    if(cmd == 0b10){
+        sim_flag = 1;
+        DEBUG_PRINT_W("processRcv", "Simulation mode");
+    }else{
+        sim_flag = 0;
+    }
+    
+    live_mode = 1;
 }
 
 void stopAcquisition(void){

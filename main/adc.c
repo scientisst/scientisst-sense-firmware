@@ -171,6 +171,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
             }
             *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
             frame_next_wr += 3;
+            printf("AX%d: %d\n", i+1, adc_external_res[i]);
         }
     }
 
