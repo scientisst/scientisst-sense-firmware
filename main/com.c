@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "spi.h"
 #include "bt.h"
+#include "spi.h"
 
 //Processes the buffer recieved in the bluetooth event
 void processRcv(uint8_t* buff, int buff_size){
@@ -63,7 +64,6 @@ void actionPWM(uint8_t *buff){
 }
 
 void changeAPI(uint8_t mode){
-
     if(mode == API_MODE_BITALINO){
         api_config.api_mode = API_MODE_BITALINO;
         api_config.aquire_func = &acquireAdc1Channels;
@@ -241,7 +241,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
     //Start external
     if(num_extern_active_chs){
-        adsStart();
+        adcExtStart();
     }
 
     if(cmd == 0b10){
@@ -261,9 +261,13 @@ void stopAcquisition(void){
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
 
+    //Stop external
+    if(num_extern_active_chs){
+        adcExtStop();
+    }
+
     live_mode = 0;
     crc_seq = 0;
-    adsStop();
 
     vTaskDelay(100/portTICK_PERIOD_MS);
 

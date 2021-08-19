@@ -8,8 +8,9 @@
 
 #define MAX32664_MFIO_IO    GPIO_NUM_15
 #define MAX32664_RSTN_IO    GPIO_NUM_4
-#define STATE_LED_IO        GPIO_NUM_27     //GPIO_NUM_27
-#define O0_IO               GPIO_NUM_0
+
+#define STATE_LED_IO        GPIO_NUM_22     //GPIO_NUM_27
+#define O0_IO               GPIO_NUM_0      
 #define O1_IO               GPIO_NUM_2
 #define I0_IO               GPIO_NUM_14
 #define I1_IO               GPIO_NUM_15
@@ -25,5 +26,10 @@
 
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
 void gpioInit();
+
+#if _ADC_EXT_ == ADC_MCP
+void mcpConfigDrdyGpio();
+void IRAM_ATTR gpioDrdyIsrHandler();
+#endif
 
 #endif

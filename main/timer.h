@@ -12,9 +12,9 @@
 #define TIMER_IDX_ACQ_I2C 1
 
 
-void IRAM_ATTR timerGrp0Isr();
+bool IRAM_ATTR timerGrp0Isr();
 void IRAM_ATTR timerGrp1Isr();
-void timerGrpInit(int timer_group, int timer_idx, void(*timer_isr)());
+void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)());
 void timerStart(int timer_group, int timer_idx, uint32_t frequency);
 void timerPause(int timer_group, int timer_idx);
 

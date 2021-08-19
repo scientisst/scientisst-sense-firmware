@@ -159,7 +159,7 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
 
     if(num_extern_active_chs){
         //Can be a huge bottleneck
-        spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+        spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
         recv_ads = ads_rtrans->rx_buffer;
 
         //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
@@ -167,11 +167,11 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
             if(sim_flag){
                 adc_external_res[i] = sin10Hz[sin_i % 100];
             }else{
-                adc_external_res[i] = (*(uint32_t*)(recv_ads+3+(3*(active_ext_chs[i]-6)))) & 0x00FFFFFF;
+                adc_external_res[i] = (((uint32_t)recv_ads[3*(i+1)] << 16) | ((uint32_t)recv_ads[3*(i+1)+1] << 8) | (recv_ads[3*(i+1)+2]));
             }
             *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
             frame_next_wr += 3;
-            printf("AX%d: %d\n", i+1, adc_external_res[i]);
+            //printf("AX%d: %.6x\n", i+1, adc_external_res[i]);
         }
     }
 
@@ -247,7 +247,7 @@ void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
     
     if(num_extern_active_chs){
         //Get external adc values - Can be a huge bottleneck
-        spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+        spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
         recv_ads = ads_rtrans->rx_buffer;
 
         //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame

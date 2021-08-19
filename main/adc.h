@@ -50,6 +50,7 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame);
 void IRAM_ATTR acquireChannelsExtended(uint8_t* frame);
 void IRAM_ATTR acquireChannelsJson(uint8_t* frame);
 
+
 #define CALC_BYTE_CRC(_crc, _byte, _crc_table)({\
     (_crc) = _crc_table[(_crc)] ^ ((_byte) >> 4);     \
     (_crc) = _crc_table[(_crc)] ^ ((_byte) & 0x0F);   \

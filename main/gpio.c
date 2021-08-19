@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "macros.h"
+#include "main.h"
 
 //TODO: Meter os pins SPI3_MISO, U2RXD, U2TXD, SDA0, SCL0 a pull up
 
@@ -94,3 +95,28 @@ void gpioInit(){
     //gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< A2_IO) | (1ULL<< A3_IO) | (1ULL<< A4_IO)), 1, 0);                            
     configLedC();
 }
+
+#if _ADC_EXT_ == ADC_MCP
+void mcpConfigDrdyGpio(){
+    //Config DRDY gpio
+	gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL<< MCP_DRDY_IO)), 0, 0);
+
+	//install gpio isr service
+    gpio_install_isr_service(0);
+
+	//hook isr handler for specific gpio pin
+    gpio_isr_handler_add(MCP_DRDY_IO, gpioDrdyIsrHandler, NULL);
+}
+
+void IRAM_ATTR gpioDrdyIsrHandler(){
+    //Wake acqAdc1. This will only start when this handler is terminated.
+    vTaskNotifyGiveFromISR(acquiring_1_task, NULL);
+
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+    should be performed to ensure the interrupt returns directly to the highest
+    priority task.  The macro used for this purpose is dependent on the port in
+    use and may be called portEND_SWITCHING_ISR(). */
+    portYIELD_FROM_ISR();
+}
+
+#endif

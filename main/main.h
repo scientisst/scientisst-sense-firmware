@@ -11,7 +11,6 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
-#include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_gap_bt_api.h"
 #include "esp_bt_device.h"
@@ -42,7 +41,7 @@ extern uint8_t num_intern_active_chs;
 extern uint8_t live_mode;
 extern uint32_t sample_rate;
 extern I2c_Sensor_State i2c_sensor_values;
-extern spi_device_handle_t ads_spi_handler;
+extern spi_device_handle_t adc_ext_spi_handler;
 extern esp_adc_cal_characteristics_t adc1_chars; 
 extern char bt_device_name[17];
 extern uint8_t bt_write_busy;
@@ -58,6 +57,6 @@ extern DRAM_ATTR const uint8_t sin10Hz[100];
 extern uint8_t sim_flag;
 extern uint8_t sin_i;
 extern uint8_t gpio_out_state[2];
-extern spi_transaction_t ads_trans;
+extern spi_transaction_t adc_ext_trans;
 
 #endif

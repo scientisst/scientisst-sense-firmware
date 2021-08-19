@@ -61,8 +61,8 @@ uint8_t sin_i = 0;
 I2c_Sensor_State i2c_sensor_values;
 
 //SPI
-spi_device_handle_t ads_spi_handler;
-
+spi_device_handle_t adc_ext_spi_handler;
+spi_transaction_t adc_ext_trans;
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -100,11 +100,7 @@ void IRAM_ATTR btTask(){
 }
  
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
-void IRAM_ATTR acqAdc1Task(){
-    uint8_t rx_data_ads[9];
-    spi_transaction_t ads_trans;
-    
-
+void IRAM_ATTR acqAdc1Task(){    
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
 
@@ -112,47 +108,43 @@ void IRAM_ATTR acqAdc1Task(){
     initAdc(ADC_RESOLUTION);
     gpioInit();
 
-    //24 status bits + 24 bits x 2 channels = 9bytes required. But DMA buffer needs to be 32bit aligned
-    //rx_data_ads = heap_caps_malloc(3*sizeof(uint32_t), MALLOC_CAP_DMA);  
-    //memset(rx_data_ads, 0, 3*sizeof(uint32_t));
-    adsInit();
+    #if _ADC_EXT_ == ADC_MCP
+    gpio_set_level(SPI3_CS0_IO, 1);
+    adcExtInit(SPI3_CS1_IO);
+    mcpSetupRoutine();
+    mcpStart();
+    #elif _ADC_EXT_ == ADC_ADS
+    adcExtInit(SPI3_CS0_IO);
     adsSetupRoutine();
-    adsSetSamplingRate(250);
-    adsConfigureChannels(3);
-    memset(&ads_trans, 0, sizeof(ads_trans));   //zero out the transaction
-    ads_trans.length = 72;                   //send nothing
-    ads_trans.rxlength = 72;                //24 status bits + 24 bits x 2 channels
-    ads_trans.tx_buffer = NULL;             //skip write phase
-    ads_trans.rx_buffer = rx_data_ads;
-    //ads_trans.flags = 0;
+    adsConfigureChannels(1);
+    #endif
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-            //Send sample request to the external adc, if there're external chs active
             if(num_extern_active_chs){
-                //memset(ads_trans.rx_buffer, 0, 3*sizeof(uint32_t));
-                spi_device_queue_trans(ads_spi_handler, &ads_trans, portMAX_DELAY);
+                spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
             }
-
-            //api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
             
-            spi_transaction_t *ads_rtrans;
-            spi_device_get_trans_result(ads_spi_handler, &ads_rtrans, portMAX_DELAY);
+            api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
+
+            #if _ADC_EXT_ == ADC_MCP
+            printf("%u\n", mcpReadRegister(0x00, 3));
+            continue;
+            #elif _ADC_EXT_ == ADC_ADS
+            //ADS TEST CODE-----------------------------------------------------------------------------------------
+            /*spi_transaction_t *ads_rtrans;
+            spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
             uint8_t* recv_ads = ads_rtrans->rx_buffer;
-            uint32_t swag = (((uint32_t)recv_ads[0] << 16) | ((uint32_t)recv_ads[1] << 8) | (recv_ads[2])) & 0xFFFFFF;
-            //printf("Raw:%d, Voltage:%f\n", swag, (double)swag*(3.3/16777216));
+            int32_t swag = (((uint32_t)recv_ads[0] << 16) | ((uint32_t)recv_ads[1] << 8) | (recv_ads[2]));
 
             //swag = SPI_SWAP_DATA_RX(*(uint32_t*)recv_ads, 24) & 0xFFFFFF;
-            printf("%d, ", swag);
-            swag = (((uint32_t)recv_ads[3] << 16) | ((uint32_t)recv_ads[4] << 8) | (recv_ads[5])) & 0xFFFFFF;
-            printf("%d, ", swag);
-            swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8])) & 0xFFFFFF;
-            printf("%d", swag);
-            for(int i = 0; i < 3*sizeof(uint32_t); i += 3){
-                uint32_t byte = (*(uint32_t*)recv_ads+i);
-                //printf("%d, ", byte);
-            }
-            printf("\n");
+            printf("%d, ", (int32_t)swag);
+            swag = (((uint32_t)recv_ads[3] << 16) | ((uint32_t)recv_ads[4] << 8) | (recv_ads[5]));
+            printf("%.6x, ", (int32_t)swag);
+            swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8]));
+            printf("%d\n", (int32_t)swag);*/
+            //~ADS TEST CODE-----------------------------------------------------------------------------------------
+            #endif
             
             snd_buff_idx[acq_curr_buff] += packet_size;
 
