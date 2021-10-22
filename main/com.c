@@ -343,15 +343,18 @@ void sendFirmwareVersionPacket(){
     true_send_threshold = send_threshold;
     send_threshold = 0;
 
-    memcpy(snd_buff[bt_curr_buff], FIRMWARE_VERSION_STR, strlen(FIRMWARE_VERSION_STR)+1);
-
-    snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_VERSION_STR)+1;
-
-    //Send ADC1 configurations for raw2voltage precision conversions
     if(api_config.api_mode != API_MODE_BITALINO){
+        memcpy(snd_buff[bt_curr_buff], FIRMWARE_VERSION_STR, strlen(FIRMWARE_VERSION_STR));
+        snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_VERSION_STR);
+        
+        //Send ADC1 configurations for raw2voltage precision conversions
         memcpy(snd_buff[bt_curr_buff]+snd_buff_idx[bt_curr_buff], &adc1_chars, 6*sizeof(int));      //We don't want to send the 2 last pointers of adc1_chars struct
         snd_buff_idx[bt_curr_buff] += 6*sizeof(int);
+    }else{
+        memcpy(snd_buff[bt_curr_buff], FIRMWARE_BITALINO_VERSION_STR, strlen(FIRMWARE_BITALINO_VERSION_STR));
+        snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_BITALINO_VERSION_STR);
     }
+
     
     sendData();   
     send_threshold = true_send_threshold;

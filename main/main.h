@@ -24,6 +24,7 @@
 #include "spi.h"
 
 #define FIRMWARE_VERSION_STR "ScientISST1.0\n"
+#define FIRMWARE_BITALINO_VERSION_STR "BITalino_v5.1\n"
 
 extern TaskHandle_t acquiring_1_task;
 extern TaskHandle_t acquiring_i2c_task;
