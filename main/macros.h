@@ -8,7 +8,7 @@
 #define GEN_ERR -1
 #define GEN_OK 1
 #define DEFAULT_TASK_STACK_SIZE 2048
-#define _DEBUG_ 2
+#define _DEBUG_ 1
 #define ONE_HOUR_MS 3600000
 
 
