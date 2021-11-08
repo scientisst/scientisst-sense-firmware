@@ -253,7 +253,9 @@ void initBt(){
 void getDeviceName(){
     uint8_t mac[6];
 
-    if(esp_efuse_mac_get_default(mac) == ESP_OK){
+    //Read base Mac address from EFUSE, which is used to calculate the MAC addr for all the interfaces
+    //Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
+    if(esp_efuse_mac_get_default(mac) == ESP_OK && esp_read_mac(mac, ESP_MAC_BT) == ESP_OK){
         sprintf(bt_device_name, "%s-%x-%x", BT_DEFAULT_DEVICE_NAME, mac[4], mac[5]);
     }else{
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
