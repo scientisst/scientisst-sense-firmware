@@ -26,7 +26,7 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel){
     if(adc_index == 1){
         adc1_config_channel_atten(adc_channel, ADC_ATTENUATION);        //Atennuation to get a input voltage of 0 to 2.6V
     }else if(adc_index == 2){
-        adc2_config_channel_atten(adc_channel, ADC_ATTENUATION);
+        adc2_config_channel_atten(adc_channel, ADC2_ATTENUATION);
         ret = adc2_get_raw(adc_channel, ADC_RESOLUTION, &dummy);
         if (ret == ESP_ERR_TIMEOUT){
             DEBUG_PRINT_E("configAdc", "CAN'T USE ADC2, WIFI IS ENABLED");
@@ -61,8 +61,21 @@ void initAdc(uint8_t adc_resolution){
         configAdc(1, adc_resolution, analog_channels[i]);
     }
 
+    //Config ADC2 resolution
+    configAdc(2, adc_resolution, ABAT_ADC_CH);
+
     //Characterize ADC
     val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
+    } else {
+        DEBUG_PRINT_E("ADC1 Calibration type: Default");
+    }
+
+    val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
 
     if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
         DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
@@ -89,6 +102,9 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_res)A%d=%d", active_internal_chs[i], adc_res[i]);
     }
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
+
+    //TODO:
+    adc_res[0] = abat;
 
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
