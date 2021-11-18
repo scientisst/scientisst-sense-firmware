@@ -89,7 +89,7 @@ void app_main(void){
     
     xTaskCreatePinnedToCore(&btTask, "btTask", DEFAULT_TASK_STACK_SIZE, NULL, BT_SEND_PRIORITY_TASK, &bt_task, 0);
 
-    //xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
+    xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", DEFAULT_TASK_STACK_SIZE, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
@@ -202,7 +202,7 @@ void IRAM_ATTR AbatTask(){
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
             abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars);
-            printf("abat (raw): %d, abat (mV): %d\n", raw, abat);
+            //printf("abat (raw): %d, abat (mV): %d\n", raw, abat);
         }else{
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }

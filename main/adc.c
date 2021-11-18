@@ -103,9 +103,6 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
     }
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
-    //TODO:
-    adc_res[0] = abat;
-
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
     io_state |= gpio_get_level(I1_IO) << 6;
@@ -164,6 +161,9 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
         }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
+
+    //TODO:
+    adc_internal_res[0] = abat;
 
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
