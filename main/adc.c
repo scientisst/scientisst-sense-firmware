@@ -78,11 +78,11 @@ void initAdc(uint8_t adc_resolution){
     val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
 
     if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
+        DEBUG_PRINT_W("ADC2 Calibration type: eFuse Vref");
     } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
+        DEBUG_PRINT_W("ADC2 Calibration type: Two Point");
     } else {
-        DEBUG_PRINT_E("ADC1 Calibration type: Default");
+        DEBUG_PRINT_E("ADC2 Calibration type: Default");
     }
 }
 
@@ -161,9 +161,6 @@ void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
         }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
-
-    //TODO:
-    adc_internal_res[0] = abat;
 
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;

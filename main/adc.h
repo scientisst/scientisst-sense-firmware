@@ -37,8 +37,7 @@
 #define A4_IO   GPIO_NUM_34         //AI5
 #define A5_IO   GPIO_NUM_35         //AI6
 
-#define ABAT_CHECK_FREQUENCY 1       //1 Hz
-#define DEFAULT_BATTERY_THRESHOLD 0
+#define DEFAULT_BATTERY_THRESHOLD 3500  //mV
 
 #define MAX_BUFFER_SIZE ESP_SPP_MAX_MTU
 /*#if (MAX_BUFFER_SIZE > 256)

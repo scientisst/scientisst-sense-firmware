@@ -42,7 +42,7 @@ DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 1
 uint8_t crc_seq = 0;
 const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};       //Table that has the packet size in function of the number of channels
 
-uint8_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
+uint16_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
 
 Api_Config api_config = {.api_mode = API_MODE_BITALINO, .aquire_func = &acquireAdc1Channels, .select_ch_mask_func = &selectChsFromMask};
 cJSON *json = NULL;
@@ -69,10 +69,6 @@ I2c_Sensor_State i2c_sensor_values;
 //SPI
 spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
-
-
-//TODO:
-uint16_t abat;
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -188,6 +184,9 @@ void IRAM_ATTR acqAdc1Task(){
 
 void IRAM_ATTR AbatTask(){    
     uint16_t raw;
+    uint16_t abat;  //Battery voltage in mV
+    uint8_t bat_led_status_gpio = 0;
+    uint8_t turn_led_on;        //Flag that indicates wether the bat_led_status should turn on or not
 
     //Init Timer 1_0 (timer 0 from group 1) and register it's interupt handler
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
@@ -201,8 +200,24 @@ void IRAM_ATTR AbatTask(){
             if(adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int*)&raw) != ESP_OK){
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
-            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars);
-            //printf("abat (raw): %d, abat (mV): %d\n", raw, abat);
+            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DEVIDER_FACTOR;
+            printf("abat (raw): %d, abat (mV): %d\n", raw, abat);
+            
+            turn_led_on = abat <= battery_threshold;
+
+            //Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the threshold
+            if(!bat_led_status_gpio && turn_led_on){
+                battery_threshold += 50;
+            
+            //It already charged passed the real threshold, so update the battery_threshold to its real value
+            }else if(bat_led_status_gpio && !turn_led_on){
+                battery_threshold -= 50;
+            }
+
+            bat_led_status_gpio = turn_led_on;
+            gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
+            
+
         }else{
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }

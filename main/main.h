@@ -61,9 +61,6 @@ extern uint8_t sim_flag;
 extern uint8_t sin_i;
 extern uint8_t gpio_out_state[2];
 extern spi_transaction_t adc_ext_trans;
-extern uint8_t battery_threshold;
-
-//TODO:
-extern uint16_t abat;
+extern uint16_t battery_threshold;
 
 #endif

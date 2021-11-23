@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#define ABAT_CHECK_FREQUENCY 1       //1 Hz
+
 #define TIMER_DIVIDER       16  //  Hardware timer clock divider
 #define TIMER_SCALE         (TIMER_BASE_CLK / TIMER_DIVIDER)  // convert counter value to seconds
 
