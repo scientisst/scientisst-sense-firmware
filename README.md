@@ -9,11 +9,30 @@ The firmware for the Scientisst - Sense development board
 - deps              :   External Dependencies
 - main              :   Firmware Source Files
 - sdkconfig         :   ESP32 Hardware Configurations
-```
+``` 
+
 ## Installing
+### 1) Prerequisites
+Install the ESP-IDF prerequisites following espressif's guide https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/#step-1-install-prerequisites
+
+
+
+### 2) Getting this repository 
+
 ```sh
 # Getting this repository 
 git clone --recursive https://github.com/scientisst/scientisst-sense-firmware.git
+```
+### 3) Install Xtensa's toolchain
+
+#### Linux/MacOS:
+```
+./deps/esp-idf/install.sh esp32
+```
+
+#### Windows:
+```
+deps/esp-idf/install.bat esp32
 ```
 
 ## Flash Firmware (Linux/MacOS)
