@@ -2,6 +2,7 @@
 
 The firmware for the Scientisst - Sense development board
 
+---
 
 ## Repository structure
 
