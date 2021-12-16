@@ -41,7 +41,7 @@
 #elif _ADC_EXT_ == ADC_MCP
 	#define DMA_CHAN	0
 	#define SPI_MODE	2			//0 or 2, MCP Only supports these two modes
-	#define ADC_EXT_SLCK_HZ 1*1000*1000           //Clock out at 1 MHz, divisors of 80MHz
+	#define ADC_EXT_SLCK_HZ 10*1000*1000           //Clock out at 10 MHz
 
 	#define MCP_ADDR	0b01
 
@@ -69,10 +69,12 @@
 
 #endif
 
+
+#if _ADC_EXT_ != NO_ADC_EXT
 void adcExtInit(uint32_t cs_pin){
     esp_err_t ret;
 
-    spi_bus_config_t buscfg={
+    spi_bus_config_t buscfg = {
         .miso_io_num = SPI3_MISO_IO,
         .mosi_io_num = SPI3_MOSI_IO,
         .sclk_io_num = SPI3_SCLK_IO,
@@ -82,7 +84,7 @@ void adcExtInit(uint32_t cs_pin){
 		.intr_flags = ESP_INTR_FLAG_IRAM
     };
 
-    spi_device_interface_config_t devcfg={
+    spi_device_interface_config_t devcfg = {
         .clock_speed_hz = ADC_EXT_SLCK_HZ,
         .mode = SPI_MODE,                         //SPI mode 1: (CPOL) = 0 and the clock phase (CPHA) = 1. 
         .spics_io_num = cs_pin,              //CS pin
@@ -113,6 +115,8 @@ void adcExtStop(void){
 		adsStop();
 	#endif
 }
+
+#endif
 
 #if (_ADC_EXT_ == ADC_MCP)
 
@@ -194,11 +198,10 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
 }
 
 void mcpSetupRoutine(void){
-	mcpSendCmd(RESET);
-
 	//Config Drdy GPIO and interrupt
-	mcpConfigDrdyGpio();
+	adcExtDrdyGpio(MCP_DRDY_IO);
 
+	mcpSendCmd(RESET);
 	mcpWriteRegister(REG_CONFIG0, (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00), 1);
 	mcpWriteRegister(REG_CONFIG1, 0, 1);
 	mcpWriteRegister(REG_CONFIG2, (0b10 << 6) | (0b001 << 3) | (0b0 << 2) | (0b11), 1);
@@ -286,6 +289,9 @@ void adsWriteRegister(uint8_t address, uint8_t data){
 }
 
 void adsSetupRoutine(){
+	//Config Drdy GPIO and interrupt
+	adcExtDrdyGpio(ADS_DRDY_IO);
+
 	adsSendCmd(RESET);
     vTaskDelay(100/portTICK_PERIOD_MS);
 

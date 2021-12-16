@@ -4,16 +4,19 @@
 #include <stdio.h>
 #include "driver/spi_master.h"
 
-#define ADC_ADS 0
-#define ADC_MCP 1
+#define NO_EXT_ADC 0
+#define ADC_ADS 1
+#define ADC_MCP 2
 
-#define _ADC_EXT_ ADC_ADS
+#define _ADC_EXT_ NO_EXT_ADC
 
 #define SPI3_MISO_IO    GPIO_NUM_19
 #define SPI3_MOSI_IO    GPIO_NUM_23
 #define SPI3_SCLK_IO    GPIO_NUM_18
 #if _ADC_EXT_ == ADC_MCP
-#define MCP_DRDY_IO     GPIO_NUM_14
+#define MCP_DRDY_IO     I1_IO
+#elif _ADC_EXT_ == ADC_ADS
+#define ADS_DRDY_IO     GPIO_NUM_16
 #endif
 
 #define SPI3_CS0_IO     GPIO_NUM_5

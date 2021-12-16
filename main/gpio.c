@@ -96,19 +96,7 @@ void gpioInit(){
     configLedC();
 }
 
-#if _ADC_EXT_ == ADC_MCP
-void mcpConfigDrdyGpio(){
-    //Config DRDY gpio
-	gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL<< MCP_DRDY_IO)), 0, 0);
-
-	//install gpio isr service
-    gpio_install_isr_service(0);
-
-	//hook isr handler for specific gpio pin
-    gpio_isr_handler_add(MCP_DRDY_IO, gpioDrdyIsrHandler, NULL);
-}
-
-void IRAM_ATTR gpioDrdyIsrHandler(){
+bool IRAM_ATTR gpioDrdyIsrHandler(){
     //Wake acqAdc1. This will only start when this handler is terminated.
     vTaskNotifyGiveFromISR(acquiring_1_task, NULL);
 
@@ -116,7 +104,21 @@ void IRAM_ATTR gpioDrdyIsrHandler(){
     should be performed to ensure the interrupt returns directly to the highest
     priority task.  The macro used for this purpose is dependent on the port in
     use and may be called portEND_SWITCHING_ISR(). */
-    portYIELD_FROM_ISR();
+    //portYIELD_FROM_ISR();
+
+    return 1;       //Replaces portYIELD_FROM_ISR()
 }
 
-#endif
+void adcExtDrdyGpio(int io_num){
+    //Config DRDY gpio
+	gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL<< io_num)), 0, 0);
+
+	//install gpio isr service
+    gpio_install_isr_service(0);
+
+	//hook isr handler for specific gpio pin
+    gpio_isr_handler_add(io_num, gpioDrdyIsrHandler, NULL);
+}
+
+
+

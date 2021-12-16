@@ -70,7 +70,6 @@ void app_main(void){
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
     }
-    
 
     //Inicialize send buffers
     for(uint8_t i = 0; i < NUM_BUFFERS; i++){
@@ -101,22 +100,26 @@ void IRAM_ATTR btTask(){
  
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
 void IRAM_ATTR acqAdc1Task(){    
+    //When there is an external adc, esp32 follows the ADC's clock
+    #if _ADC_EXT_ == NO_EXT_ADC
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
+    #endif
 
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION);
     gpioInit();
 
     #if _ADC_EXT_ == ADC_MCP
-    gpio_set_level(SPI3_CS0_IO, 1);
+    //gpio_set_level(SPI3_CS0_IO, 1);
     adcExtInit(SPI3_CS1_IO);
     mcpSetupRoutine();
-    mcpStart();
+    adcExtStart();
     #elif _ADC_EXT_ == ADC_ADS
     adcExtInit(SPI3_CS0_IO);
     adsSetupRoutine();
-    adsConfigureChannels(1);
+    adsConfigureChannels(2);
+    adcExtStart();
     #endif
     
     while(1){
@@ -124,7 +127,7 @@ void IRAM_ATTR acqAdc1Task(){
             if(num_extern_active_chs){
                 spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
             }
-            
+
             api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
 
             #if _ADC_EXT_ == ADC_MCP
@@ -132,7 +135,7 @@ void IRAM_ATTR acqAdc1Task(){
             continue;
             #elif _ADC_EXT_ == ADC_ADS
             //ADS TEST CODE-----------------------------------------------------------------------------------------
-            /*spi_transaction_t *ads_rtrans;
+            spi_transaction_t *ads_rtrans;
             spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
             uint8_t* recv_ads = ads_rtrans->rx_buffer;
             int32_t swag = (((uint32_t)recv_ads[0] << 16) | ((uint32_t)recv_ads[1] << 8) | (recv_ads[2]));
@@ -142,7 +145,8 @@ void IRAM_ATTR acqAdc1Task(){
             swag = (((uint32_t)recv_ads[3] << 16) | ((uint32_t)recv_ads[4] << 8) | (recv_ads[5]));
             printf("%.6x, ", (int32_t)swag);
             swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8]));
-            printf("%d\n", (int32_t)swag);*/
+            printf("%d\n", (int32_t)swag);
+            continue;
             //~ADS TEST CODE-----------------------------------------------------------------------------------------
             #endif
             
@@ -174,10 +178,11 @@ void IRAM_ATTR acqAdc1Task(){
     }
 }
 
+/*
 void acqI2cTask(){
-    /*uint16_t heart_rate;
-    uint16_t oxygen;
-    uint8_t confidence;*/
+    //uint16_t heart_rate;
+    //uint16_t oxygen;
+    //uint8_t confidence;
 
     i2cMasterInit();
     MAX32664_Init();    
@@ -192,14 +197,14 @@ void acqI2cTask(){
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
             
-            /*MLX90614_GetTempObj(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_obj), &(i2c_sensor_values.temp_obj_int));
-            MLX90614_GetTempAmb(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_amb), &(i2c_sensor_values.temp_amb_int));
-            MAX32664_GetBPM(&heart_rate, &oxygen, &confidence, &(i2c_sensor_values.status));
-            if(confidence >= CONFIDENCE_THRESHOLD){
-                i2c_sensor_values.heart_rate = heart_rate;
-                i2c_sensor_values.oxygen = oxygen;
-                i2c_sensor_values.confidence = confidence;
-            }*/
+            //MLX90614_GetTempObj(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_obj), &(i2c_sensor_values.temp_obj_int));
+            //MLX90614_GetTempAmb(MLX90614_DEFAULT_ADDRESS, &(i2c_sensor_values.temp_amb), &(i2c_sensor_values.temp_amb_int));
+            //MAX32664_GetBPM(&heart_rate, &oxygen, &confidence, &(i2c_sensor_values.status));
+            //if(confidence >= CONFIDENCE_THRESHOLD){
+            //    i2c_sensor_values.heart_rate = heart_rate;
+            //    i2c_sensor_values.oxygen = oxygen;
+            //    i2c_sensor_values.confidence = confidence;
+            //}
 
             //printf("BPM:%d, SpO2:%d, Confidence:%d, Status:%d, Temp Object:%.1f, Temp Ambient:%.1f\n", i2c_sensor_values.heart_rate, i2c_sensor_values.oxygen, i2c_sensor_values.confidence, i2c_sensor_values.status, i2c_sensor_values.temp_obj, i2c_sensor_values.temp_amb);
         }else{
@@ -207,3 +212,4 @@ void acqI2cTask(){
         }
     }
 }
+*/

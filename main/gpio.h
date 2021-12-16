@@ -15,7 +15,6 @@
 #define I0_IO               GPIO_NUM_14
 #define I1_IO               GPIO_NUM_15
 
-
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL_USED       LEDC_CHANNEL_0
@@ -27,9 +26,9 @@
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
 void gpioInit();
 
-#if _ADC_EXT_ == ADC_MCP
-void mcpConfigDrdyGpio();
+#if _ADC_EXT_ != NO_ADC_EXT
 void IRAM_ATTR gpioDrdyIsrHandler();
+void adcExtDrdyGpio(int io_num);
 #endif
 
 #endif

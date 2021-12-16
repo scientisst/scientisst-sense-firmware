@@ -86,7 +86,7 @@ bool IRAM_ATTR timerGrp0Isr(){
     priority task.  The macro used for this purpose is dependent on the port in
     use and may be called portEND_SWITCHING_ISR(). */
     //portYIELD_FROM_ISR();
-    return 1;
+    return 1;   //replaces portYIELD_FROM_ISR()
 }
 
 /*

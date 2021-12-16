@@ -232,17 +232,22 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
     snd_buff_idx[bt_curr_buff] = 0;
     bt_buffs_to_send[bt_curr_buff] = 0;
+
+    #if _ADC_EXT_ == NO_EXT_ADC
     //Init timer for adc task top start
     timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+    #endif
     //Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
     //Set live mode duty cycle for state led
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
     //Start external
+    #if _ADC_EXT_ != NO_ADC_EXT
     if(num_extern_active_chs){
         adcExtStart();
     }
+    #endif
 
     if(cmd == 0b10){
         sim_flag = 1;
@@ -255,16 +260,20 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
 }
 
 void stopAcquisition(void){
+    #if _ADC_EXT_ == NO_EXT_ADC
     timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
+    #endif
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
 
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
 
     //Stop external
+    #if _ADC_EXT_ != NO_ADC_EXT
     if(num_extern_active_chs){
         adcExtStop();
     }
+    #endif
 
     live_mode = 0;
     crc_seq = 0;
