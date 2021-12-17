@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "freertos/FreeRTOS.h"
@@ -252,11 +253,23 @@ void initBt(){
 //Use the last 2 bytes of MAC-ADDRESS found on EFUSE to make the device name
 void getDeviceName(){
     uint8_t mac[6];
+    char last_five_chars_bt_name[6];
 
     //Read base Mac address from EFUSE, which is used to calculate the MAC addr for all the interfaces
     //Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
     if(esp_efuse_mac_get_default(mac) == ESP_OK && esp_read_mac(mac, ESP_MAC_BT) == ESP_OK){
-        sprintf(bt_device_name, "%s-%x-%x", BT_DEFAULT_DEVICE_NAME, mac[4], mac[5]);
+        sprintf(last_five_chars_bt_name, "%x-%x", mac[4], mac[5]);
+
+        //Turn the last xx-xx of mac address from lower case to upper case
+        for (int i = 0; last_five_chars_bt_name[i] != '\0'; i++) {
+            char c = last_five_chars_bt_name[i];
+            if (c >= 97 && c <= 122){
+                c -= 32;
+            }
+            last_five_chars_bt_name[i] = c;
+        }
+
+        sprintf(bt_device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
     }else{
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
     }
