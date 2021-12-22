@@ -38,6 +38,8 @@ void IRAM_ATTR sendData(){
         bt_write_busy = 0;
         return;
     }
+
+    DEBUG_PRINT_I("sendData", "Data sent: %d bytes", snd_buff_idx[bt_curr_buff]);
     
     bt_write_busy = 1;
     esp_spp_write(bt_client, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
