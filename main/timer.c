@@ -89,33 +89,13 @@ bool IRAM_ATTR timerGrp0Isr(){
     return 1;   //replaces portYIELD_FROM_ISR()
 }
 
-/*
- * Timer group1 ISR handler
- * This interrupt is handled by CPU1
- * Note:
- * We don't call the timer API here because they are not declared with IRAM_ATTR (This flag forces this 
- * function's text to reside in SRAM instead of Flash to improve it's access speed).
- * If we're okay with the timer irq not being serviced while SPI flash cache is disabled,
- * we can allocate this interrupt without the ESP_INTR_FLAG_IRAM flag and use the normal API.
- * 
- */
-void IRAM_ATTR timerGrp1Isr(){            
-
-    timer_spinlock_take(TIMER_GRP_ACQ_I2C);
-
-    //Clear the interrupt
-    timer_group_clr_intr_status_in_isr(TIMER_GRP_ACQ_I2C, TIMER_IDX_ACQ_I2C);
-
-    timer_spinlock_give(TIMER_GRP_ACQ_I2C);
-
-    vTaskNotifyGiveFromISR(acquiring_i2c_task, pdFALSE);
+bool IRAM_ATTR timerGrp1Isr(){            
 
 
-    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-    should be performed to ensure the interrupt returns directly to the highest
-    priority task.  The macro used for this purpose is dependent on the port in
-    use and may be called portEND_SWITCHING_ISR(). */
-    portYIELD_FROM_ISR();
+    vTaskNotifyGiveFromISR(abat_task, NULL);
+
+
+    return 1;
 }
 
 

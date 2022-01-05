@@ -32,16 +32,16 @@ void processRcv(uint8_t* buff, int buff_size){
             stopAcquisition();
         }
     }else{                                                      //If in idle mode
-        if(cmd == 0b01 || cmd == 0b10){                                        //Set live mode
+        if(cmd == 0b01 || cmd == 0b10){                         //Set live mode
             startAcquisition(buff, cmd);
         }else if(cmd == 0b11){                                  //Configuration command
-            if((buff[0] & 0b00111100) == 0){                      //Set sample rate
+            if((buff[0] & 0b00111100) == 0){                    //Set sample rate
                 setSampleRate(buff);
-            }else if(((buff[0] >> 2) & 0b000011) == 0b10){    //Send device status
+            }else if(((buff[0] >> 2) & 0b000011) == 0b10){      //Send device status
                 sendStatusPacket();
-            }else if(((buff[0] >> 2) & 0b000011) == 0b01){    //Send firmware version string
+            }else if(((buff[0] >> 2) & 0b000011) == 0b01){      //Send firmware version string
                 sendFirmwareVersionPacket();
-            }else if(buff[0] & 0b00110000){              //Change API mode
+            }else if(buff[0] & 0b00110000){                     //Change API mode
                 changeAPI((buff[0] & 0b00110000) >> 4);
             }
 

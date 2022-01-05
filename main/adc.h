@@ -10,6 +10,7 @@
 #define ADC_RESOLUTION ADC_WIDTH_BIT_12
 #define ADC_ATTENUATION ADC_ATTEN_DB_0
 #define ADC_RES_VALUE 12                    //ADC Resolution Value: Tem que ser o valor indicado por ADC_RESOLUTION
+#define ADC2_ATTENUATION ADC_ATTEN_DB_11
 
 #define A0 0
 #define A1 1
@@ -27,12 +28,16 @@
 #define A4_ADC_CH   ADC1_CHANNEL_6  //AI5, GPIO34
 #define A5_ADC_CH   ADC1_CHANNEL_7  //AI6, GPIO35
 
+#define ABAT_ADC_CH ADC2_CHANNEL_5
+
 #define A0_IO   GPIO_NUM_36         //AI1
 #define A1_IO   GPIO_NUM_39         //AI2
 #define A2_IO   GPIO_NUM_32         //AI3
 #define A3_IO   GPIO_NUM_33         //AI4
 #define A4_IO   GPIO_NUM_34         //AI5
 #define A5_IO   GPIO_NUM_35         //AI6
+
+#define DEFAULT_BATTERY_THRESHOLD 3500  //mV
 
 #define MAX_BUFFER_SIZE ESP_SPP_MAX_MTU
 /*#if (MAX_BUFFER_SIZE > 256)

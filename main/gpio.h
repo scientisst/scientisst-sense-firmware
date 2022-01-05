@@ -10,6 +10,7 @@
 #define MAX32664_RSTN_IO    GPIO_NUM_4
 
 #define STATE_LED_IO        GPIO_NUM_22     //GPIO_NUM_27
+#define BAT_LED_STATUS_IO   GPIO_NUM_21
 #define O0_IO               GPIO_NUM_0      
 #define O1_IO               GPIO_NUM_2
 #define I0_IO               GPIO_NUM_14
@@ -22,6 +23,9 @@
 #define LEDC_IDLE_DUTY          50                     //10% the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_LIVE_PWM_FREQ      4
 #define LEDC_IDLE_PWM_FREQ      1
+
+
+#define ABAT_DEVIDER_FACTOR 2
 
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
 void gpioInit();

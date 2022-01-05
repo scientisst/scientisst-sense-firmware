@@ -6,14 +6,17 @@
 #include "spi.h"
 
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
+#define ABAT_PRIORITY_TASK 1
 #define ACQ_PRIORITY_TASK 10
 #define I2C_ACQ_PRIORITY_TASK 1
 
 void IRAM_ATTR btTask();
+void IRAM_ATTR AbatTask();
 void IRAM_ATTR acqAdc1Task();
 void acqI2cTask();
 
 TaskHandle_t bt_task;
+TaskHandle_t abat_task;
 TaskHandle_t acquiring_1_task;
 TaskHandle_t acquiring_i2c_task;
 
@@ -37,7 +40,9 @@ uint16_t send_threshold = DEFAULT_SEND_THRESHOLD;
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
 uint8_t crc_seq = 0;
-const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};       //Table that has the packet size in function of the number of channels 
+const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};       //Table that has the packet size in function of the number of channels
+
+uint16_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
 
 Api_Config api_config = {.api_mode = API_MODE_BITALINO, .aquire_func = &acquireAdc1Channels, .select_ch_mask_func = &selectChsFromMask};
 cJSON *json = NULL;
@@ -50,7 +55,8 @@ uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
 uint8_t live_mode = 0;                                  //Flag that indicastes if live mode (acquiring) is on    
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;    
-esp_adc_cal_characteristics_t adc1_chars;    
+esp_adc_cal_characteristics_t adc1_chars;
+esp_adc_cal_characteristics_t adc2_chars; 
 uint8_t gpio_out_state[2] = {0, 0};                 //Output of 01 & O2 (O0 & O1)
 
 DRAM_ATTR const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
@@ -77,6 +83,8 @@ void app_main(void){
     }
     
     xTaskCreatePinnedToCore(&btTask, "btTask", DEFAULT_TASK_STACK_SIZE, NULL, BT_SEND_PRIORITY_TASK, &bt_task, 0);
+
+    xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", DEFAULT_TASK_STACK_SIZE, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
@@ -174,6 +182,46 @@ void IRAM_ATTR acqAdc1Task(){
             }
         }else{
             DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
+        }
+    }
+}
+
+void IRAM_ATTR AbatTask(){    
+    uint16_t raw;
+    uint16_t abat;  //Battery voltage in mV
+    uint8_t bat_led_status_gpio = 0;
+    uint8_t turn_led_on;        //Flag that indicates wether the bat_led_status should turn on or not
+
+    //Init Timer 1_0 (timer 0 from group 1) and register it's interupt handler
+    timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
+    timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, ABAT_CHECK_FREQUENCY);
+
+    //Config all possible adc channels
+    initAdc(ADC_RESOLUTION);
+    
+    while(1){
+        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
+            if(adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int*)&raw) != ESP_OK){
+                DEBUG_PRINT_E("adc2_get_raw", "Error!");
+            }
+            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DEVIDER_FACTOR;
+            
+            turn_led_on = abat <= battery_threshold;
+
+            //Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the threshold
+            if(!bat_led_status_gpio && turn_led_on){
+                battery_threshold += 50;
+            
+            //It already charged passed the real threshold, so update the battery_threshold to its real value
+            }else if(bat_led_status_gpio && !turn_led_on){
+                battery_threshold -= 50;
+            }
+
+            bat_led_status_gpio = turn_led_on;
+
+            gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
+        }else{
+            DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }
     }
 }

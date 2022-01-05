@@ -27,6 +27,7 @@
 #define FIRMWARE_BITALINO_VERSION_STR "BITalino_v5.1\n"
 
 extern TaskHandle_t acquiring_1_task;
+extern TaskHandle_t abat_task;
 extern TaskHandle_t acquiring_i2c_task;
 extern uint32_t bt_client;
 extern uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];                                
@@ -43,7 +44,8 @@ extern uint8_t live_mode;
 extern uint32_t sample_rate;
 extern I2c_Sensor_State i2c_sensor_values;
 extern spi_device_handle_t adc_ext_spi_handler;
-extern esp_adc_cal_characteristics_t adc1_chars; 
+extern esp_adc_cal_characteristics_t adc1_chars;
+extern esp_adc_cal_characteristics_t adc2_chars;
 extern char bt_device_name[17];
 extern uint8_t bt_write_busy;
 extern SemaphoreHandle_t bt_buffs_to_send_mutex;
@@ -59,5 +61,6 @@ extern uint8_t sim_flag;
 extern uint8_t sin_i;
 extern uint8_t gpio_out_state[2];
 extern spi_transaction_t adc_ext_trans;
+extern uint16_t battery_threshold;
 
 #endif
