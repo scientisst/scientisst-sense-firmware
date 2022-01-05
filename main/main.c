@@ -201,7 +201,6 @@ void IRAM_ATTR AbatTask(){
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
             abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DEVIDER_FACTOR;
-            printf("abat (raw): %d, abat (mV): %d\n", raw, abat);
             
             turn_led_on = abat <= battery_threshold;
 
@@ -215,9 +214,8 @@ void IRAM_ATTR AbatTask(){
             }
 
             bat_led_status_gpio = turn_led_on;
-            gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
-            
 
+            gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
         }else{
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }

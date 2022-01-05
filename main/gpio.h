@@ -10,7 +10,7 @@
 #define MAX32664_RSTN_IO    GPIO_NUM_4
 
 #define STATE_LED_IO        GPIO_NUM_22     //GPIO_NUM_27
-#define BAT_LED_STATUS_IO   GPIO_NUM_22
+#define BAT_LED_STATUS_IO   GPIO_NUM_21
 #define O0_IO               GPIO_NUM_0      
 #define O1_IO               GPIO_NUM_2
 #define I0_IO               GPIO_NUM_14
