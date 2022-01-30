@@ -186,17 +186,10 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
 }
 
 void initBt(){
-    esp_err_t ret = nvs_flash_init();
+    esp_err_t ret;
 
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
-
     getDeviceName();
-    
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
@@ -263,14 +256,13 @@ void getDeviceName(){
         sprintf(last_five_chars_bt_name, "%x-%x", mac[4], mac[5]);
 
         //Turn the last xx-xx of mac address from lower case to upper case
-        for (int i = 0; last_five_chars_bt_name[i] != '\0'; i++) {
+        for (int i = 0; last_five_chars_bt_name[i] != '\0'; i++){
             char c = last_five_chars_bt_name[i];
             if (c >= 97 && c <= 122){
                 c -= 32;
             }
             last_five_chars_bt_name[i] = c;
         }
-
         sprintf(bt_device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
     }else{
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");

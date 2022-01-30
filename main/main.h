@@ -62,5 +62,7 @@ extern uint8_t sin_i;
 extern uint8_t gpio_out_state[2];
 extern spi_transaction_t adc_ext_trans;
 extern uint16_t battery_threshold;
+extern uint8_t wifi_en;
+extern op_settings_info_t op_settings;
 
 #endif

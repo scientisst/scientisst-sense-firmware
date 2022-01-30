@@ -24,7 +24,7 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel){
     esp_err_t ret;
     
     if(adc_index == 1){
-        adc1_config_channel_atten(adc_channel, ADC_ATTENUATION);        //Atennuation to get a input voltage of 0 to 2.6V
+        adc1_config_channel_atten(adc_channel, ADC1_ATTENUATION);        //Atennuation to get a input voltage of 0 to 2.6V
     }else if(adc_index == 2){
         adc2_config_channel_atten(adc_channel, ADC2_ATTENUATION);
         ret = adc2_get_raw(adc_channel, ADC_RESOLUTION, &dummy);
@@ -34,7 +34,7 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel){
     }
 }
 
-void initAdc(uint8_t adc_resolution){
+void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en){
     uint8_t i;
     esp_adc_cal_value_t val_type;
     
@@ -53,36 +53,42 @@ void initAdc(uint8_t adc_resolution){
         DEBUG_PRINT_W("eFuse Vref: NOT supported\n");
     }
 
-    //Configure only adc1 resolution (it's not done per channel)
-    adc1_config_width(ADC_RESOLUTION);
+    //If adc1 is enabled, configure it
+    if(adc1_en){
+        //Configure only adc1 resolution (it's not done per channel)
+        adc1_config_width(ADC_RESOLUTION);
 
-    //Configure each adc channel
-    for(i = 0; i < DEFAULT_ADC_CHANNELS; i++){
-        configAdc(1, adc_resolution, analog_channels[i]);
+        //Configure each adc channel
+        for(i = 0; i < DEFAULT_ADC_CHANNELS; i++){
+            configAdc(1, adc_resolution, analog_channels[i]);
+        }
+
+        //Characterize ADC
+        val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+
+        if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+            DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
+        } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+            DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
+        } else {
+            DEBUG_PRINT_E("ADC1 Calibration type: Default");
+        }
     }
 
-    //Config ADC2 resolution
-    configAdc(2, adc_resolution, ABAT_ADC_CH);
+    //If adc2 is enabled, configure it
+    if(adc2_en){
+        //Config ADC2 resolution
+        configAdc(2, adc_resolution, ABAT_ADC_CH);
 
-    //Characterize ADC
-    val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+        val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
 
-    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
-    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
-    } else {
-        DEBUG_PRINT_E("ADC1 Calibration type: Default");
-    }
-
-    val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
-
-    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        DEBUG_PRINT_W("ADC2 Calibration type: eFuse Vref");
-    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        DEBUG_PRINT_W("ADC2 Calibration type: Two Point");
-    } else {
-        DEBUG_PRINT_E("ADC2 Calibration type: Default");
+        if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+            DEBUG_PRINT_W("ADC2 Calibration type: eFuse Vref");
+        } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+            DEBUG_PRINT_W("ADC2 Calibration type: Two Point");
+        } else {
+            DEBUG_PRINT_E("ADC2 Calibration type: Default");
+        }
     }
 }
 

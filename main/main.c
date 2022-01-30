@@ -4,6 +4,8 @@
 #include "timer.h"
 #include "gpio.h"
 #include "spi.h"
+#include "wifi.h"
+#include "wifi_rest_server.h"
 
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
@@ -70,6 +72,12 @@ I2c_Sensor_State i2c_sensor_values;
 spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
+//Wifi op settings
+op_settings_info_t op_settings;     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+
+//Init Config
+uint8_t wifi_en = 1;    //Indifcates if wifi is enabled -> wifi cannot coexist with adc2
+
 void app_main(void){ 
     // Create a mutex type semaphore
     if((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL){
@@ -82,9 +90,11 @@ void app_main(void){
         memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
     }
     
-    xTaskCreatePinnedToCore(&btTask, "btTask", DEFAULT_TASK_STACK_SIZE, NULL, BT_SEND_PRIORITY_TASK, &bt_task, 0);
+    xTaskCreatePinnedToCore(&btTask, "btTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &bt_task, 0);
 
-    xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
+    if(!wifi_en){
+        xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
+    }
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", DEFAULT_TASK_STACK_SIZE, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
@@ -97,13 +107,25 @@ void app_main(void){
 
 //THis task can be removed and acqAdc1Task can do the sendData() when !bt_write_busy. But, atm acqAdc1Task is the bottleneck
 void IRAM_ATTR btTask(){
+    //Init nvs (Non volatile storage)
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
     initBt();
 
+    if(wifi_en){
+        wifiInit();
+        initRestServer();
+    }
+    
     while(1){
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             sendData();
     }
-
 }
  
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
@@ -115,7 +137,7 @@ void IRAM_ATTR acqAdc1Task(){
     #endif
 
     //Config all possible adc channels
-    initAdc(ADC_RESOLUTION);
+    initAdc(ADC_RESOLUTION, 1, !wifi_en);
     gpioInit();
 
     #if _ADC_EXT_ == ADC_MCP
@@ -195,9 +217,6 @@ void IRAM_ATTR AbatTask(){
     //Init Timer 1_0 (timer 0 from group 1) and register it's interupt handler
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
     timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, ABAT_CHECK_FREQUENCY);
-
-    //Config all possible adc channels
-    initAdc(ADC_RESOLUTION);
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
