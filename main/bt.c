@@ -23,28 +23,40 @@
 #define SEND_AFTER_C0NG 2
 
 void IRAM_ATTR sendData(){
-
     //Check if there's anything to send and if there is, check if it's enough to send
     xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
     if(bt_buffs_to_send[bt_curr_buff]){
         xSemaphoreGive(bt_buffs_to_send_mutex);
         if(snd_buff_idx[bt_curr_buff] < send_threshold){
-            bt_write_busy = 0;
+            send_busy = 0;
             return;
         }
     //There's nothing to send
     }else{
         xSemaphoreGive(bt_buffs_to_send_mutex);
-        bt_write_busy = 0;
+        send_busy = 0;
         return;
     }
 
     DEBUG_PRINT_I("sendData", "Data sent: %d bytes", snd_buff_idx[bt_curr_buff]);
     
-    bt_write_busy = 1;
-    esp_spp_write(bt_client, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+    send_busy = 1;
+    send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 
-    //The buffer changing and clearing tasks are done after the ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in esp_spp_cb()
+    //The buffer changing and clearing tasks are done after in finalizeSend() the ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in esp_spp_cb()
+}
+
+void IRAM_ATTR finalizeSend(){
+    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+        bt_buffs_to_send[bt_curr_buff] = 0;
+    xSemaphoreGive(bt_buffs_to_send_mutex);
+
+    //Clear recently sent buffer
+    memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
+    snd_buff_idx[bt_curr_buff] = 0;
+
+    //Change send buffer
+    bt_curr_buff = (bt_curr_buff+1)%4;
 }
 
 static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
@@ -58,8 +70,8 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         break;
     case ESP_SPP_SRV_OPEN_EVT:                      //Server connection open (first client connection)  
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_SRV_OPEN_EVT");  
-        if (!bt_client){
-            bt_client = param->open.handle;
+        if (!send_fd){
+            send_fd = param->open.handle;
         }else{
             esp_spp_disconnect(param->open.handle);
         }
@@ -75,7 +87,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
     case ESP_SPP_CLOSE_EVT:                         //Client connection closed
         DEBUG_PRINT_E("esp_spp_cb", "ESP_SPP_CLOSE_EVT");
         
-        bt_client = 0;
+        send_fd = 0;
         stopAcquisition();
         //Make sure that sendBtTask doesn't stay's stuck waiting for a sucessful write
         break;
@@ -97,7 +109,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
 
         break;
     case ESP_SPP_CONG_EVT:                          //connection congestion status changed
-        if(param->cong.cong == 0 && bt_write_busy == SEND_AFTER_C0NG){
+        if(param->cong.cong == 0 && send_busy == SEND_AFTER_C0NG){
             sendData();                             //bt write is free
         }else if(param->cong.cong == 1){
             DEBUG_PRINT_W("esp_spp_cb", "ESP_SPP_CONG_EVT");
@@ -107,27 +119,17 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
     case ESP_SPP_WRITE_EVT:                         //write operation status changed
         //Completed successfuly send---------------------------------------------------------  
         if(param->write.status == ESP_SPP_SUCCESS){
-            xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
-                bt_buffs_to_send[bt_curr_buff] = 0;
-            xSemaphoreGive(bt_buffs_to_send_mutex);
-
-            //Clear recently sent buffer
-            memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
-            snd_buff_idx[bt_curr_buff] = 0;
-
-            //Change send buffer
-            bt_curr_buff = (bt_curr_buff+1)%4;
-
+            finalizeSend();
             //Try to send next buff
             if(param->write.cong == 0){         //bt write is free   
                 sendData();                             
             }else{
-                bt_write_busy = SEND_AFTER_C0NG;
+                send_busy = SEND_AFTER_C0NG;
             }
         //write failed because congestion, so wait event 'ESP_SPP_CONG_EVT' and 'param->cong.cong == 0' to resend the failed writing data.
         }else{
             //To resend the same buffer (note that because the write was unsuccessful, bt_curr_buff wasn't updated)
-            bt_write_busy = SEND_AFTER_C0NG;
+            send_busy = SEND_AFTER_C0NG;
         }
         break;
     default:

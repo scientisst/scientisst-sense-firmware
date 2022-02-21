@@ -6,19 +6,24 @@
 #include "spi.h"
 #include "wifi.h"
 #include "wifi_rest_server.h"
+#include "tcp.h"
+#include "sdkconfig.h"
 
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
+#define WIFI_RCV_PRIORITY_TASK 1
 #define ACQ_PRIORITY_TASK 10
 #define I2C_ACQ_PRIORITY_TASK 1
 
 void IRAM_ATTR btTask();
+void wifiRcvTask();
 void IRAM_ATTR AbatTask();
 void IRAM_ATTR acqAdc1Task();
 void acqI2cTask();
 
 TaskHandle_t bt_task;
 TaskHandle_t abat_task;
+TaskHandle_t wifi_rcv_task;
 TaskHandle_t acquiring_1_task;
 TaskHandle_t acquiring_i2c_task;
 
@@ -26,10 +31,11 @@ TaskHandle_t acquiring_i2c_task;
 SemaphoreHandle_t bt_buffs_to_send_mutex;
 
 //BT
-uint32_t bt_client = 0;
 char bt_device_name[17] = BT_DEFAULT_DEVICE_NAME;
 
 //COM
+int send_fd = 0;
+
 uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];         //Data structure to hold the data to be sent through bluetooth        
 uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0};      //It contains, for each buffer, the index of the first free element in the respective buffer 
 uint8_t bt_buffs_to_send[NUM_BUFFERS] = {0, 0, 0, 0};               //If element 0 is set to 1, bt task has to send snd_buff[0]
@@ -37,7 +43,7 @@ uint8_t bt_curr_buff = 0;                               //Index of the buffer th
 uint8_t acq_curr_buff = 0;                              //Index of the buffer that adc task is currently using
 
 uint8_t packet_size = 0;                //Current packet size (dependent on number of channels used)
-uint8_t bt_write_busy = 0;
+uint8_t send_busy = 0;
 uint16_t send_threshold = DEFAULT_SEND_THRESHOLD;
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
@@ -48,6 +54,8 @@ uint16_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
 
 Api_Config api_config = {.api_mode = API_MODE_BITALINO, .aquire_func = &acquireAdc1Channels, .select_ch_mask_func = &selectChsFromMask};
 cJSON *json = NULL;
+
+esp_err_t (*send_func)(uint32_t, int, uint8_t*) = NULL;     //Send function pointer
 
 //ADC
 DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {A0_ADC_CH, A1_ADC_CH, A2_ADC_CH, A3_ADC_CH, A4_ADC_CH, A5_ADC_CH};
@@ -72,7 +80,7 @@ I2c_Sensor_State i2c_sensor_values;
 spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
-//Wifi op settings
+//Wifi
 op_settings_info_t op_settings;     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 
 //Init Config
@@ -92,7 +100,10 @@ void app_main(void){
     
     xTaskCreatePinnedToCore(&btTask, "btTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &bt_task, 0);
 
-    if(!wifi_en){
+    if(wifi_en){
+        xTaskCreatePinnedToCore(&wifiRcvTask, "wifiRcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &wifi_rcv_task, 0);
+    //Wifi is mutually exclusive with ADC2
+    }else{
         xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
     }
 
@@ -105,7 +116,7 @@ void app_main(void){
     vTaskDelete(NULL);
 }
 
-//THis task can be removed and acqAdc1Task can do the sendData() when !bt_write_busy. But, atm acqAdc1Task is the bottleneck
+//THis task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck
 void IRAM_ATTR btTask(){
     //Init nvs (Non volatile storage)
     esp_err_t ret = nvs_flash_init();
@@ -115,16 +126,31 @@ void IRAM_ATTR btTask(){
     }
     ESP_ERROR_CHECK(ret);
 
-    initBt();
-
-    if(wifi_en){
-        wifiInit();
-        initRestServer();
+    if(!wifi_en){   
+        initBt();
+        send_func = &esp_spp_write;
     }
     
     while(1){
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             sendData();
+    }
+}
+
+void wifiRcvTask(){
+    wifiInit();
+    initRestServer();
+
+    while(1){
+        //Tcp client
+        if(!strcmp(op_settings.op_mode, OP_MODE_TCP_STA)){
+            while((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0){
+                vTaskDelay(2000/portTICK_PERIOD_MS);
+                DEBUG_PRINT_E("btTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
+            }
+            send_func = &tcpSend;
+        }
+        tcpRcv();
     }
 }
  
@@ -190,7 +216,7 @@ void IRAM_ATTR acqAdc1Task(){
                 xSemaphoreGive(bt_buffs_to_send_mutex);
 
                 //If bt task is idle, wake it up
-                if(bt_write_busy == 0){
+                if(send_busy == 0){
                     xTaskNotifyGive(bt_task);
                 }
                 //Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput

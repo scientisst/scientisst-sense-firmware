@@ -13,6 +13,7 @@
 #define SPP_SHOW_MODE SPP_SHOW_SPEED    /*Choose show mode: show data or speed*/
 
 void IRAM_ATTR sendData();
+void IRAM_ATTR finalizeSend();
 void initBt();
 void getDeviceName();
 

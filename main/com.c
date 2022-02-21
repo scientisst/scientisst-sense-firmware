@@ -79,7 +79,6 @@ void changeAPI(uint8_t mode){
     }
 
     DEBUG_PRINT_W("changeAPI", "API changed to %d", mode);
-       
 }
 
 uint8_t getPacketSize(){
@@ -228,7 +227,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     bt_curr_buff = 0;
     acq_curr_buff = 0;
     //Clean send buff, because of send status and send firmware string
-    bt_write_busy = 0;
+    send_busy = 0;
     memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
     snd_buff_idx[bt_curr_buff] = 0;
     bt_buffs_to_send[bt_curr_buff] = 0;
@@ -291,7 +290,7 @@ void stopAcquisition(void){
 
     bt_curr_buff = 0;
     acq_curr_buff = 0;
-    bt_write_busy = 0;
+    send_busy = 0;
 
     //Reset previous active chs
     num_intern_active_chs = 0;

@@ -22,6 +22,7 @@
 #include "com.h"
 #include "i2c.h"
 #include "spi.h"
+#include "wifi.h"
 
 #define FIRMWARE_VERSION_STR "ScientISST1.0\n"
 #define FIRMWARE_BITALINO_VERSION_STR "BITalino_v5.1\n"
@@ -29,7 +30,7 @@
 extern TaskHandle_t acquiring_1_task;
 extern TaskHandle_t abat_task;
 extern TaskHandle_t acquiring_i2c_task;
-extern uint32_t bt_client;
+extern int send_fd;
 extern uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];                                
 extern uint8_t packet_size;
 extern uint16_t snd_buff_idx[NUM_BUFFERS];
@@ -47,7 +48,7 @@ extern spi_device_handle_t adc_ext_spi_handler;
 extern esp_adc_cal_characteristics_t adc1_chars;
 extern esp_adc_cal_characteristics_t adc2_chars;
 extern char bt_device_name[17];
-extern uint8_t bt_write_busy;
+extern uint8_t send_busy;
 extern SemaphoreHandle_t bt_buffs_to_send_mutex;
 extern uint16_t send_threshold;
 extern uint8_t bt_curr_buff;
@@ -64,5 +65,6 @@ extern spi_transaction_t adc_ext_trans;
 extern uint16_t battery_threshold;
 extern uint8_t wifi_en;
 extern op_settings_info_t op_settings;
+extern esp_err_t (*send_func)(uint32_t, int, uint8_t*);
 
 #endif

@@ -13,6 +13,8 @@
 #define API_MODE_EXTENDED 2
 #define API_MODE_JSON 3
 
+#define CMD_MAX_BYTES 4
+
 typedef struct{
     uint8_t api_mode;
     void (*aquire_func)();
