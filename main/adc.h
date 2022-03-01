@@ -39,13 +39,6 @@
 
 #define DEFAULT_BATTERY_THRESHOLD 3500  //mV
 
-#define MAX_BUFFER_SIZE ESP_SPP_MAX_MTU
-/*#if (MAX_BUFFER_SIZE > 256)
-    #error "MAX_BUFFER_SIZE needs to be less or equal than 256 because of iterators (uint8_t i) are just 8bit long"
-#endif*/
-#define NUM_BUFFERS 4
-#define DEFAULT_SEND_THRESHOLD 4
-
 #define DEFAULT_SAMPLE_RATE 1 //In Hz
 #define MAX_LIVE_MODE_PACKET_SIZE 8
 

@@ -2,6 +2,7 @@
 #define _COM_H
 
 #include <stdio.h>
+#include "sdkconfig.h"
 
 #define DEFAULT_ADC_CHANNELS 6          //Default number of active adc channels
 #define EXT_ADC_CHANNELS 2               //Num of external adc channels
@@ -14,6 +15,9 @@
 #define API_MODE_JSON 3
 
 #define CMD_MAX_BYTES 4
+#define NUM_BUFFERS 4
+//#define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU)   //If changed, change in API
+#define MAX_BUFFER_SIZE CONFIG_LWIP_TCP_SND_BUF_DEFAULT
 
 typedef struct{
     uint8_t api_mode;

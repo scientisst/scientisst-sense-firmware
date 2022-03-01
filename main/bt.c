@@ -37,9 +37,9 @@ void IRAM_ATTR sendData(){
         send_busy = 0;
         return;
     }
-
-    DEBUG_PRINT_I("sendData", "Data sent: %d bytes", snd_buff_idx[bt_curr_buff]);
     
+    DEBUG_PRINT_I("sendData", "Data sent: %d bytes", snd_buff_idx[bt_curr_buff]);
+
     send_busy = 1;
     send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 
@@ -138,7 +138,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
 }
 
 static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param){
-    switch (event) {
+    switch (event){
     case ESP_BT_GAP_AUTH_CMPL_EVT:{
         if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS) {
             DEBUG_PRINT_I("esp_spp_cb", "authentication success: %s", param->auth_cmpl.device_name);

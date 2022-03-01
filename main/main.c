@@ -7,6 +7,7 @@
 #include "wifi.h"
 #include "wifi_rest_server.h"
 #include "tcp.h"
+#include "udp.h"
 #include "sdkconfig.h"
 
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
@@ -44,7 +45,7 @@ uint8_t acq_curr_buff = 0;                              //Index of the buffer th
 
 uint8_t packet_size = 0;                //Current packet size (dependent on number of channels used)
 uint8_t send_busy = 0;
-uint16_t send_threshold = DEFAULT_SEND_THRESHOLD;
+uint16_t send_threshold = MAX_BUFFER_SIZE;   //Amount of bytes a buffer needs to have filled with packets in order to trigger a send
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
 uint8_t crc_seq = 0;
@@ -69,7 +70,7 @@ esp_adc_cal_characteristics_t adc1_chars;
 esp_adc_cal_characteristics_t adc2_chars; 
 uint8_t gpio_out_state[2] = {0, 0};                 //Output of 01 & O2 (O0 & O1)
 
-DRAM_ATTR const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
+const uint8_t sin10Hz[100] =  {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
 uint8_t sim_flag = 0;
 uint8_t sin_i = 0;
 
@@ -149,8 +150,14 @@ void wifiRcvTask(){
                 DEBUG_PRINT_E("btTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSend;
+        }else if(!strcmp(op_settings.op_mode, OP_MODE_UDP_STA)){
+            while((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0){
+                vTaskDelay(2000/portTICK_PERIOD_MS);
+                DEBUG_PRINT_E("btTask", "Cannot connect to UDP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
+            }
+            send_func = &udpSend;
         }
-        tcpRcv();
+        wifiRcv();
     }
 }
  
@@ -224,6 +231,7 @@ void IRAM_ATTR acqAdc1Task(){
                     DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                     continue;
                 }
+                //printf("%d %d %d %d\n", bt_buffs_to_send[0], bt_buffs_to_send[1], bt_buffs_to_send[2], bt_buffs_to_send[3]);
 
                 //Next buffer is free, change buffer
                 acq_curr_buff = (acq_curr_buff+1)%4;

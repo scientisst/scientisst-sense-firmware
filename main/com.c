@@ -192,11 +192,6 @@ void setSampleRate(uint8_t* buff){
     //sample_rate = (*(uint16_t*)(buff+1) & 0xFFFF);
 
     DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", sample_rate);
-    if(sample_rate > 100){
-        send_threshold = MAX_BUFFER_SIZE-10;
-    }else{
-        send_threshold = DEFAULT_SEND_THRESHOLD;
-    }
 }
 
 void selectChsFromMask(uint8_t* buff){
@@ -232,21 +227,18 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     snd_buff_idx[bt_curr_buff] = 0;
     bt_buffs_to_send[bt_curr_buff] = 0;
 
-    #if _ADC_EXT_ == NO_EXT_ADC
-    //Init timer for adc task top start
-    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
-    #endif
-    //Set led state to blink at live mode frequency
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
-    //Set live mode duty cycle for state led
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
-    //Start external
-    #if _ADC_EXT_ != NO_ADC_EXT
-    if(num_extern_active_chs){
-        adcExtStart();
+     //Clean send buffers, to be sure
+    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
+        memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
+        snd_buff_idx[i] = 0;
     }
-    #endif
+
+    //WARINING: if changed, change same code in API
+    if(sample_rate > 100){
+        send_threshold = !(MAX_BUFFER_SIZE%packet_size) ? MAX_BUFFER_SIZE-packet_size : MAX_BUFFER_SIZE-(MAX_BUFFER_SIZE%packet_size);
+    }else{
+        send_threshold = packet_size;
+    }
 
     if(cmd == 0b10){
         sim_flag = 1;
@@ -254,7 +246,25 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     }else{
         sim_flag = 0;
     }
+
+    #if _ADC_EXT_ == NO_EXT_ADC
+        //Init timer for adc task top start
+        timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+        #endif
+        //Set led state to blink at live mode frequency
+        ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+        //Set live mode duty cycle for state led
+        ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
+        ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
+
+    //Start external
+    #if _ADC_EXT_ != NO_ADC_EXT
+    if(num_extern_active_chs){
+        adcExtStart();
+    }
+    #endif
     
+    DEBUG_PRINT_W("startAcquisition", "Acquisition started");
     live_mode = 1;
 }
 
@@ -295,6 +305,8 @@ void stopAcquisition(void){
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
+
+    DEBUG_PRINT_W("startAcquisition", "Acquisition stopped");
 }
 
 void sendStatusPacket(){
@@ -363,6 +375,7 @@ void sendFirmwareVersionPacket(){
         snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_BITALINO_VERSION_STR);
     }
 
-    sendData();   
+    sendData();
+    DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
     send_threshold = true_send_threshold;
 }

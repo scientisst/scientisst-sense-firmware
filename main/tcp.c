@@ -36,10 +36,10 @@ int initTcpServer(char* port_str){
 
 int initTcpClient(char* ip, char* port){
 	struct addrinfo hints,*res;
-    int client_fd;
+    int server_fd;
 
-    client_fd = socket(AF_INET, SOCK_STREAM, 0);    // TCP socket
-    if (client_fd == -1){ 
+    server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);    // TCP socket
+    if (server_fd == -1){ 
         DEBUG_PRINT_E("initTcpClient", "ERROR: SOCKET CREATION FAILED"); 
         return -1;
     }
@@ -50,21 +50,23 @@ int initTcpClient(char* ip, char* port){
 
     if (getaddrinfo(ip, port, &hints, &res) != 0){
         DEBUG_PRINT_E("initTcpClient", "ERROR: GETADDRINFO FAILED");
-        shutdown(client_fd, 0);
-        close(client_fd);
-        client_fd = 0;
+        free(res);
+        shutdown(server_fd, 0);
+        close(server_fd);
+        server_fd = 0;
         return -1;
     }
-    if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1){
+    if (connect(server_fd, res->ai_addr, res->ai_addrlen) == -1){
         DEBUG_PRINT_E("initTcpClient", "ERROR: CONNECT FAILED");
-        shutdown(client_fd, 0);
-        close(client_fd);
-        client_fd = 0;
+        free(res);
+        shutdown(server_fd, 0);
+        close(server_fd);
+        server_fd = 0;
         return -1;
     }
 
     DEBUG_PRINT_I("initTcpClient", "Client successfully connected");
-    return client_fd;
+    return server_fd;
 }
 
 esp_err_t IRAM_ATTR tcpSend(uint32_t fd, int len, uint8_t *buff){
@@ -91,7 +93,7 @@ esp_err_t IRAM_ATTR tcpSend(uint32_t fd, int len, uint8_t *buff){
     return ESP_OK;
 }
 
-void tcpRcv(){
+void wifiRcv(){
     uint8_t buff[CMD_MAX_BYTES];
     int len;
     int read_bytes;
@@ -125,6 +127,8 @@ void tcpRcv(){
                 shutdown(send_fd, 0);
                 close(send_fd);
                 send_fd = 0;
+
+                stopAcquisition();
                 return;
             }
         }
