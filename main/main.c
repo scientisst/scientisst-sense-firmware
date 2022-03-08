@@ -85,7 +85,7 @@ spi_transaction_t adc_ext_trans;
 op_settings_info_t op_settings;     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 
 //Init Config
-uint8_t wifi_en = 1;    //Indifcates if wifi is enabled -> wifi cannot coexist with adc2
+uint8_t wifi_en = 0;    //Indifcates if wifi is enabled -> wifi cannot coexist with adc2
 
 void app_main(void){ 
     // Create a mutex type semaphore
