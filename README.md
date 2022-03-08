@@ -10,6 +10,7 @@ The firmware for the Scientisst - Sense development board
 - deps              :   External Dependencies
 - main              :   Firmware Source Files
 - sdkconfig         :   ESP32 Hardware Configurations
+- www               :   Configuration HTML Page
 ``` 
 
 ## Installing
