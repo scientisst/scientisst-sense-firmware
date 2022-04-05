@@ -260,3 +260,7 @@ void wifiInit(void){
         wifi_init_softap();
     }
 }
+
+uint8_t isOpModeWifi(void){
+    return (!strcmp(op_settings.op_mode, OP_MODE_TCP_AP) || !strcmp(op_settings.op_mode, OP_MODE_TCP_STA) || !strcmp(op_settings.op_mode, OP_MODE_UDP_STA));
+}

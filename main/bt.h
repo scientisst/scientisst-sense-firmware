@@ -9,7 +9,6 @@
 //#define BT_DEFAULT_DEVICE_NAME "eFORTO\0"
 #define BT_DEFAULT_DEVICE_NAME "ScientISST\0"
 
-
 void IRAM_ATTR sendData();
 void IRAM_ATTR finalizeSend();
 void initBt();

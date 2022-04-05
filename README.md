@@ -63,3 +63,4 @@ If you're having trouble with the default command, try specifying the USB port:
 ```
 idf.py monitor -p '/dev/ttyUSB0'
 ```
+To exit the serial monitor, press `CTRL+T` followed by `CTRL+X`

@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "i2c.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c"
+idf_component_register(SRCS "main.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "i2c.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c"
                     INCLUDE_DIRS ".")
 
 set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../www")

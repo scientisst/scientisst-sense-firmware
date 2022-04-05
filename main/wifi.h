@@ -1,10 +1,6 @@
 #ifndef _WIFI_H
 #define _WIFI_H
 
-#define OP_MODE_TCP_AP "tcp_ap"
-#define OP_MODE_TCP_STA "tcp_sta"
-#define OP_MODE_UDP_STA "udp_sta"
-
 #define SIZE_2 (2)
 #define SIZE_5 (5)
 #define SIZE_6 (6)
@@ -16,6 +12,12 @@
 #define SIZE_32 (32)
 #define SIZE_64 (64)
 #define BIGGEST_SIZE SIZE_64
+
+#define OP_MODE_TCP_AP "tcp_ap"
+#define OP_MODE_TCP_STA "tcp_sta"
+#define OP_MODE_UDP_STA "udp_sta"
+#define OP_MODE_BT "bt"
+#define OP_MODE_SERIAL "serial"
 
 typedef struct {
 	char ssid[SIZE_32];
@@ -34,6 +36,10 @@ typedef struct {
 }op_settings_info_t;
 
 void wifiInit(void);
+
+//Checks if op_mode is one of the wifi modes
+uint8_t isOpModeWifi(void);
+
 int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
 void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
 
