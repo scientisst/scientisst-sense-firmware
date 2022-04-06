@@ -12,8 +12,10 @@
 #include "spi.h"
 
 //Processes the buffer recieved in the bluetooth event
-void processRcv(uint8_t* buff, int buff_size){
+void processRcv(uint8_t* buff, int len){
     uint8_t cmd = buff[0] & 0b00000011;
+
+    DEBUG_PRINT_I("processRcv", "Recived %d bytes", len);
     
     //Live mode with 0 channels selected
     if((api_config.api_mode == API_MODE_BITALINO && buff[0] == 1) || (api_config.api_mode != API_MODE_BITALINO && buff[0] == 1 && buff[1] == 0)){

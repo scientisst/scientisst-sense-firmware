@@ -83,7 +83,7 @@ spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 //Wifi
-op_settings_info_t op_settings = {.op_mode = OP_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.op_mode = OP_MODE_SERIAL};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -99,8 +99,8 @@ void app_main(void){
     
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &send_task, 0);
 
-    //If op_mode is Wifi
-    if(isOpModeWifi()){
+    //If op_mode is Wifi or Serial
+    if(isOpModeWifi() || !strcmp(op_settings.op_mode, OP_MODE_SERIAL)){
         xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
     //Wifi is mutually exclusive with ADC2
     }else{
@@ -108,7 +108,7 @@ void app_main(void){
     }
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
-    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", DEFAULT_TASK_STACK_SIZE, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
+    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
 
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
     //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY_TASK, &acquiring_i2c_task, 1);
@@ -138,25 +138,36 @@ void IRAM_ATTR sendTask(){
 }
 
 void rcvTask(){
-    wifiInit();
-    initRestServer();
+
+    if(isOpModeWifi()){
+        wifiInit();
+        //initRestServer();
+    }
 
     while(1){
-        //Tcp client
+        //TCP client
         if(!strcmp(op_settings.op_mode, OP_MODE_TCP_STA)){
             while((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000/portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
-            send_func = &tcpSend;
+            send_func = &tcpSerialSend;
+        //UDP client
         }else if(!strcmp(op_settings.op_mode, OP_MODE_UDP_STA)){
             while((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000/portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to UDP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &udpSend;
+        //Serial
+        }else if(!strcmp(op_settings.op_mode, OP_MODE_SERIAL)){
+            while((send_fd = serialInit()) < 0){
+                vTaskDelay(2000/portTICK_PERIOD_MS);
+                DEBUG_PRINT_E("rcvTask", "Cannot connect to host USB Serial port. Trying again...");
+            }
+            send_func = &tcpSerialSend;
         }
-        wifiRcv();
+        wifiSerialRcv();
     }
 }
  
@@ -256,7 +267,7 @@ void IRAM_ATTR AbatTask(){
             if(adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int*)&raw) != ESP_OK){
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
-            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DEVIDER_FACTOR;
+            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DIVIDER_FACTOR;
             
             turn_led_on = abat <= battery_threshold;
 

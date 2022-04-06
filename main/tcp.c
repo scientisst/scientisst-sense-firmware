@@ -69,7 +69,7 @@ int initTcpClient(char* ip, char* port){
     return server_fd;
 }
 
-esp_err_t IRAM_ATTR tcpSend(uint32_t fd, int len, uint8_t *buff){
+esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff){
     uint8_t *ptr;
     ssize_t n_left = len;
     ssize_t n_written;
@@ -79,21 +79,20 @@ esp_err_t IRAM_ATTR tcpSend(uint32_t fd, int len, uint8_t *buff){
     while (n_left > 0){
         n_written = write(fd, ptr, n_left);
         if (n_written == -1) {
-            DEBUG_PRINT_E("tcpSend", "ERROR: WRITE FAILED\n");
+            DEBUG_PRINT_E("tcpSerialSend", "ERROR: WRITE FAILED\n");
             return ESP_FAIL;
         }
         n_left -= n_written;
         ptr += n_written;
     }
     finalizeSend();
-    DEBUG_PRINT_I("tcpSend", "[TCP] Sent: %d bytes", len);
 
     //Try to send next buff
     sendData(); 
     return ESP_OK;
 }
 
-void wifiRcv(){
+void wifiSerialRcv(){
     uint8_t buff[CMD_MAX_BYTES];
     int len;
     int read_bytes;
@@ -106,17 +105,17 @@ void wifiRcv(){
 
         while(1){
             if((read_bytes = read(send_fd, buff, CMD_MAX_BYTES)) == 0){
-                DEBUG_PRINT_W("wifiRcvTask", "Connection closed gracefully");
+                DEBUG_PRINT_W("wifiSerialRcv", "Connection closed gracefully");
                 buff[0] = 0;
                 len = 1;
             }else if(read_bytes < 0){
-                DEBUG_PRINT_W("wifiRcvTask", "Connection closed with errno %d", errno);
+                DEBUG_PRINT_W("wifiSerialRcv", "Connection closed with errno %d", errno);
                 buff[0] = 0;
                 len = 1;
             }else{
                 //TODO: implement walk around (if a message is 3bytes, it may happen that it is divided into a read of 2bytes and a read of 1byte, thus the check below will give a false positive error)
                 if(read_bytes != CMD_MAX_BYTES){
-                    DEBUG_PRINT_E("wifiRcvTask", "Recieved %d bytes and the acceptable amount is %d", read_bytes, CMD_MAX_BYTES);
+                    DEBUG_PRINT_E("wifiSerialRcv", "Recieved %d bytes and the acceptable amount is %d", read_bytes, CMD_MAX_BYTES);
                 }
                 len = CMD_MAX_BYTES;
             }
