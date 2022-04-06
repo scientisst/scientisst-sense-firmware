@@ -83,7 +83,7 @@ spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 //Wifi
-op_settings_info_t op_settings = {.op_mode = OP_MODE_SERIAL};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.op_mode = OP_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 
 void app_main(void){ 
     // Create a mutex type semaphore
