@@ -76,14 +76,14 @@ uint8_t sim_flag = 0;
 uint8_t sin_i = 0;
 
 //I2C
-I2c_Sensor_State i2c_sensor_values;
+//I2c_Sensor_State i2c_sensor_values;
 
 //SPI
 spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 //Wifi
-op_settings_info_t op_settings = {.op_mode = OP_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.op_mode = OP_MODE_SERIAL};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 
 void app_main(void){ 
     // Create a mutex type semaphore
@@ -197,9 +197,11 @@ void IRAM_ATTR acqAdc1Task(){
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
+            #if _ADC_EXT_ != NO_EXT_ADC
             if(num_extern_active_chs){
                 spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
             }
+            #endif
 
             api_config.aquire_func(snd_buff[acq_curr_buff]+snd_buff_idx[acq_curr_buff]);
 
@@ -260,7 +262,7 @@ void IRAM_ATTR AbatTask(){
 
     //Init Timer 1_0 (timer 0 from group 1) and register it's interupt handler
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
-    timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, ABAT_CHECK_FREQUENCY);
+    timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, (uint32_t)ABAT_CHECK_FREQUENCY);
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){

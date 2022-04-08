@@ -43,7 +43,7 @@ extern uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS];
 extern uint8_t num_intern_active_chs;
 extern uint8_t live_mode;
 extern uint32_t sample_rate;
-extern I2c_Sensor_State i2c_sensor_values;
+//extern I2c_Sensor_State i2c_sensor_values;
 extern spi_device_handle_t adc_ext_spi_handler;
 extern esp_adc_cal_characteristics_t adc1_chars;
 extern esp_adc_cal_characteristics_t adc2_chars;

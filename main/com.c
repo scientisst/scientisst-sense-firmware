@@ -324,12 +324,12 @@ void sendStatusPacket(){
     send_threshold = 0;
         
     // -------------------Bytes 0 - 11-------------------------------------------------
-    *(uint16_t*)(snd_buff[bt_curr_buff]) = i2c_sensor_values.oxygen;
+    /**(uint16_t*)(snd_buff[bt_curr_buff]) = i2c_sensor_values.oxygen;
     *(uint16_t*)(snd_buff[bt_curr_buff]+2) = i2c_sensor_values.heart_rate;
     *(uint16_t*)(snd_buff[bt_curr_buff]+4) = (uint16_t)i2c_sensor_values.confidence;
     *(uint16_t*)(snd_buff[bt_curr_buff]+6) = (uint16_t)i2c_sensor_values.status;
     *(uint16_t*)(snd_buff[bt_curr_buff]+8) = i2c_sensor_values.temp_obj_int;
-    *(uint16_t*)(snd_buff[bt_curr_buff]+10) = i2c_sensor_values.temp_amb_int;
+    *(uint16_t*)(snd_buff[bt_curr_buff]+10) = i2c_sensor_values.temp_amb_int;*/
 
     //-----------------------Calc CRC -------------------------------------------------
 
