@@ -66,5 +66,6 @@ extern uint16_t battery_threshold;
 extern uint8_t com_mode;
 extern op_settings_info_t op_settings;
 extern esp_err_t (*send_func)(uint32_t, int, uint8_t*);
+extern uint8_t is_op_settings_valid;
 
 #endif

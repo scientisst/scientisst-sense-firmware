@@ -21,6 +21,7 @@
 
 #include "wifi.h"
 #include "main.h"
+#include "macros.h"
 
 // if the structure of a record saved for a subsequent reboot changes
 // then consider using semver to change the version number or else
@@ -182,15 +183,16 @@ int wifi_init_sta(void){
 }
 
 //Retrieve the connection info. if rc == 0 means ok.
-int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
+int getOpSettingsInfo(op_settings_info_t *_op_settings){
 	nvs_handle handle;
 	size_t size;
 	esp_err_t err;
+    op_settings_info_t pOpSettingsInfo;
 	//uint32_t version;
 
 	err = nvs_open(BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle);
-	if (err != 0) {
-		printf(">> ERROR: opening NVS\n");
+	if(err != 0){
+		DEBUG_PRINT_E("getOpSettingsInfo", "ERROR: opening NVS");
 		return -1;
 	}
 
@@ -210,9 +212,9 @@ int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 	}*/
 
 	size = sizeof(op_settings_info_t);
-	err = nvs_get_blob(handle, KEY_SETTINGS_INFO, pOpSettingsInfo, &size);
+	err = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
 	if (err != ESP_OK) {
-		printf(">> ERROR: no connection record found\n");
+		DEBUG_PRINT_E("getOpSettingsInfo", "No op settings record found!");
 		nvs_close(handle);
 		return -1;
 	}
@@ -220,11 +222,7 @@ int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 	// cleanup
 	nvs_close(handle);
 
-	// do a sanity check on the SSID
-	if (strlen(pOpSettingsInfo->ssid) == 0) {
-		printf(">> ERROR: NULL SSID detected\n");
-		return -1;
-	}
+    *_op_settings = pOpSettingsInfo;
 	return 0;
 }
 
@@ -243,21 +241,17 @@ void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 void wifiInit(void){
     ESP_LOGI("wifiInit", "ESP_WIFI_MODE_AP");
 
-    //Load saved op_settings configuration which resides in flash
-    getOpSettingsInfo(&op_settings);
-
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    
-    //Check if saved op_mode is station (udp or tcp)
-    if(!strcmp(op_settings.op_mode, OP_MODE_TCP_STA) || !strcmp(op_settings.op_mode, OP_MODE_UDP_STA)){
+
+    //Check if saved op_mode is access point
+    if(!strcmp(op_settings.op_mode, OP_MODE_TCP_AP)){
+        wifi_init_softap();
+    }else{
         //If the wifi configuration fails, start softap to enable the user to change op_settings
         if(wifi_init_sta() == ESP_FAIL){
             wifi_init_softap();
         }
-    //If not, start access point
-    }else{
-        wifi_init_softap();
     }
 }
 

@@ -15,6 +15,7 @@
 #define O1_IO               GPIO_NUM_2
 #define I0_IO               GPIO_NUM_14
 #define I1_IO               GPIO_NUM_15
+#define CONFIG_BTN_IO       I0_IO
 
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE

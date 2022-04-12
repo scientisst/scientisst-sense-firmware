@@ -82,11 +82,12 @@ uint8_t sin_i = 0;
 spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
-//Wifi
-op_settings_info_t op_settings = {.op_mode = OP_MODE_SERIAL};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+//Op settings
+op_settings_info_t op_settings = {.op_mode = OP_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+uint8_t is_op_settings_valid = 0;       //Flag that indicates if a valid op_settings has been read successfuly from flash
 
-void app_main(void){ 
-    // Create a mutex type semaphore
+void app_main(void){
+    //Create a mutex type semaphore
     if((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL){
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
@@ -95,6 +96,25 @@ void app_main(void){
     //Inicialize send buffers
     for(uint8_t i = 0; i < NUM_BUFFERS; i++){
         memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
+    }
+
+    //Load saved op_settings configuration which resides in flash
+    if(!getOpSettingsInfo(&op_settings)){
+        is_op_settings_valid = 1;
+    }else{
+        is_op_settings_valid = 0;
+    }
+
+    gpioInit();
+
+    //Check if CONFIG pin is 1 on startup
+    if(gpio_get_level(CONFIG_BTN_IO)){
+        wifiInit();
+        initRestServer();
+        gpio_set_level(STATE_LED_IO, 1);
+        while(1){
+            vTaskDelay(portMAX_DELAY);
+        }
     }
     
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &send_task, 0);
@@ -138,10 +158,8 @@ void IRAM_ATTR sendTask(){
 }
 
 void rcvTask(){
-
     if(isOpModeWifi()){
         wifiInit();
-        //initRestServer();
     }
 
     while(1){
@@ -181,7 +199,6 @@ void IRAM_ATTR acqAdc1Task(){
 
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isOpModeWifi());
-    gpioInit();
 
     #if _ADC_EXT_ == ADC_MCP
     //gpio_set_level(SPI3_CS0_IO, 1);

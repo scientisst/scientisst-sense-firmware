@@ -136,7 +136,6 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req){
 /* Simple handler for getting system handler */
 static esp_err_t op_settings_get_handler(httpd_req_t *req){
     cJSON *root,*connectionInfo, *bitalinoInfo;
-    op_settings_info_t opSettingsInfo;
 
     httpd_resp_set_type(req, "application/json");
 
@@ -145,19 +144,19 @@ static esp_err_t op_settings_get_handler(httpd_req_t *req){
     cJSON_AddItemToObject(root, "bitalinoInfo", bitalinoInfo = cJSON_CreateObject());
 
     //if no error
-    if(!getOpSettingsInfo(&opSettingsInfo)){
+    if(is_op_settings_valid){
         DEBUG_PRINT_I("op_settings_get_handler", "Success reading from flash op_settings");
-        cJSON_AddStringToObject(connectionInfo, "ssid", opSettingsInfo.ssid);
-        cJSON_AddStringToObject(connectionInfo, "password", opSettingsInfo.password);
-        cJSON_AddStringToObject(connectionInfo, "host_ip", opSettingsInfo.host_ip);
-        cJSON_AddStringToObject(connectionInfo, "port_number", opSettingsInfo.port_number);
-        cJSON_AddStringToObject(bitalinoInfo, "bit_when", opSettingsInfo.bit_when);
-        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", opSettingsInfo.sampling_rate);	
-        cJSON_AddStringToObject(bitalinoInfo, "no_channels", opSettingsInfo.no_channels);
-        cJSON_AddStringToObject(bitalinoInfo, "channels", opSettingsInfo.channels);		
-        cJSON_AddStringToObject(bitalinoInfo, "bit_mode", opSettingsInfo.bit_mode);
-        cJSON_AddStringToObject(bitalinoInfo, "port_o1", opSettingsInfo.port_o1);	
-        cJSON_AddStringToObject(bitalinoInfo, "port_o2", opSettingsInfo.port_o2);
+        cJSON_AddStringToObject(connectionInfo, "ssid", op_settings.ssid);
+        cJSON_AddStringToObject(connectionInfo, "password", op_settings.password);
+        cJSON_AddStringToObject(connectionInfo, "host_ip", op_settings.host_ip);
+        cJSON_AddStringToObject(connectionInfo, "port_number", op_settings.port_number);
+        cJSON_AddStringToObject(bitalinoInfo, "bit_when", op_settings.bit_when);
+        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", op_settings.sampling_rate);	
+        cJSON_AddStringToObject(bitalinoInfo, "no_channels", op_settings.no_channels);
+        cJSON_AddStringToObject(bitalinoInfo, "channels", op_settings.channels);		
+        cJSON_AddStringToObject(bitalinoInfo, "bit_mode", op_settings.bit_mode);
+        cJSON_AddStringToObject(bitalinoInfo, "port_o1", op_settings.port_o1);	
+        cJSON_AddStringToObject(bitalinoInfo, "port_o2", op_settings.port_o2);
     }else{
         DEBUG_PRINT_W("op_settings_get_handler", "Failure reading from flash op_settings");			
         cJSON_AddStringToObject(connectionInfo, "ssid", "SSID");
