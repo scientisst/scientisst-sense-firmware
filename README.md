@@ -65,5 +65,8 @@ idf.py monitor -p '/dev/ttyUSB0'
 ```
 To exit the serial monitor, press `CTRL+T` followed by `CTRL+X`
 
+## Disclaimer
+This is not a medical device certified for diagnosis or treatment. It is provided to you as is only for research and educational purposes.
+
 ## Acknowledgments
 This work was partially supported by Fundação para a Ciência e Tecnologia (FCT) under the projects’ UIDB/50008/2020 and PCIF/SSO/0163/2019 (SafeFire), and by the Active Assisted Living Programme Collaborative Project AAL-2020-7-237-CP (FORTO 2.0) through IT—Instituto de Telecomunicações, which is gratefully acknowledged.
