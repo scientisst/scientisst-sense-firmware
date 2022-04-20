@@ -63,10 +63,10 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
     switch (event){
     case ESP_SPP_INIT_EVT:
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_INIT_EVT");
-        esp_bt_dev_set_device_name(bt_device_name);
+        esp_bt_dev_set_device_name(device_name);
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         esp_spp_start_srv(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
-        ESP_LOGI("Init Bluetooth", "Device online with the name: %s", bt_device_name);
+        ESP_LOGI("Init Bluetooth", "Device online with the name: %s", device_name);
         break;
     case ESP_SPP_SRV_OPEN_EVT:                      //Server connection open (first client connection)  
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_SRV_OPEN_EVT");  
@@ -191,7 +191,6 @@ void initBt(){
     esp_err_t ret;
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
-    getDeviceName();
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
@@ -265,7 +264,7 @@ void getDeviceName(){
             }
             last_five_chars_bt_name[i] = c;
         }
-        sprintf(bt_device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
+        sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
     }else{
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
     }

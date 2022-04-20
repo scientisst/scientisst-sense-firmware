@@ -14,6 +14,10 @@
 #define API_MODE_EXTENDED 2
 #define API_MODE_JSON 3
 
+#define OP_MODE_IDLE 0
+#define OP_MODE_LIVE 1
+#define OP_MODE_CONFIG 2
+
 #define CMD_MAX_BYTES 4
 #define NUM_BUFFERS 4
 #define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU)   //If changed, change in API

@@ -13,17 +13,17 @@
 #define SIZE_64 (64)
 #define BIGGEST_SIZE SIZE_64
 
-#define OP_MODE_TCP_AP "tcp_ap"
-#define OP_MODE_TCP_STA "tcp_sta"
-#define OP_MODE_UDP_STA "udp_sta"
-#define OP_MODE_BT "bt"
-#define OP_MODE_SERIAL "serial"
+#define COM_MODE_TCP_AP "tcp_ap"
+#define COM_MODE_TCP_STA "tcp_sta"
+#define COM_MODE_UDP_STA "udp_sta"
+#define COM_MODE_BT "bt"
+#define COM_MODE_SERIAL "serial"
 
 typedef struct {
 	char ssid[SIZE_32];
 	char password[SIZE_64];
 
-	char op_mode[SIZE_8];
+	char com_mode[SIZE_8];
 	char host_ip[SIZE_16];
 	char port_number[SIZE_6];
 	char bit_when[SIZE_9];
@@ -35,10 +35,11 @@ typedef struct {
 	char port_o2[SIZE_5];
 }op_settings_info_t;
 
-void wifiInit(void);
+int wifiInit(uint8_t force_ap);
+void wifi_init_softap();
 
-//Checks if op_mode is one of the wifi modes
-uint8_t isOpModeWifi(void);
+//Checks if com_mode is one of the wifi modes
+uint8_t isComModeWifi(void);
 
 int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
 void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);

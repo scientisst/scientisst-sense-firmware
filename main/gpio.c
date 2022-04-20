@@ -93,7 +93,6 @@ void gpioInit(){
     gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_IO) | (1ULL<< BAT_LED_STATUS_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO) | (1ULL<< SPI3_CS0_IO)), 0, 0);       
     gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 1, 0);                                //The 2 IO inputs
     //gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< A2_IO) | (1ULL<< A3_IO) | (1ULL<< A4_IO)), 1, 0);                            
-    configLedC();
 }
 
 bool IRAM_ATTR gpioDrdyIsrHandler(){

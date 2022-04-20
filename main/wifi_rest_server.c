@@ -249,8 +249,8 @@ static void opSettingsSaveMember(char *member, char *value){
         strcpy(op_settings.ssid, value);
     }else if(!strcmp(member, "password")){
         strcpy(op_settings.password, value);
-    }else if(!strcmp(member, "op_mode")){
-        strcpy(op_settings.op_mode, value);
+    }else if(!strcmp(member, "com_mode")){
+        strcpy(op_settings.com_mode, value);
     }else if(!strcmp(member, "host_ip")){
         strcpy(op_settings.host_ip, value);
     }else if(!strcmp(member, "port_number")){

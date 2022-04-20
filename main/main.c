@@ -10,6 +10,7 @@
 #include "udp.h"
 #include "sdkconfig.h"
 #include "uart.h"
+#include "wifi.h"
 
 #define BT_SEND_PRIORITY_TASK 10        //MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
@@ -21,19 +22,20 @@ void IRAM_ATTR sendTask();
 void rcvTask();
 void IRAM_ATTR AbatTask();
 void IRAM_ATTR acqAdc1Task();
-void acqI2cTask();
+void opModeConfig(void);
+//void acqI2cTask();
 
 TaskHandle_t send_task;
 TaskHandle_t abat_task;
 TaskHandle_t rcv_task;
 TaskHandle_t acquiring_1_task;
-TaskHandle_t acquiring_i2c_task;
+//TaskHandle_t acquiring_i2c_task;
 
 //SemaphoreHandle_t snd_buff_mutex[NUM_BUFFERS];
 SemaphoreHandle_t bt_buffs_to_send_mutex;
 
 //BT
-char bt_device_name[17] = BT_DEFAULT_DEVICE_NAME;
+char device_name[17] = BT_DEFAULT_DEVICE_NAME;
 
 //COM
 int send_fd = 0;
@@ -65,7 +67,7 @@ uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};      //A
 uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};                  //Active external channels | If all channels are active: = {7, 6}
 uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
-uint8_t live_mode = 0;                                  //Flag that indicastes if live mode (acquiring) is on    
+uint8_t op_mode = OP_MODE_IDLE;                                  //Flag that indicastes if op mode is on (idle, live or config)    
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;    
 esp_adc_cal_characteristics_t adc1_chars;
 esp_adc_cal_characteristics_t adc2_chars; 
@@ -83,7 +85,7 @@ spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 //Op settings
-op_settings_info_t op_settings = {.op_mode = OP_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.com_mode = COM_MODE_BT};     //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;       //Flag that indicates if a valid op_settings has been read successfuly from flash
 
 void app_main(void){
@@ -98,6 +100,14 @@ void app_main(void){
         memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
     }
 
+    //Init nvs (Non volatile storage)
+    esp_err_t ret = nvs_flash_init();
+    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
     //Load saved op_settings configuration which resides in flash
     if(!getOpSettingsInfo(&op_settings)){
         is_op_settings_valid = 1;
@@ -105,22 +115,31 @@ void app_main(void){
         is_op_settings_valid = 0;
     }
 
+    //Determine and save device name in device_name
+    getDeviceName();
+
+    //Init GPIOs
     gpioInit();
 
     //Check if CONFIG pin is 1 on startup
     if(gpio_get_level(CONFIG_BTN_IO)){
-        wifiInit();
-        initRestServer();
-        gpio_set_level(STATE_LED_IO, 1);
-        while(1){
-            vTaskDelay(portMAX_DELAY);
+        wifiInit(1);
+        opModeConfig();
+    }
+
+    //If it's a wifi com mode, let's first try to setup the wifi and (if it's station) try to connect to the access point. If it doesn't work, enter immediatly to config mode in order for the user to update SSID and password
+    if(isComModeWifi()){
+        //If the wifi configuration fails, start softap to enable the user to change op_settings
+        if(wifiInit(0) == ESP_FAIL){
+            wifi_init_softap();
+            opModeConfig();
         }
     }
     
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &send_task, 0);
 
     //If op_mode is Wifi or Serial
-    if(isOpModeWifi() || !strcmp(op_settings.op_mode, OP_MODE_SERIAL)){
+    if(isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
         xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
     //Wifi is mutually exclusive with ADC2
     }else{
@@ -138,15 +157,7 @@ void app_main(void){
 
 //This task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck
 void IRAM_ATTR sendTask(){
-    //Init nvs (Non volatile storage)
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
-    if(!strcmp(op_settings.op_mode, OP_MODE_BT)){
+    if(!strcmp(op_settings.com_mode, COM_MODE_BT)){
         initBt();
         send_func = &esp_spp_write;
     }
@@ -158,27 +169,23 @@ void IRAM_ATTR sendTask(){
 }
 
 void rcvTask(){
-    if(isOpModeWifi()){
-        wifiInit();
-    }
-
     while(1){
         //TCP client
-        if(!strcmp(op_settings.op_mode, OP_MODE_TCP_STA)){
+        if(!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)){
             while((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000/portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
         //UDP client
-        }else if(!strcmp(op_settings.op_mode, OP_MODE_UDP_STA)){
+        }else if(!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)){
             while((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000/portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to UDP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &udpSend;
         //Serial
-        }else if(!strcmp(op_settings.op_mode, OP_MODE_SERIAL)){
+        }else if(!strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
             while((send_fd = serialInit()) < 0){
                 vTaskDelay(2000/portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to host USB Serial port. Trying again...");
@@ -198,7 +205,7 @@ void IRAM_ATTR acqAdc1Task(){
     #endif
 
     //Config all possible adc channels
-    initAdc(ADC_RESOLUTION, 1, !isOpModeWifi());
+    initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
 
     #if _ADC_EXT_ == ADC_MCP
     //gpio_set_level(SPI3_CS0_IO, 1);
@@ -211,6 +218,9 @@ void IRAM_ATTR acqAdc1Task(){
     adsConfigureChannels(2);
     adcExtStart();
     #endif
+
+    //Config LED control core
+    configLedC();
     
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
@@ -305,6 +315,17 @@ void IRAM_ATTR AbatTask(){
         }else{
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }
+    }
+}
+
+void opModeConfig(void){
+    op_mode = OP_MODE_CONFIG;
+    initRestServer();
+    gpio_set_level(STATE_LED_IO, 1);
+
+    //Hang here until user successfully submites a new config in the web page
+    while(1){
+        vTaskDelay(portMAX_DELAY);
     }
 }
 

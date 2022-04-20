@@ -24,7 +24,7 @@
 				      <li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="tcp_sta">TCP/IP client - station mode</a></li>
 				      <li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="udp_sta">UDP client - station Mode</a></li>
 				    </ul>
-				    <input class="span2" id="op_mode" name="op_mode" type="hidden">
+				    <input class="span2" id="com_mode" name="com_mode" type="hidden">
 			</div>
 			<h4 id="modeTitle" style="display: none; font-weight: bold;">modeTitle</h4>
 			<div id="appendConnectionInfo" style="text-align: left;"></div>
@@ -113,7 +113,7 @@
 			$("#appendRequired").html(writeRequiredDIV());
         }
 
-        $('#op_mode').val(dropdownSelects.modeID);
+        $('#com_mode').val(dropdownSelects.modeID);
         loadNVSdata(appendToHTML);
 	});
 

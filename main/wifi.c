@@ -72,7 +72,7 @@ void wifi_init_softap(void){
             .authmode = WIFI_AUTH_WPA_WPA2_PSK
         },
     };
-    memcpy(wifi_config.ap.ssid, bt_device_name, strlen(bt_device_name)+1);
+    memcpy(wifi_config.ap.ssid, device_name, strlen(device_name)+1);
 
     if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0){
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
@@ -82,12 +82,12 @@ void wifi_init_softap(void){
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", bt_device_name, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
+    ESP_LOGI("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }
 
 //wifi station--------------------------------------------------------------------------------------------------------------------
 
-#define EXAMPLE_ESP_MAXIMUM_RETRY  5        //Default is 5
+#define EXAMPLE_ESP_MAXIMUM_RETRY  1        //Default is 5
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -136,12 +136,12 @@ int wifi_init_sta(void){
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "",
-            .password = "",
+            .ssid = "test",
+            .password = "test",
             /* Setting a password implies station will connect to all security modes including WEP/WPA.
              * However these modes are deprecated and not advisable to be used. Incase your Access point
              * doesn't support WPA2, these mode can be enabled by commenting below line */
-	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+	        .threshold.authmode = WIFI_AUTH_WPA2_PSK,
 
             .pmf_cfg = {
                 .capable = true,
@@ -149,16 +149,17 @@ int wifi_init_sta(void){
             },
         },
     };
-    strcpy((char*)wifi_config.sta.ssid, op_settings.ssid);
-    strcpy((char*)wifi_config.sta.password, op_settings.password);
+    //If ssid and password are empty "", attempt to connect will not fail. This is not desirable
+    if(strcmp(op_settings.ssid, "") && strcmp(op_settings.password, "")){
+        strcpy((char*)wifi_config.sta.ssid, op_settings.ssid);
+        strcpy((char*)wifi_config.sta.password, op_settings.password);
+    }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-    ESP_ERROR_CHECK(esp_wifi_start() );
+    ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI("wifi station", "wifi_init_sta finished.");
-
-    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for EXAMPLE_ESP_MAXIMUM_RETRY
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
 
@@ -226,7 +227,6 @@ int getOpSettingsInfo(op_settings_info_t *_op_settings){
 	return 0;
 }
 
-
 //Save our configuration info for retrieval on a subsequent restart.
 void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 	nvs_handle handle;
@@ -237,24 +237,20 @@ void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 	nvs_close(handle);
 }
 
-
-void wifiInit(void){
-    ESP_LOGI("wifiInit", "ESP_WIFI_MODE_AP");
-
+int wifiInit(uint8_t force_ap){
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     //Check if saved op_mode is access point
-    if(!strcmp(op_settings.op_mode, OP_MODE_TCP_AP)){
+    if(force_ap || !strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
         wifi_init_softap();
+        return ESP_OK;
     }else{
-        //If the wifi configuration fails, start softap to enable the user to change op_settings
-        if(wifi_init_sta() == ESP_FAIL){
-            wifi_init_softap();
-        }
+        //Return result of attempt connection to saved SSID
+        return wifi_init_sta();
     }
 }
 
-uint8_t isOpModeWifi(void){
-    return (!strcmp(op_settings.op_mode, OP_MODE_TCP_AP) || !strcmp(op_settings.op_mode, OP_MODE_TCP_STA) || !strcmp(op_settings.op_mode, OP_MODE_UDP_STA));
+uint8_t isComModeWifi(void){
+    return (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP) || !strcmp(op_settings.com_mode, COM_MODE_TCP_STA) || !strcmp(op_settings.com_mode, COM_MODE_UDP_STA));
 }

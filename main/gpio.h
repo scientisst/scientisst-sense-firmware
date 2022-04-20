@@ -13,8 +13,8 @@
 #define BAT_LED_STATUS_IO   GPIO_NUM_21
 #define O0_IO               GPIO_NUM_0      
 #define O1_IO               GPIO_NUM_2
-#define I0_IO               GPIO_NUM_14
-#define I1_IO               GPIO_NUM_15
+#define I0_IO               GPIO_NUM_15
+#define I1_IO               GPIO_NUM_14
 #define CONFIG_BTN_IO       I0_IO
 
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
@@ -30,6 +30,7 @@
 
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
 void gpioInit();
+void configLedC();
 
 #if _ADC_EXT_ != NO_ADC_EXT
 void IRAM_ATTR gpioDrdyIsrHandler();

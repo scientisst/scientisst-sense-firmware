@@ -28,8 +28,8 @@ void processRcv(uint8_t* buff, int len){
     }else if(buff[0] & 0b10100011){
         actionPWM(buff);
     }
-
-    if(live_mode){
+    
+    if(op_mode == OP_MODE_LIVE){
         if(!buff[0]){
             stopAcquisition();
         }
@@ -267,7 +267,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     #endif
     
     DEBUG_PRINT_W("startAcquisition", "Acquisition started");
-    live_mode = 1;
+    op_mode = OP_MODE_LIVE;
 }
 
 void stopAcquisition(void){
@@ -286,7 +286,7 @@ void stopAcquisition(void){
     }
     #endif
 
-    live_mode = 0;
+    op_mode = OP_MODE_IDLE;
     crc_seq = 0;
 
     vTaskDelay(100/portTICK_PERIOD_MS);
