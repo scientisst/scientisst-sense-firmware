@@ -45,12 +45,10 @@
 static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
     if (event_id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
-        ESP_LOGI("wifi softAP", "station "MACSTR" join, AID=%d",
-                 MAC2STR(event->mac), event->aid);
+        ESP_LOGI("wifi softAP", "station "MACSTR" join, AID=%d", MAC2STR(event->mac), event->aid);
     } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
-        ESP_LOGI("wifi softAP", "station "MACSTR" leave, AID=%d",
-                 MAC2STR(event->mac), event->aid);
+        ESP_LOGI("wifi softAP", "station "MACSTR" leave, AID=%d", MAC2STR(event->mac), event->aid);
     }
 }
 
@@ -82,7 +80,7 @@ void wifi_init_softap(void){
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
+    DEBUG_PRINT_I("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }
 
 //wifi station--------------------------------------------------------------------------------------------------------------------
@@ -107,11 +105,11 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI("wifi station", "retry to connect to the AP");
+            DEBUG_PRINT_I("wifi station", "retry to connect to the AP");
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
-        ESP_LOGI("wifi station","connect to the AP fail");
+        DEBUG_PRINT_I("wifi station","connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI("wifi station", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
@@ -137,7 +135,7 @@ int wifi_init_sta(void){
     wifi_config_t wifi_config = {
         .sta = {
             .ssid = "test",
-            .password = "test",
+            .password = "",
             /* Setting a password implies station will connect to all security modes including WEP/WPA.
              * However these modes are deprecated and not advisable to be used. Incase your Access point
              * doesn't support WPA2, these mode can be enabled by commenting below line */
@@ -149,10 +147,16 @@ int wifi_init_sta(void){
             },
         },
     };
-    //If ssid and password are empty "", attempt to connect will not fail. This is not desirable
-    if(strcmp(op_settings.ssid, "") && strcmp(op_settings.password, "")){
+    //Store 
+    // If ssid is empty "", attempt to connect will not fail. This is not desirable
+    if(strcmp(op_settings.ssid, "")){
         strcpy((char*)wifi_config.sta.ssid, op_settings.ssid);
-        strcpy((char*)wifi_config.sta.password, op_settings.password);
+    }
+    strcpy((char*)wifi_config.sta.password, op_settings.password);
+
+    //If there's no password, there is no authmode.
+    if(!strcmp((char*)wifi_config.sta.password, "")){
+        wifi_config.sta.threshold.authmode = 0;
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
@@ -166,13 +170,13 @@ int wifi_init_sta(void){
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI("wifi station", "connected to ap SSID:%s password:%s", (char*)wifi_config.sta.ssid, (char*)wifi_config.sta.password);
+        DEBUG_PRINT_I("wifi station", "connected to ap SSID:%s password:%s", (char*)wifi_config.sta.ssid, (char*)wifi_config.sta.password);
         ret = 0;
     } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGI("wifi station", "Failed to connect to SSID:%s, password:%s", (char*)wifi_config.sta.ssid, (char*)wifi_config.sta.password);
+        DEBUG_PRINT_W("wifi station", "Failed to connect to SSID:%s, password:%s", (char*)wifi_config.sta.ssid, (char*)wifi_config.sta.password);
         ret = ESP_FAIL;
     } else {
-        ESP_LOGE("wifi station", "UNEXPECTED EVENT");
+        DEBUG_PRINT_E("wifi station", "UNEXPECTED EVENT");
         ret = ESP_FAIL;
     }
 
