@@ -39,12 +39,13 @@ deps/esp-idf/install.bat esp32
 
 ## Flash Firmware (Linux/MacOS)
 ```sh
+cd scientisst-sense-firmware
+
 #Export idf.py
 ESP_LOCATION=./deps  #Your esp-idf installation location
 . $ESP_LOCATION/esp-idf/export.sh
 
-#Flash Firmware
-cd scientisst-sense-firmware 
+#Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
 idf.py flash
 ```
 
