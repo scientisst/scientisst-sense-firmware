@@ -70,14 +70,14 @@ void changeAPI(uint8_t mode){
         api_config.api_mode = API_MODE_BITALINO;
         api_config.aquire_func = &acquireAdc1Channels;
         api_config.select_ch_mask_func = &selectChsFromMask;
-    }else if(mode == API_MODE_EXTENDED){
-        api_config.api_mode = API_MODE_EXTENDED;
-        api_config.aquire_func = &acquireChannelsExtended;
-        api_config.select_ch_mask_func = &selectChsFromMaskExtendedJson;
+    }else if(mode == API_MODE_SCIENTISST){
+        api_config.api_mode = API_MODE_SCIENTISST;
+        api_config.aquire_func = &acquireChannelsScientisst;
+        api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
     }else if(mode == API_MODE_JSON){
         api_config.api_mode = API_MODE_JSON;
         api_config.aquire_func = &acquireChannelsJson;
-        api_config.select_ch_mask_func = &selectChsFromMaskExtendedJson;
+        api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
     }
 
     DEBUG_PRINT_W("changeAPI", "API changed to %d", mode);
@@ -89,7 +89,7 @@ uint8_t getPacketSize(){
     if(api_config.api_mode == API_MODE_BITALINO){
         _packet_size = packet_size_num_chs[num_intern_active_chs];
 
-    }else if(api_config.api_mode == API_MODE_EXTENDED){
+    }else if(api_config.api_mode == API_MODE_SCIENTISST){
         //Add 24bit channel's contributuion to packet size
         _packet_size += 3*num_extern_active_chs;
 
@@ -111,7 +111,7 @@ uint8_t getPacketSize(){
     return _packet_size;
 }
 
-void selectChsFromMaskExtendedJson(uint8_t* buff){
+void selectChsFromMaskScientisstJson(uint8_t* buff){
     uint8_t i;
     char aux_str[10];
     char value_str[10];

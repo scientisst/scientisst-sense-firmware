@@ -45,7 +45,7 @@
 void configAdc(int adc_index, int adc_resolution, int adc_channel);
 void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en);
 void IRAM_ATTR acquireAdc1Channels(uint8_t* frame);
-void IRAM_ATTR acquireChannelsExtended(uint8_t* frame);
+void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame);
 void IRAM_ATTR acquireChannelsJson(uint8_t* frame);
 
 

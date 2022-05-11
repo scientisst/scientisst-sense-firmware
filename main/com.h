@@ -11,7 +11,7 @@
 #define STATUS_PACKET_SIZE 16
 
 #define API_MODE_BITALINO 1
-#define API_MODE_EXTENDED 2
+#define API_MODE_SCIENTISST 2
 #define API_MODE_JSON 3
 
 #define OP_MODE_IDLE 0
@@ -43,7 +43,7 @@ void stopAcquisition(void);
 void sendStatusPacket();
 void sendFirmwareVersionPacket();
 void changeAPI(uint8_t mode);
-void selectChsFromMaskExtendedJson(uint8_t* buff);
+void selectChsFromMaskScientisstJson(uint8_t* buff);
 void setSampleRate(uint8_t* buff);
 void actionGpio(uint8_t *buff);
 void actionPWM(uint8_t *buff);
