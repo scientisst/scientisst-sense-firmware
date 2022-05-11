@@ -148,7 +148,7 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
     crc_seq++;
 }
 
-void IRAM_ATTR acquireChannelsExtended(uint8_t* frame){
+void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[2] = {0, 0};
     uint8_t io_state = 0;
