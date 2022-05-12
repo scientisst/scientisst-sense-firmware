@@ -8,7 +8,7 @@
 #define ADC_ADS 1
 #define ADC_MCP 2
 
-#define _ADC_EXT_ NO_EXT_ADC
+#define _ADC_EXT_ ADC_ADS
 
 #define SPI3_MISO_IO    GPIO_NUM_19
 #define SPI3_MOSI_IO    GPIO_NUM_23
@@ -16,7 +16,7 @@
 #if _ADC_EXT_ == ADC_MCP
 #define MCP_DRDY_IO     I1_IO
 #elif _ADC_EXT_ == ADC_ADS
-#define ADS_DRDY_IO     GPIO_NUM_16
+#define ADS_DRDY_IO     I1_IO
 #endif
 
 #define SPI3_CS0_IO     GPIO_NUM_5
