@@ -5,6 +5,7 @@
 #include "main.h"
 #include "cJSON.h"
 #include "gpio.h"
+#include "config.h"
 
 #define DEFAULT_VREF 1100
 
@@ -154,8 +155,10 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     uint8_t io_state = 0;
     int i;
     uint8_t crc = 0;
+    #if _ADC_EXT_ != NO_EXT_ADC
     spi_transaction_t *ads_rtrans;
     uint8_t* recv_ads;
+    #endif
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
 
@@ -176,6 +179,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
 
     frame[packet_size-2] = io_state;
 
+    #if _ADC_EXT_ != NO_EXT_ADC
     if(num_extern_active_chs){
         //Can be a huge bottleneck
         spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
@@ -193,6 +197,12 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
             //printf("AX%d: %.6x\n", i+1, adc_external_res[i]);
         }
     }
+    #elif _TIMESTAMP_ == 1
+    if(num_extern_active_chs == 2){
+        *(uint64_t*)(frame+frame_next_wr) |= esp_timer_get_time();
+        frame_next_wr += 6;
+    }
+    #endif
 
 
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions

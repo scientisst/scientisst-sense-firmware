@@ -3,12 +3,7 @@
 
 #include <stdio.h>
 #include "driver/spi_master.h"
-
-#define NO_EXT_ADC 0
-#define ADC_ADS 1
-#define ADC_MCP 2
-
-#define _ADC_EXT_ NO_EXT_ADC
+#include "config.h"
 
 #define SPI3_MISO_IO    GPIO_NUM_19
 #define SPI3_MOSI_IO    GPIO_NUM_23

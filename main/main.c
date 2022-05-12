@@ -52,7 +52,6 @@ uint16_t send_threshold = MAX_BUFFER_SIZE;   //Amount of bytes a buffer needs to
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
 uint8_t crc_seq = 0;
-const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};       //Table that has the packet size in function of the number of channels
 
 uint16_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
 
@@ -64,7 +63,7 @@ esp_err_t (*send_func)(uint32_t, int, uint8_t*) = NULL;     //Send function poin
 //ADC
 DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {A0_ADC_CH, A1_ADC_CH, A2_ADC_CH, A3_ADC_CH, A4_ADC_CH, A5_ADC_CH};
 uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};      //Active internal channels | If all channels are active: = {5, 4, 3, 2, 1, 0}
-uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};                  //Active external channels | If all channels are active: = {7, 6}
+uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};                           //Active external channels | If all channels are active: = {7, 6}
 uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
 uint8_t op_mode = OP_MODE_IDLE;                                  //Flag that indicastes if op mode is on (idle, live or config)    
