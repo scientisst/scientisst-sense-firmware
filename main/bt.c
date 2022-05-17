@@ -249,24 +249,54 @@ void initBt(){
 //Use the last 2 bytes of MAC-ADDRESS found on EFUSE to make the device name
 void getDeviceName(){
     uint8_t mac[6];
-    char last_five_chars_bt_name[6];
+    uint8_t mac_iterface[6];
+    uint8_t mac_bt[6];
+    char mac_interface_str[18];
+    char mac_bt_str[18];
+
+    char* mac_str_arr[2] = {mac_interface_str, mac_bt_str};
+    int res;
 
     //Read base Mac address from EFUSE, which is used to calculate the MAC addr for all the interfaces
-    //Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
-    if(esp_efuse_mac_get_default(mac) == ESP_OK && esp_read_mac(mac, ESP_MAC_BT) == ESP_OK){
-        sprintf(last_five_chars_bt_name, "%x-%x", mac[4], mac[5]);
+    if(esp_efuse_mac_get_default(mac) != ESP_OK){
+        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
+        return;
+    }
 
-        //Turn the last xx-xx of mac address from lower case to upper case
-        for (int i = 0; last_five_chars_bt_name[i] != '\0'; i++){
-            char c = last_five_chars_bt_name[i];
-            if (c >= 97 && c <= 122){
+    memcpy(mac_iterface, mac, 6);
+    memcpy(mac_bt, mac, 6);
+
+    //Use esp_read_mac to infer the wifi station mac addr based in the base mac addr read from EFUSE
+    if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
+        res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_SOFTAP);
+    //Use esp_read_mac to infer the wifi softap mac addr based in the base mac addr read from EFUSE
+    }else if(!strcmp(op_settings.com_mode, COM_MODE_TCP_STA) || !strcmp(op_settings.com_mode, COM_MODE_UDP_STA)){
+        res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_STA);
+    //Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
+    }else{
+        res = esp_read_mac(mac_iterface, ESP_MAC_BT);
+    }
+
+    if(res != ESP_OK || esp_read_mac(mac_bt, ESP_MAC_BT) != ESP_OK){
+        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
+        return;
+    }
+    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2], mac_iterface[3], mac_iterface[4], mac_iterface[5]);
+    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
+
+    //Turn all characters of both mac address strings from lower case to upper case
+    for(int pntr_idx = 0; pntr_idx < 2; pntr_idx++){
+        char *str = mac_str_arr[pntr_idx];
+        for(int i = 0; str[i] != '\0'; i++){
+            char c = str[i];
+            if(c >= 97 && c <= 122){
                 c -= 32;
             }
-            last_five_chars_bt_name[i] = c;
+            str[i] = c;
         }
-        sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
-        DEBUG_PRINT_W("getDeviceName", "Device name is: %s", device_name);
-    }else{
-        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
     }
+    sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char*)(mac_bt_str+12));
+
+    DEBUG_PRINT_W("getDeviceName", "Device name is: %s, Interface MAC address is: %s, Bluetooth Classic MAC address is: %s", device_name, mac_interface_str, mac_bt_str);
+
 }
