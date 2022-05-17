@@ -281,6 +281,8 @@ void getDeviceName(){
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
         return;
     }
+
+    //Make mac address human readable
     sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2], mac_iterface[3], mac_iterface[4], mac_iterface[5]);
     sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
 
@@ -289,8 +291,10 @@ void getDeviceName(){
         char *str = mac_str_arr[pntr_idx];
         for(int i = 0; str[i] != '\0'; i++){
             char c = str[i];
+
+            //If it's a lower-case letter
             if(c >= 97 && c <= 122){
-                c -= 32;
+                c -= 32;    //Make it upper-case
             }
             str[i] = c;
         }
@@ -298,5 +302,4 @@ void getDeviceName(){
     sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char*)(mac_bt_str+12));
 
     DEBUG_PRINT_W("getDeviceName", "Device name is: %s, Interface MAC address is: %s, Bluetooth Classic MAC address is: %s", device_name, mac_interface_str, mac_bt_str);
-
 }
