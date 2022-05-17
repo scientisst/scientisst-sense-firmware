@@ -265,6 +265,7 @@ void getDeviceName(){
             last_five_chars_bt_name[i] = c;
         }
         sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, last_five_chars_bt_name);
+        DEBUG_PRINT_W("getDeviceName", "Device name is: %s", device_name);
     }else{
         DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
     }
