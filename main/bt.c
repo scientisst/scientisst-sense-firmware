@@ -301,5 +301,5 @@ void getDeviceName(){
     }
     sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char*)(mac_bt_str+12));
 
-    DEBUG_PRINT_W("getDeviceName", "Device name is: %s, Interface MAC address is: %s, Bluetooth Classic MAC address is: %s", device_name, mac_interface_str, mac_bt_str);
+    DEBUG_PRINT_W("getDeviceName", "Device name is: %s, COM Mode MAC address is: %s, Bluetooth Classic MAC address is: %s", device_name, mac_interface_str, mac_bt_str);
 }
