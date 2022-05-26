@@ -49,6 +49,30 @@ ESP_LOCATION=./deps  #Your esp-idf installation location
 idf.py flash
 ```
 
+### Troubleshooting
+####  Cannot open /dev/ttyUSB0: Permission denied
+This is not an issue with the ScientISST SENSE, and its not actually a bug at all, its just part of Linux. Its best practice to not change permissions in /dev unless as a last resort. What you want to do instead is to add yourself to the group which would give you permission to access the tty ports.
+
+To see the groups you are in simply type:
+
+```
+groups
+```
+
+To see all available groups type:
+
+```
+compgen -g
+```
+
+Most of them are self-explanatory, in this case you want to add yourself to either the tty group, or dialout, which you would do by:
+
+```
+sudo usermod -a -G tty yourname
+```
+
+Then your user should have access to tty without use of sudo.
+
 ## Serial Monitor (Linux/MacOS)
 ```sh
 #Export idf.py

@@ -87,6 +87,7 @@ uint8_t getPacketSize(){
     uint8_t _packet_size = 0;
 
     if(api_config.api_mode == API_MODE_BITALINO){
+        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};       //Table that has the packet size in function of the number of channels
         _packet_size = packet_size_num_chs[num_intern_active_chs];
 
     }else if(api_config.api_mode == API_MODE_SCIENTISST){

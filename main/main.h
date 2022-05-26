@@ -37,7 +37,6 @@ extern uint16_t snd_buff_idx[NUM_BUFFERS];
 extern uint8_t bt_buffs_to_send[NUM_BUFFERS];                              
 extern DRAM_ATTR const uint8_t crc_table[16];
 extern uint8_t crc_seq;
-extern const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS+1];        
 extern DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS];
 extern uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS];                                               
 extern uint8_t num_intern_active_chs;
