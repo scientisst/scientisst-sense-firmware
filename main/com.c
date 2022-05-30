@@ -22,11 +22,11 @@ void processRcv(uint8_t* buff, int len){
         return;
     }
 
-    //Check action command - it's regardeless of the current mode
-    if(buff[0] & 0b10110011){                    //Action command - Set output GPIO levels
-        actionGpio(buff);
-    }else if(buff[0] & 0b10100011){
-        actionPWM(buff);
+    //Check trigger command - it's regardeless of the current mode
+    if(buff[0] & 0b10110011){                    //trigger command - Set output GPIO levels
+        triggerGpio(buff);
+    }else if(buff[0] & 0b10100011){              //trigger command - Set output DAC level
+        triggerDAC(buff);
     }
     
     if(op_mode == OP_MODE_LIVE){
@@ -53,16 +53,15 @@ void processRcv(uint8_t* buff, int len){
     }
 }
 
-void actionGpio(uint8_t *buff){
+void triggerGpio(uint8_t *buff){
     gpio_set_level(O0_IO, (buff[0] & 0b00001000) >> 3);
     gpio_out_state[0] = (buff[0] & 0b00001000) >> 3;
     gpio_set_level(O1_IO, (buff[0] & 0b00000100) >> 2);
     gpio_out_state[1] = (buff[0] & 0b00000100) >> 2;
 }
 
-void actionPWM(uint8_t *buff){
-    //FIQUEI AQUI -> FALTA LER E ADICIONAR NAS TRAMAS DE AQUISIÇÃO OS ESTADOS DOS GPIO
-    //FALTA ACABAR O PWM AQUI
+void triggerDAC(uint8_t *buff){
+    dac_output_voltage(DAC_CHANNEL_1, buff[1]);
 }
 
 void changeAPI(uint8_t mode){

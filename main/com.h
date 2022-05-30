@@ -45,8 +45,8 @@ void sendFirmwareVersionPacket();
 void changeAPI(uint8_t mode);
 void selectChsFromMaskScientisstJson(uint8_t* buff);
 void setSampleRate(uint8_t* buff);
-void actionGpio(uint8_t *buff);
-void actionPWM(uint8_t *buff);
+void triggerGpio(uint8_t *buff);
+void triggerDAC(uint8_t *buff);
 void startAcquisition(uint8_t *buff, uint8_t cmd);
 
 /*          MASK CONFIGURATION EXAMPLE

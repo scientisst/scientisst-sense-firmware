@@ -120,6 +120,9 @@ void app_main(void){
     //Init GPIOs
     gpioInit();
 
+    //Enable DAC
+    dac_output_enable(DAC_CH);
+
     //Check if CONFIG pin is 1 on startup
     if(gpio_get_level(CONFIG_BTN_IO)){
         wifiInit(1);

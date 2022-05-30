@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "driver/gpio.h"
 #include "driver/ledc.h"
-
+#include "driver/dac.h"
 
 #define MAX32664_MFIO_IO    GPIO_NUM_15
 #define MAX32664_RSTN_IO    GPIO_NUM_4
@@ -25,6 +25,7 @@
 #define LEDC_LIVE_PWM_FREQ      4
 #define LEDC_IDLE_PWM_FREQ      1
 
+#define DAC_CH   DAC_CHANNEL_1
 
 #define ABAT_DIVIDER_FACTOR 2
 
