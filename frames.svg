@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35355339"
-     inkscape:cx="-424.96915"
-     inkscape:cy="1862.4822"
+     inkscape:zoom="0.5"
+     inkscape:cx="-222.94103"
+     inkscape:cy="1843.5554"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
@@ -38,8 +38,8 @@
      units="mm"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:measure-start="-38.8077,1411.83"
-     inkscape:measure-end="-38.8069,1418.84" />
+     inkscape:measure-start="-1039.45,2497.5"
+     inkscape:measure-end="-1039.45,2498.21" />
   <metadata
      id="metadata4">
     <rdf:RDF>
@@ -10603,12 +10603,12 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="-1364.0187"
-       y="-1430.8088"
+       x="-1436.8507"
+       y="-1412.4241"
        id="text3229-1-3-3"><tspan
          sodipodi:role="line"
-         x="-1364.0187"
-         y="-1430.8088"
+         x="-1436.8507"
+         y="-1412.4241"
          id="tspan1279-7">ScientISST Trigger Commands</tspan></text>
     <flowRoot
        xml:space="preserve"
@@ -10620,7 +10620,7 @@
            height="162.63457"
            x="-1408.5568"
            y="-1409.7528" /></flowRegion><flowPara
-         id="flowPara3868"></flowPara></flowRoot>    <rect
+         id="flowPara3868" /></flowRoot>    <rect
        inkscape:export-ydpi="134.94"
        inkscape:export-xdpi="134.94"
        inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
@@ -10836,5 +10836,263 @@
          x="-926.46222"
          y="305.37888"
          id="tspan3231-5-6">Bitalino Commands</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#d3d3d3;fill-opacity:1;stroke:none"
+       x="-1359.9519"
+       y="-1250.6125"
+       id="text4919-6-6-1-4-3"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/X MCU/frames.png"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-ydpi="134.94"><tspan
+         sodipodi:role="line"
+         id="tspan4921-1-5-7-3-6"
+         x="-1359.9519"
+         y="-1250.6125"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#d3d3d3;fill-opacity:1">1</tspan></text>
+    <rect
+       y="-1273.6643"
+       x="-1345.2629"
+       height="32.981319"
+       width="312.98309"
+       id="rect4519-5-8-92-7"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#dde9af;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.89759874;marker:none;enable-background:accumulate"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-ydpi="134.94" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#d3d3d3;fill-opacity:1;stroke:none"
+       x="-1359.7876"
+       y="-1293.3823"
+       id="text4919-6-6-1-8-5"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/X MCU/frames.png"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-ydpi="134.94"><tspan
+         sodipodi:role="line"
+         id="tspan4921-1-5-7-9-3"
+         x="-1359.7876"
+         y="-1293.3823"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#d3d3d3;fill-opacity:1">0</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       y="-1316.6456"
+       x="-1185.2611"
+       height="32.981319"
+       width="32.981319"
+       id="rect4847-1-7-6-1-1-7-5"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1168.7706"
+       y="-1293.616"
+       id="text4871-8-3-3-5-5-3-6"><tspan
+         sodipodi:role="line"
+         id="tspan4873-4-61-1-9-9-6-2"
+         x="-1168.7706"
+         y="-1293.616"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d">0</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate"
+       id="rect4849-9-84-8-9-8-1-9"
+       width="32.981319"
+       height="32.981319"
+       x="-1145.2611"
+       y="-1316.6456" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       id="text4875-5-06-4-0-4-2-1"
+       y="-1293.616"
+       x="-1128.7706"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d"
+         y="-1293.616"
+         x="-1128.7706"
+         id="tspan4877-0-3-9-9-8-9-2"
+         sodipodi:role="line">0</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       y="-1316.6456"
+       x="-1105.2612"
+       height="32.981319"
+       width="32.981319"
+       id="rect4851-4-5-8-7-1-3-7"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ececec;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1088.7706"
+       y="-1293.616"
+       id="text4879-3-2-2-7-0-1-0"><tspan
+         sodipodi:role="line"
+         id="tspan4881-6-0-0-1-3-9-9"
+         x="-1088.7706"
+         y="-1293.616"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d">1</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ececec;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate"
+       id="rect4853-7-0-4-5-0-4-3"
+       width="32.981319"
+       height="32.981319"
+       x="-1065.2611"
+       y="-1316.6456" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       id="text4883-1-6-6-9-4-7-6"
+       y="-1293.616"
+       x="-1048.7705"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d"
+         y="-1293.616"
+         x="-1048.7705"
+         id="tspan4885-0-1-8-7-4-8-0"
+         sodipodi:role="line">1</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       y="-1316.4252"
+       x="-1265.2611"
+       height="32.981319"
+       width="32.981319"
+       id="rect4847-1-7-64-6-6-3-6"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1248.7705"
+       y="-1293.3955"
+       id="text4871-8-3-9-3-3-6-2"><tspan
+         sodipodi:role="line"
+         id="tspan4873-4-61-5-8-1-1-6"
+         x="-1248.7705"
+         y="-1293.3955"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d">1</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate"
+       id="rect4849-9-84-4-5-7-0-1"
+       width="32.981319"
+       height="32.981319"
+       x="-1225.261"
+       y="-1316.4252" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       id="text4875-5-06-8-6-5-6-8"
+       y="-1293.3955"
+       x="-1208.7704"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d"
+         y="-1293.3955"
+         x="-1208.7704"
+         id="tspan4877-0-3-7-1-9-3-7"
+         sodipodi:role="line">0</tspan></text>
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1189.1229"
+       y="-1250.6125"
+       id="text4871-8-3-3-5-6-4-5-2-9"><tspan
+         sodipodi:role="line"
+         id="tspan4873-4-61-1-9-7-7-0-0-2"
+         x="-1189.1229"
+         y="-1250.6125"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d">DAC</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       y="-1316.4252"
+       x="-1345.2611"
+       height="32.981319"
+       width="32.981319"
+       id="rect4847-1-7-64-5-5-8-5-0"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1328.7705"
+       y="-1293.3955"
+       id="text4871-8-3-9-4-1-1-5-2"><tspan
+         sodipodi:role="line"
+         id="tspan4873-4-61-5-0-1-3-4-3"
+         x="-1328.7705"
+         y="-1293.3955"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d">1</tspan></text>
+    <rect
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.5;marker:none;enable-background:accumulate"
+       id="rect4849-9-84-4-5-0-1-7-7"
+       width="32.981319"
+       height="32.981319"
+       x="-1305.2611"
+       y="-1316.4252" />
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/MCU/frames.png"
+       id="text4875-5-06-8-9-8-1-6-5"
+       y="-1293.3955"
+       x="-1288.7705"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;text-anchor:middle;fill:#4d4d4d"
+         y="-1293.3955"
+         x="-1288.7705"
+         id="tspan4877-0-3-7-4-5-0-5-9"
+         sodipodi:role="line">0</tspan></text>
+    <text
+       inkscape:export-ydpi="134.94"
+       inkscape:export-xdpi="134.94"
+       inkscape:export-filename="/Users/hsilva/Work/BIT/BITalino (r)evolution/docs/Datasheets/X MCU/frames.png"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Dax;-inkscape-font-specification:Dax;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+       x="-1019.3057"
+       y="-1276.672"
+       id="text3562-9-09-1-9-9-2"><tspan
+         sodipodi:role="line"
+         id="tspan3564-2-2-0-0-9-2"
+         x="-1019.3057"
+         y="-1276.672"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;fill:#4d4d4d">trigger DAC</tspan></text>
   </g>
 </svg>

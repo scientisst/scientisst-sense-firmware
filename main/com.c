@@ -23,9 +23,9 @@ void processRcv(uint8_t* buff, int len){
     }
 
     //Check trigger command - it's regardeless of the current mode
-    if(buff[0] & 0b10110011){                    //trigger command - Set output GPIO levels
+    if((buff[0] & 0b10110011) == 0b10110011){       //trigger command - Set output GPIO levels
         triggerGpio(buff);
-    }else if(buff[0] & 0b10100011){              //trigger command - Set output DAC level
+    }else if(buff[0] == 0b10100011){              //trigger command - Set output DAC level
         triggerDAC(buff);
     }
     
@@ -54,14 +54,21 @@ void processRcv(uint8_t* buff, int len){
 }
 
 void triggerGpio(uint8_t *buff){
-    gpio_set_level(O0_IO, (buff[0] & 0b00001000) >> 3);
-    gpio_out_state[0] = (buff[0] & 0b00001000) >> 3;
-    gpio_set_level(O1_IO, (buff[0] & 0b00000100) >> 2);
-    gpio_out_state[1] = (buff[0] & 0b00000100) >> 2;
+    uint8_t o1_lvl = (buff[0] & 0b00001000) >> 3;
+    uint8_t o2_lvl = (buff[0] & 0b00000100) >> 2;
+
+    gpio_set_level(O0_IO, o1_lvl);
+    gpio_out_state[0] = o1_lvl;
+    gpio_set_level(O1_IO, o2_lvl);
+    gpio_out_state[1] = o2_lvl;
+
+    DEBUG_PRINT_I("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
 }
 
 void triggerDAC(uint8_t *buff){
     dac_output_voltage(DAC_CHANNEL_1, buff[1]);
+
+    DEBUG_PRINT_I("triggerDAC", "DAC output to %d", buff[1]);
 }
 
 void changeAPI(uint8_t mode){
