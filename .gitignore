@@ -1,4 +1,5 @@
 build/
+esp-idf-tools/
 .vscode
 .directory
 includes_vscode.txt

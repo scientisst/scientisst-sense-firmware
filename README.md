@@ -13,6 +13,22 @@ The firmware for the Scientisst - Sense development board
 - www               :   Configuration HTML Page
 ``` 
 
+## scientisst-firmware.py usage
+
+```
+ScientISST Firmware Tool
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i, --install         Install esp-idf tools in order to build firmware
+  -b, --build           Build firmware
+  -c, --clean           Clean build outputs
+  -f, --flash           Flash firmware
+  -v, --version         Show firmware version
+  -m [MONITOR], --monitor [MONITOR]
+                        Open serial monitor in <MONITOR> port. Example: scientisst-firmware.py --monitor /dev/ttyUSB0
+```
+
 ## Installing
 ### 1) Prerequisites
 Install the ESP-IDF prerequisites following espressif's guide https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/#step-1-install-prerequisites
@@ -27,26 +43,14 @@ git clone --recursive https://github.com/scientisst/scientisst-sense-firmware.gi
 ```
 ### 3) Install Xtensa's toolchain
 
-#### Linux/MacOS:
 ```
-./deps/esp-idf/install.sh esp32
-```
-
-#### Windows:
-```
-deps/esp-idf/install.bat esp32
+python scientisst-firmware.py --install
 ```
 
 ## Flash Firmware (Linux/MacOS)
 ```sh
-cd scientisst-sense-firmware
-
-#Export idf.py
-ESP_LOCATION=./deps  #Your esp-idf installation location
-. $ESP_LOCATION/esp-idf/export.sh
-
 #Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
-idf.py flash
+python scientisst-firmware.py --flash
 ```
 
 ### Troubleshooting
@@ -75,18 +79,7 @@ Then your user should have access to tty without use of sudo.
 
 ## Serial Monitor (Linux/MacOS)
 ```sh
-#Export idf.py
-ESP_LOCATION=./deps  #Your esp-idf installation location
-. $ESP_LOCATION/esp-idf/export.sh
-
-#Serial monitor
-cd scientisst-sense-firmware 
-idf.py monitor
-```
-If you're having trouble with the default command, try specifying the USB port:
-
-```
-idf.py monitor -p '/dev/ttyUSB0'
+python scientisst-firmware.py --monitor
 ```
 To exit the serial monitor, press `CTRL+T` followed by `CTRL+X`
 
