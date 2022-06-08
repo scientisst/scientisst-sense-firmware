@@ -179,6 +179,13 @@ void rcvTask(){
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
+        //TCP server
+        }else if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
+            while((send_fd = initTcpServer(op_settings.port_number)) < 0){
+                vTaskDelay(2000/portTICK_PERIOD_MS);
+                DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
+            }
+            send_func = &tcpSerialSend;
         //UDP client
         }else if(!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)){
             while((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0){

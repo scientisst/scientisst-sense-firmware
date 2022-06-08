@@ -30,9 +30,10 @@
 #include "wifi_rest_server.h"
 #include "wifi.h"
 
-#define MDNS_HOST_NAME "scientisst"   //Specify the domain name used in the mDNS service. Note that webpage also take it as a part of URL where it will send GET/POST requests to.
+
+
 #define WEB_MOUNT_POINT "/www"      //Specify the mount point in VFS.
-#define MDNS_INSTANCE "esp home web server"
+
 
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
     do                                                                                 \
@@ -353,21 +354,6 @@ esp_err_t init_fs(void){
 }
 
 void initRestServer(void){
-    ESP_ERROR_CHECK(esp_netif_init());
-    //ESP_ERROR_CHECK(esp_event_loop_create_default());     commented cuz it's already called before in wifi.c
-
-    mdns_init();
-    mdns_hostname_set(MDNS_HOST_NAME);
-    mdns_instance_name_set(MDNS_INSTANCE);
-    mdns_txt_item_t serviceTxtData[] = {
-        {"board", "esp32"},
-        {"path", "/"}
-    };
-    ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
-    netbiosns_init();
-
-    netbiosns_set_name(MDNS_HOST_NAME);
-
     ESP_ERROR_CHECK(init_fs());
     ESP_ERROR_CHECK(start_rest_server(WEB_MOUNT_POINT));
 }

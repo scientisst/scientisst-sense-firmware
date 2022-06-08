@@ -42,6 +42,9 @@
 #define EXAMPLE_ESP_WIFI_CHANNEL   1            //Range: 1 to 13, default: 1
 #define EXAMPLE_MAX_STA_CONN       4            //Default: 4
 
+#define MDNS_HOST_NAME "scientisst"   //Specify the domain name used in the mDNS service. Note that webpage also take it as a part of URL where it will send GET/POST requests to.
+#define MDNS_INSTANCE "esp home web server"
+
 static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
     if (event_id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
@@ -244,6 +247,17 @@ void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo){
 int wifiInit(uint8_t force_ap){
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    mdns_init();
+    mdns_hostname_set(MDNS_HOST_NAME);
+    mdns_instance_name_set(MDNS_INSTANCE);
+    mdns_txt_item_t serviceTxtData[] = {
+        {"board", "esp32"},
+        {"path", "/"}
+    };
+    ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
+    netbiosns_init();
+    netbiosns_set_name(MDNS_HOST_NAME);
 
     //Check if saved op_mode is access point
     if(force_ap || !strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){

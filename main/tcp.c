@@ -11,27 +11,38 @@
 
 int initTcpServer(char* port_str){
     int port;
-    struct sockaddr_in local_addr;
-    int server_fd;
+    struct sockaddr_in listen_addr;
+    int listen_fd;
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len;
+    int client_fd;
 
     sscanf(port_str, "%d", &port);  //Transform port string to int
 	
-	if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){										//Verificar se não houve erro a criar a socket
+	if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){										//Verificar se não houve erro a criar a socket
 		DEBUG_PRINT_E("initTcpServer", "socket error");
 	}
 
-	local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = htonl(INADDR_ANY);                     
-    local_addr.sin_port = htons(port); 
+	listen_addr.sin_family = AF_INET;
+    listen_addr.sin_addr.s_addr = htonl(INADDR_ANY);                     
+    listen_addr.sin_port = htons(port); 
 
-	if(bind(server_fd, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0){					//Verificar se não houve erro a fazer bind
+	if(bind(listen_fd, (struct sockaddr*)&listen_addr, sizeof(listen_addr)) < 0){					//Verificar se não houve erro a fazer bind
 		DEBUG_PRINT_E("initTcpServer", "bind error");
 	}
 
-	if(listen(server_fd, 2) == -1){																//Verificar se não houve erro a fazer listen
+	if(listen(listen_fd, 2) == -1){																//Verificar se não houve erro a fazer listen
 		DEBUG_PRINT_E("initTcpServer", "listen error");
 	}
-	return server_fd;
+
+    if(client_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len) < 0){
+        DEBUG_PRINT_E("initTcpServer", "accept error");
+        shutdown(listen_fd, 0);
+        close(listen_fd);
+        listen_fd = 0;
+        return -1;
+    }
+	return client_fd;
 }
 
 int initTcpClient(char* ip, char* port){
