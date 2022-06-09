@@ -35,7 +35,7 @@ int initTcpServer(char* port_str){
 		DEBUG_PRINT_E("initTcpServer", "listen error");
 	}
 
-    if(client_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len) < 0){
+    if((client_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0){
         DEBUG_PRINT_E("initTcpServer", "accept error");
         shutdown(listen_fd, 0);
         close(listen_fd);

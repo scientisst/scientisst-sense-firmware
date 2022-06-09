@@ -18,7 +18,9 @@
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "lwip/apps/netbiosns.h"
 
+#include "mdns.h"
 #include "wifi.h"
 #include "main.h"
 #include "macros.h"
