@@ -11,6 +11,7 @@
 #include "sdkconfig.h"
 #include "uart.h"
 #include "wifi.h"
+#include "ws.h"
 
 #define BT_SEND_PRIORITY_TASK 10 // MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
@@ -41,7 +42,7 @@ char device_name[17] = BT_DEFAULT_DEVICE_NAME;
 int send_fd = 0;
 
 // TCP server
-int listen_fd = 0;
+int listen_fd;
 
 uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];       // Data structure to hold the data to be sent through bluetooth
 uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0};    // It contains, for each buffer, the index of the first free element in the respective buffer
@@ -87,8 +88,8 @@ spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 // Op settings
-op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; // Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
-uint8_t is_op_settings_valid = 0;                                                      // Flag that indicates if a valid op_settings has been read successfuly from flash
+op_settings_info_t op_settings = {.com_mode = COM_MODE_WS_AP}; // Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+uint8_t is_op_settings_valid = 0;                              // Flag that indicates if a valid op_settings has been read successfuly from flash
 
 void app_main(void)
 {
@@ -115,14 +116,14 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     // Load saved op_settings configuration which resides in flash
-    if (!getOpSettingsInfo(&op_settings))
-    {
-        is_op_settings_valid = 1;
-    }
-    else
-    {
-        is_op_settings_valid = 0;
-    }
+    // if (!getOpSettingsInfo(&op_settings))
+    // {
+    //     is_op_settings_valid = 1;
+    // }
+    // else
+    // {
+    //     is_op_settings_valid = 0;
+    // }
 
     // Determine and save device name in device_name
     getDeviceName();
@@ -157,16 +158,32 @@ void app_main(void)
     if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL))
     {
 
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
+        if (!strcmp(op_settings.com_mode, COM_MODE_WS_AP))
         {
-            if ((listen_fd = initTcpServer(op_settings.port_number)) < 0)
-            {
-                DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
-            }
+            DEBUG_PRINT_W("WS", "Starting web server");
+            start_webserver();
+
+            send_func = &wsSerialSend;
+            // if ((listen_fd = initWsServer()) < 0)
+            // {
+            //     DEBUG_PRINT_E("WS", "Cannot init WS Server. Trying again...");
+            // }
+            // xTaskCreatePinnedToCore(&rcvWsTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
         }
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
-        // Wifi is mutually exclusive with ADC2
+        else
+        {
+            DEBUG_PRINT_W("WS", "NOT WS");
+            if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
+            {
+                if ((listen_fd = initTcpServer(op_settings.port_number)) < 0)
+                {
+                    DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
+                }
+            }
+            xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
+        }
     }
+    // Wifi is mutually exclusive with ADC2
     else
     {
         xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
@@ -194,6 +211,23 @@ void IRAM_ATTR sendTask()
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         sendData();
+    }
+}
+
+void rcvWsTask()
+{
+    while (1)
+    {
+        // else if (!strcmp(op_settings.com_mode, COM_MODE_WS_AP))
+        // {
+        //     while ((send_fd = initTcpConnection(listen_fd)) < 0)
+        //     {
+        //         vTaskDelay(2000 / portTICK_PERIOD_MS);
+        //         DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
+        //     }
+        //     send_func = &tcpSerialSend;
+        // }
+        wifiSerialRcv();
     }
 }
 

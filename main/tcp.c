@@ -41,7 +41,7 @@ int initTcpServer(char *port_str)
     return listen_fd;
 }
 
-int initTcpConnection(int* listen_fd)
+int initTcpConnection(int listen_fd)
 {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len;
