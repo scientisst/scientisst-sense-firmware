@@ -108,18 +108,8 @@ const httpd_uri_t cert_get = {
 httpd_handle_t start_webserver(void)
 {
 
-    // Prepare keep-alive engine
-    // wss_keep_alive_config_t keep_alive_config = KEEP_ALIVE_CONFIG_DEFAULT();
-    // keep_alive_config.max_clients = max_clients;
-    // keep_alive_config.client_not_alive_cb = client_not_alive_cb;
-    // keep_alive_config.check_client_alive_cb = check_client_alive_cb;
-    // wss_keep_alive_t keep_alive = wss_keep_alive_start(&keep_alive_config);
-
     httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
     conf.httpd.max_open_sockets = max_clients;
-    // conf.httpd.global_user_ctx = keep_alive;
-    //  conf.httpd.open_fn = wss_open_fd;
-    //  conf.httpd.close_fn = wss_close_fd;
 
     httpd_handle_t server = NULL;
 
