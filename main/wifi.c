@@ -283,6 +283,7 @@ int wifiInit(uint8_t force_ap)
         {"board", "esp32"},
         {"path", "/"}};
     ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData, sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
+    ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_https", "_tcp", 443, serviceTxtData, sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
     netbiosns_init();
     netbiosns_set_name(MDNS_HOST_NAME);
 

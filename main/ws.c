@@ -3,6 +3,7 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include "esp_netif.h"
+#include <esp_https_server.h>
 
 #include "com.h"
 #include "main.h"
@@ -11,6 +12,8 @@
 #include "ws.h"
 
 static const char *TAG = "ws_server";
+
+static const size_t max_clients = 1;
 
 httpd_handle_t ws_hd;
 int ws_fd;
@@ -82,6 +85,13 @@ esp_err_t rcv_handler(httpd_req_t *req)
     return ret;
 }
 
+esp_err_t get_handler(httpd_req_t *req)
+{
+    const char resp[] = "<!DOCTYPE html><html><body><h1>Success!</h1><p>Authorized ScientISST Sense self-signed certificate</p><script>setTimeout(()=>{history.back();},1000);</script></body></html>";
+    httpd_resp_send(req, resp, HTTPD_RESP_USE_STRLEN);
+    return ESP_OK;
+}
+
 const httpd_uri_t ws = {
     .uri = "/",
     .method = HTTP_GET,
@@ -89,18 +99,47 @@ const httpd_uri_t ws = {
     .user_ctx = NULL,
     .is_websocket = true};
 
+const httpd_uri_t cert_get = {
+    .uri = "/cert",
+    .method = HTTP_GET,
+    .handler = get_handler,
+    .user_ctx = NULL};
+
 httpd_handle_t start_webserver(void)
 {
+
+    // Prepare keep-alive engine
+    // wss_keep_alive_config_t keep_alive_config = KEEP_ALIVE_CONFIG_DEFAULT();
+    // keep_alive_config.max_clients = max_clients;
+    // keep_alive_config.client_not_alive_cb = client_not_alive_cb;
+    // keep_alive_config.check_client_alive_cb = check_client_alive_cb;
+    // wss_keep_alive_t keep_alive = wss_keep_alive_start(&keep_alive_config);
+
+    httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
+    conf.httpd.max_open_sockets = max_clients;
+    // conf.httpd.global_user_ctx = keep_alive;
+    //  conf.httpd.open_fn = wss_open_fd;
+    //  conf.httpd.close_fn = wss_close_fd;
+
     httpd_handle_t server = NULL;
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+
+    extern const unsigned char cacert_start[] asm("_binary_cacert_pem_start");
+    extern const unsigned char cacert_end[] asm("_binary_cacert_pem_end");
+    conf.cacert_pem = cacert_start;
+    conf.cacert_len = cacert_end - cacert_start;
+
+    extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
+    extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
+    conf.prvtkey_pem = prvtkey_pem_start;
+    conf.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
 
     // Start the httpd server
-    ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-    if (httpd_start(&server, &config) == ESP_OK)
+    if (httpd_ssl_start(&server, &conf) == ESP_OK)
     {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &ws);
+        httpd_register_uri_handler(server, &cert_get);
         return server;
     }
 
