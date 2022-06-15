@@ -10,16 +10,14 @@
 
 int bind_err;
 
-int initTcpServer(char *port_str)
-{
+int initTcpServer(char *port_str){
     int port;
     struct sockaddr_in listen_addr;
     int listen_fd;
 
     sscanf(port_str, "%d", &port); // Transform port string to int
 
-    if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    { // Verificar se não houve erro a criar a socket
+    if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ // Verificar se não houve erro a criar a socket
         DEBUG_PRINT_E("initTcpServer", "socket error");
     }
 
@@ -41,16 +39,15 @@ int initTcpServer(char *port_str)
     return listen_fd;
 }
 
-int initTcpConnection(int* listen_fd)
-{
+int initTcpConnection(int* listen_fd){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len;
     int client_fd;
-    if ((client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0)
+    if ((client_fd = accept(*listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0)
     {
         DEBUG_PRINT_E("initTcpServer", "accept error");
-        shutdown(listen_fd, 0);
-        close(listen_fd);
+        shutdown(*listen_fd, 0);
+        close(*listen_fd);
         listen_fd = 0;
         return -1;
     }
