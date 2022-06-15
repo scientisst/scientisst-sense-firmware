@@ -4,20 +4,11 @@ from pathlib import Path
 import argparse
 import platform
 import sys
+import subprocess
 
-ABS_PATH = str(Path().absolute())
+#ABS_PATH = str(Path().absolute())
 
-ESP_IDF_PATH = ABS_PATH + '/deps/esp-idf/'
-
-SCRIPT_EXT = '.bat' if platform.system() == "Windows" else '.sh'
-EXPORT_PATH = ESP_IDF_PATH + 'export' + SCRIPT_EXT
-INSTALL_PATH = ESP_IDF_PATH + 'install' + SCRIPT_EXT
-GET_IDF_PATH = './get_idf' + SCRIPT_EXT
-
-GET_IDF = ('call ' if platform.system() == "Windows" else '. ') + GET_IDF_PATH
-
-
-parser = argparse.ArgumentParser(description='ScientISST Firmware Tool')
+parser = argparse.ArgumentParser(description='ScientISST-SENSE Firmware Tool')
 group = parser.add_mutually_exclusive_group(required=True)  #Make these args mutually exclusive, i.e. only one arg is allowed
 
 group.add_argument(
@@ -77,18 +68,22 @@ group.add_argument(
 
 args = parser.parse_args()
 
+SCRIPT_EXT = '.bat' if platform.system() == "Windows" else '.sh'
+GET_IDF_PATH = './get_idf' + SCRIPT_EXT
+
+SOURCE_GET_IDF = '. ' + GET_IDF_PATH
 if args.install:
-    IDF_TOOLS_PATH_PATH = ABS_PATH + "/esp-idf-tools/"
-    os.environ["IDF_TOOLS_PATH"] = IDF_TOOLS_PATH_PATH
-    os.system(INSTALL_PATH)
+    cmd = SOURCE_GET_IDF + " --no_export" + " && " + "$IDF_PATH/" + 'install' + SCRIPT_EXT + " esp32"
 else:
     if args.build:
-        os.system(GET_IDF + ' && idf.py build')
+        cmd = SOURCE_GET_IDF+ ' && idf.py build'
     elif args.clean:
-        os.system(GET_IDF + ' && idf.py fullclean')
+        cmd = SOURCE_GET_IDF + ' && idf.py fullclean'
     elif args.flash:
-        os.system(GET_IDF + ' && idf.py flash')
+        cmd = SOURCE_GET_IDF + ' && idf.py flash'
     elif args.version:
         print("Not yet implemented")
     elif args.monitor:
-        os.system(GET_IDF + ' && idf.py monitor' + args.monitor)
+        cmd = SOURCE_GET_IDF + ' && idf.py monitor' + args.monitor
+
+os.system('/bin/sh ' + cmd)
