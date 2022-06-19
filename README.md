@@ -69,10 +69,11 @@ To see all available groups type:
 compgen -g
 ```
 
-Most of them are self-explanatory, in this case you want to add yourself to either the tty group, or dialout, which you would do by:
+Most of them are self-explanatory, in this case you want to add yourself to either the tty group and dialout group, which you would do by:
 
 ```
-sudo usermod -a -G tty yourname
+sudo usermod -a -G tty <your username>
+sudo usermod -a -G dialout <your username>
 ```
 
 Then your user should have access to tty without use of sudo.
