@@ -90,37 +90,30 @@ spi_transaction_t adc_ext_trans;
 op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; // Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;                                                      // Flag that indicates if a valid op_settings has been read successfuly from flash
 
-void app_main(void)
-{
+void app_main(void){
     // Create a mutex type semaphore
-    if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL)
-    {
+    if((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL){
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
     }
 
     // Inicialize send buffers
-    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
-    {
+    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
         memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
     }
 
     // Init nvs (Non volatile storage)
     esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
+    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND){
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
     // Load saved op_settings configuration which resides in flash
-    if (!getOpSettingsInfo(&op_settings))
-    {
+    if(!getOpSettingsInfo(&op_settings)){
         is_op_settings_valid = 1;
-    }
-    else
-    {
+    }else{
         is_op_settings_valid = 0;
     }
 
@@ -134,18 +127,15 @@ void app_main(void)
     dac_output_enable(DAC_CH);
 
     // Check if CONFIG pin is 1 on startup
-    if (gpio_get_level(CONFIG_BTN_IO))
-    {
+    if(gpio_get_level(CONFIG_BTN_IO)){
         wifiInit(1);
         opModeConfig();
     }
 
     // If it's a wifi com mode, let's first try to setup the wifi and (if it's station) try to connect to the access point. If it doesn't work, enter immediatly to config mode in order for the user to update SSID and password
-    if (isComModeWifi())
-    {
+    if(isComModeWifi()){
         // If the wifi configuration fails, start softap to enable the user to change op_settings
-        if (wifiInit(0) == ESP_FAIL)
-        {
+        if(wifiInit(0) == ESP_FAIL){
             wifi_init_softap();
             opModeConfig();
         }
@@ -154,21 +144,16 @@ void app_main(void)
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &send_task, 0);
 
     // If op_mode is Wifi or Serial
-    if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL))
-    {
+    if(isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
 
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
-        {
-            if ((listen_fd = initTcpServer(op_settings.port_number)) < 0)
-            {
+        if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
+            if((listen_fd = initTcpServer(op_settings.port_number)) < 0){
                 DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
             }
         }
         xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
         // Wifi is mutually exclusive with ADC2
-    }
-    else
-    {
+    }else{
         xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
     }
 
@@ -182,16 +167,13 @@ void app_main(void)
 }
 
 // This task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck
-void IRAM_ATTR sendTask()
-{
-    if (!strcmp(op_settings.com_mode, COM_MODE_BT))
-    {
+void IRAM_ATTR sendTask(){
+    if(!strcmp(op_settings.com_mode, COM_MODE_BT)){
         initBt();
         send_func = &esp_spp_write;
     }
 
-    while (1)
-    {
+    while(1){
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         sendData();
     }
