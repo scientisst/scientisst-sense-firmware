@@ -1,5 +1,5 @@
-#ifndef _MAIN_H
-#define _MAIN_H
+#ifndef _SCIENTISST_FIRMWARE_H
+#define _SCIENTISST_FIRMWARE_H
 
 #include <stdint.h>
 #include <string.h>
@@ -66,5 +66,7 @@ extern uint8_t com_mode;
 extern op_settings_info_t op_settings;
 extern esp_err_t (*send_func)(uint32_t, int, uint8_t*);
 extern uint8_t is_op_settings_valid;
+
+void initScientisst(void);
 
 #endif
