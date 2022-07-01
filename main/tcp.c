@@ -39,16 +39,12 @@ int initTcpServer(char *port_str){
     return listen_fd;
 }
 
-int initTcpConnection(int* listen_fd){
+int initTcpConnection(int listen_fd){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len;
     int client_fd;
-    if ((client_fd = accept(*listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0)
-    {
+    if ((client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0){
         DEBUG_PRINT_E("initTcpServer", "accept error");
-        shutdown(*listen_fd, 0);
-        close(*listen_fd);
-        listen_fd = 0;
         return -1;
     }
     return client_fd;

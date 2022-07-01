@@ -145,7 +145,6 @@ void app_main(void){
 
     // If op_mode is Wifi or Serial
     if(isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
-
         if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
             if((listen_fd = initTcpServer(op_settings.port_number)) < 0){
                 DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
@@ -179,45 +178,35 @@ void IRAM_ATTR sendTask(){
     }
 }
 
-void rcvTask()
-{
-    while (1)
-    {
+void rcvTask(){
+    while (1){
         // TCP client
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA))
-        {
-            while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
-            {
+        if(!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)){
+            while((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
         }
         // TCP server
-        else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
-        {
-            while ((send_fd = initTcpConnection(listen_fd)) < 0)
-            {
+        else if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
+            while((send_fd = initTcpConnection(listen_fd)) < 0){
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
         }
         // UDP client
-        else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
-        {
-            while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0)
-            {
+        else if(!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)){
+            while((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0){
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to UDP Server %s:%s specified in the configuration. Redo the configuration. Trying again...", op_settings.host_ip, op_settings.port_number);
             }
             send_func = &udpSend;
             // Serial
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL))
-        {
-            while ((send_fd = serialInit()) < 0)
-            {
+        else if(!strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
+            while((send_fd = serialInit()) < 0){
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to host USB Serial port. Trying again...");
             }
@@ -228,8 +217,7 @@ void rcvTask()
 }
 
 // Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
-void IRAM_ATTR acqAdc1Task()
-{
+void IRAM_ATTR acqAdc1Task(){
 // When there is an external adc, esp32 follows the ADC's clock
 #if _ADC_EXT_ == NO_EXT_ADC
     // Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
@@ -254,13 +242,10 @@ void IRAM_ATTR acqAdc1Task()
     // Config LED control core
     configLedC();
 
-    while (1)
-    {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
-        {
+    while(1){
+        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
 #if _ADC_EXT_ != NO_EXT_ADC
-            if (num_extern_active_chs)
-            {
+            if(num_extern_active_chs){
                 spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
             }
 #endif
@@ -290,21 +275,18 @@ void IRAM_ATTR acqAdc1Task()
             snd_buff_idx[acq_curr_buff] += packet_size;
 
             // Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send acq_curr_buff, we need to update it
-            if (snd_buff_idx[acq_curr_buff] >= send_threshold)
-            {
+            if(snd_buff_idx[acq_curr_buff] >= send_threshold){
                 // Tell bt task that it has acq_curr_buff to send (but it will only send after the buffer is filled above the threshold)
                 xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
                 bt_buffs_to_send[acq_curr_buff] = 1;
                 xSemaphoreGive(bt_buffs_to_send_mutex);
 
                 // If send task is idle, wake it up
-                if (send_busy == 0)
-                {
+                if(send_busy == 0){
                     xTaskNotifyGive(send_task);
                 }
                 // Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput
-                if (snd_buff_idx[acq_curr_buff] + packet_size >= MAX_BUFFER_SIZE && bt_buffs_to_send[(acq_curr_buff + 1) % 4] == 1)
-                {
+                if(snd_buff_idx[acq_curr_buff] + packet_size >= MAX_BUFFER_SIZE && bt_buffs_to_send[(acq_curr_buff + 1) % 4] == 1){
                     DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                     continue;
                 }
@@ -313,16 +295,13 @@ void IRAM_ATTR acqAdc1Task()
                 // Next buffer is free, change buffer
                 acq_curr_buff = (acq_curr_buff + 1) % 4;
             }
-        }
-        else
-        {
+        }else{
             DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
         }
     }
 }
 
-void IRAM_ATTR AbatTask()
-{
+void IRAM_ATTR AbatTask(){
     uint16_t raw;
     uint16_t abat; // Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;
@@ -332,12 +311,9 @@ void IRAM_ATTR AbatTask()
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
     timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, (uint32_t)ABAT_CHECK_FREQUENCY);
 
-    while (1)
-    {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
-        {
-            if (adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int *)&raw) != ESP_OK)
-            {
+    while (1){
+        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
+            if(adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int *)&raw) != ESP_OK){
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
             abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DIVIDER_FACTOR;
@@ -345,37 +321,30 @@ void IRAM_ATTR AbatTask()
             turn_led_on = abat <= battery_threshold;
 
             // Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the threshold
-            if (!bat_led_status_gpio && turn_led_on)
-            {
+            if(!bat_led_status_gpio && turn_led_on){
                 battery_threshold += 50;
 
                 // It already charged passed the real threshold, so update the battery_threshold to its real value
-            }
-            else if (bat_led_status_gpio && !turn_led_on)
-            {
+            }else if (bat_led_status_gpio && !turn_led_on){
                 battery_threshold -= 50;
             }
 
             bat_led_status_gpio = turn_led_on;
 
             gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
-        }
-        else
-        {
+        }else{
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }
     }
 }
 
-void opModeConfig(void)
-{
+void opModeConfig(void){
     op_mode = OP_MODE_CONFIG;
     initRestServer();
     gpio_set_level(STATE_LED_IO, 1);
 
     // Hang here until user successfully submites a new config in the web page
-    while (1)
-    {
+    while(1){
         vTaskDelay(portMAX_DELAY);
     }
 }
