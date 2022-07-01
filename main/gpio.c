@@ -4,7 +4,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "macros.h"
-#include "main.h"
+#include "scientisst.h"
 
 //TODO: Meter os pins SPI3_MISO, U2RXD, U2TXD, SDA0, SCL0 a pull up
 

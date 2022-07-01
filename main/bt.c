@@ -18,7 +18,7 @@
 #include "bt.h"
 #include "macros.h"
 #include "com.h"
-#include "main.h"
+#include "scientisst.h"
 
 #define SEND_AFTER_C0NG 2
 

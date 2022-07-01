@@ -2,7 +2,7 @@
 #include "macros.h"
 #include "com.h"
 #include "freertos/FreeRTOS.h"
-#include "main.h"
+#include "scientisst.h"
 #include "cJSON.h"
 #include "gpio.h"
 #include "config.h"

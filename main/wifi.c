@@ -22,7 +22,7 @@
 
 #include "mdns.h"
 #include "wifi.h"
-#include "main.h"
+#include "scientisst.h"
 #include "macros.h"
 
 // if the structure of a record saved for a subsequent reboot changes

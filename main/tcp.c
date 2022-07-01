@@ -3,7 +3,7 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
-#include "main.h"
+#include "scientisst.h"
 #include "macros.h"
 #include "tcp.h"
 #include "bt.h"

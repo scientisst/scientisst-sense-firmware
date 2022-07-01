@@ -1,6 +1,5 @@
-#include "scientisst-firmware.h"
+#include "scientisst.h"
 
 void app_main(void){
-
-
+    initScientisst();
 }

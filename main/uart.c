@@ -1,7 +1,3 @@
-#include "main.h"
-#include "macros.h"
-#include "uart.h"
-#include "bt.h"
 #include "driver/uart.h"
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
@@ -9,6 +5,11 @@
 #include <sys/errno.h>
 #include <sys/unistd.h>
 #include <sys/select.h>
+
+#include "scientisst.h"
+#include "macros.h"
+#include "uart.h"
+#include "bt.h"
 
 const uart_port_t serial_com_uart_num = UART_NUM_0;
 

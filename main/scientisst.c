@@ -1,16 +1,18 @@
-#include "main.h"
+#include "sdkconfig.h"
+#include "scientisst.h"
+#include "adc.h"
+#include "com.h"
+#include "i2c.h"
+#include "spi.h"
+#include "wifi.h"
 #include "bt.h"
 #include "macros.h"
 #include "timer.h"
 #include "gpio.h"
-#include "spi.h"
-#include "wifi.h"
 #include "wifi_rest_server.h"
 #include "tcp.h"
 #include "udp.h"
-#include "sdkconfig.h"
 #include "uart.h"
-#include "wifi.h"
 
 #define BT_SEND_PRIORITY_TASK 10 // MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1

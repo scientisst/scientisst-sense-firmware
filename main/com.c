@@ -5,7 +5,7 @@
 #include "adc.h"
 #include "macros.h"
 #include "timer.h"
-#include "main.h"
+#include "scientisst.h"
 #include "gpio.h"
 #include "spi.h"
 #include "bt.h"

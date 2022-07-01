@@ -3,7 +3,7 @@
 #include "macros.h"
 #include "com.h"
 #include "gpio.h"
-#include "main.h"
+#include "scientisst.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"

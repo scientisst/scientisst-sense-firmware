@@ -25,7 +25,7 @@
 #include "mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "macros.h"
-#include "main.h"
+#include "scientisst.h"
 #include "bt.h"
 #include "wifi_rest_server.h"
 #include "wifi.h"
