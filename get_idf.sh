@@ -9,5 +9,5 @@ export IDF_TOOLS_PATH="$SCRIPT_PATH/esp-idf-tools/"
 #If an argument is not supplited (don't skip the export part)
 if [ $# -eq 0 ]
     then
-    . ./deps/esp-idf/export.sh
+    . $IDF_PATH/export.sh
 fi
