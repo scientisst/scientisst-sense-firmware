@@ -323,7 +323,7 @@ err:
 }
 
 //restful_server_main.c-------------------------------------------------------------------------------------------------------------------
-esp_err_t init_fs(void){
+esp_err_t init_fs_www(void){
     esp_vfs_spiffs_conf_t conf = {
         .base_path = WEB_MOUNT_POINT,
         .partition_label = NULL,
@@ -334,11 +334,11 @@ esp_err_t init_fs(void){
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            DEBUG_PRINT_E("init_fs", "Failed to mount or format filesystem");
+            DEBUG_PRINT_E("init_fs_www", "Failed to mount or format filesystem");
         } else if (ret == ESP_ERR_NOT_FOUND) {
-            DEBUG_PRINT_E("init_fs", "Failed to find SPIFFS partition");
+            DEBUG_PRINT_E("init_fs_www", "Failed to find SPIFFS partition");
         } else {
-            DEBUG_PRINT_E("init_fs", "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+            DEBUG_PRINT_E("init_fs_www", "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
         return ESP_FAIL;
     }
@@ -346,14 +346,14 @@ esp_err_t init_fs(void){
     size_t total = 0, used = 0;
     ret = esp_spiffs_info(NULL, &total, &used);
     if (ret != ESP_OK) {
-        DEBUG_PRINT_E("init_fs", "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+        DEBUG_PRINT_E("init_fs_www", "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
     } else {
-        DEBUG_PRINT_I("init_fs", "Partition size: total: %d, used: %d", total, used);
+        DEBUG_PRINT_I("init_fs_www", "Partition size: total: %d, used: %d", total, used);
     }
     return ESP_OK;
 }
 
 void initRestServer(void){
-    ESP_ERROR_CHECK(init_fs());
+    ESP_ERROR_CHECK(init_fs_www());
     ESP_ERROR_CHECK(start_rest_server(WEB_MOUNT_POINT));
 }

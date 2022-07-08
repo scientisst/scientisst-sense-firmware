@@ -94,7 +94,7 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en){
 }
 
 //Acquires and stores into frame the channel acquisitions
-void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
+void acquireAdc1Channels(uint8_t* frame){
     uint16_t adc_res[6] = {0, 0, 0, 0, 0, 0};
     uint8_t io_state = 0;
     uint8_t i;
@@ -151,7 +151,9 @@ void IRAM_ATTR acquireAdc1Channels(uint8_t* frame){
 
 void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
+    #if _ADC_EXT_ != NO_EXT_ADC && _TIMESTAMP_ == 1
     uint32_t adc_external_res[2] = {0, 0};
+    #endif
     uint8_t io_state = 0;
     int i;
     uint8_t crc = 0;
@@ -238,7 +240,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     crc_seq++;
 }
 
-void IRAM_ATTR acquireChannelsJson(uint8_t* frame){
+void acquireChannelsJson(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[2] = {0, 0};
     int i;
