@@ -114,13 +114,15 @@ void initScientisst(void){
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-
+    
+    //TODO
     //Load saved op_settings configuration which resides in flash
-    if(!getOpSettingsInfo(&op_settings)){
+    /*if(!getOpSettingsInfo(&op_settings)){
         is_op_settings_valid = 1;
     }else{
         is_op_settings_valid = 0;
-    }
+    }*/
+    is_op_settings_valid = 1;
 
     //Determine and save device name in device_name
     getDeviceName();
@@ -166,8 +168,6 @@ void initScientisst(void){
 
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
     //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY_TASK, &acquiring_i2c_task, 1);
-
-    vTaskDelete(NULL);
 }
 
 //This task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck

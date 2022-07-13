@@ -5,5 +5,6 @@ cmake_minimum_required(VERSION 3.5)
 option(STANDALONE_SCIENTISST "Scientisst is intended to use as a standalone firmware" ON)
 
 set(SUPPORTED_TARGETS esp32)
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(esp32_it)
+project(scientisst-sense)

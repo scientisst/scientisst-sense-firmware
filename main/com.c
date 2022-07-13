@@ -223,6 +223,11 @@ void selectChsFromMask(uint8_t* buff){
     packet_size = getPacketSize();
 }
 
+#ifdef BINEDGE_EXAMPLE
+extern void initPreprocessing(void);
+extern void deinitPreprocessing(void);
+#endif
+
 void startAcquisition(uint8_t *buff, uint8_t cmd){
     //Get channels from mask
     api_config.select_ch_mask_func(buff);
@@ -241,6 +246,9 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
         memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
         snd_buff_idx[i] = 0;
     }
+    #ifdef BINEDGE_EXAMPLE
+    initPreprocessing();
+    #endif
 
     //WARINING: if changed, change same code in API
     if(sample_rate > 100){
@@ -291,6 +299,10 @@ void stopAcquisition(void){
     if(num_extern_active_chs){
         adcExtStop();
     }
+    #endif
+
+    #ifdef BINEDGE_EXAMPLE
+    initPreprocessing();
     #endif
 
     op_mode = OP_MODE_IDLE;

@@ -149,6 +149,10 @@ void acquireAdc1Channels(uint8_t* frame){
     crc_seq++;
 }
 
+#ifdef BINEDGE_EXAMPLE
+extern void adcCallback(uint16_t sample);
+#endif
+
 void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
     #if _ADC_EXT_ != NO_EXT_ADC && _TIMESTAMP_ == 1
@@ -172,6 +176,10 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
         }
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
+
+    #ifdef BINEDGE_EXAMPLE
+    adcCallback(adc_internal_res[0]);
+    #endif
 
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
@@ -206,7 +214,6 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
     #endif
 
-
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
 
     //Store values of internal channels into frame
@@ -223,7 +230,6 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
 
     //Calculate CRC & SEQ Number---------------------------------------------------------
-
     //calculate CRC (except last byte (seq+CRC) )
     for(i = 0; i < packet_size-1; i++){
         // calculate CRC nibble by nibble
