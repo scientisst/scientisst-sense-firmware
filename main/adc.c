@@ -150,7 +150,7 @@ void acquireAdc1Channels(uint8_t* frame){
 }
 
 #ifdef BINEDGE_EXAMPLE
-extern void adcCallback(uint16_t sample);
+extern void adcCallback(uint16_t *adc_internal_res, uint8_t *gpio_out_state);
 #endif
 
 void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
@@ -178,14 +178,14 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
 
     #ifdef BINEDGE_EXAMPLE
-    adcCallback(adc_internal_res[0]);
+    adcCallback(adc_internal_res, gpio_out_state);
     #endif
 
     //Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
     io_state |= gpio_get_level(I1_IO) << 6;
-    io_state |= gpio_out_state[0] << 5;
-    io_state |= gpio_out_state[1] << 4;
+    io_state |= (gpio_out_state[0] & 0b1) << 5;
+    io_state |= (gpio_out_state[1] & 0b1) << 4;
 
     frame[packet_size-2] = io_state;
 

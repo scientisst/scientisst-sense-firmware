@@ -1,5 +1,5 @@
 set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "i2c.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c")
-set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs)
+set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs ecg-biometrics common)
 
 set(SRCS_PATH "scientisst-sense-firmware/main")
 
@@ -10,13 +10,12 @@ else()
     list(TRANSFORM srcs PREPEND "${SRCS_PATH}/")
 endif()
 
-if(IS_BINEDGE_EXAMPLE)
-message(SEND_ERROR "BINEDGE_EXAMPLE: ${BINEDGE_EXAMPLE}")
-    idf_build_set_property(BINEDGE_EXAMPLE property PROJECT_NAME) #N sei como fazer variaveis globais
-    message(SEND_ERROR "BINEDGE_EXAMPLE: ${BINEDGE_EXAMPLE}")
-    list(APPEND requires ${BINEDGE_EXAMPLE})
-    list(APPEND requires common)
-endif()
+#if(IS_BINEDGE_EXAMPLE)
+#    idf_build_set_property(BINEDGE_EXAMPLE property PROJECT_NAME) #N sei como fazer variaveis globais
+#    list(APPEND requires ${BINEDGE_EXAMPLE})
+#    list(APPEND requires common)
+#     message(SEND_ERROR "requires: ${requires}")
+#endif()
 
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "." "../../"

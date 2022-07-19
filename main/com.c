@@ -62,7 +62,7 @@ void triggerGpio(uint8_t *buff){
     gpio_set_level(O1_IO, o2_lvl);
     gpio_out_state[1] = o2_lvl;
 
-    DEBUG_PRINT_I("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
+    DEBUG_PRINT_W("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
 }
 
 void triggerDAC(uint8_t *buff){
@@ -302,7 +302,7 @@ void stopAcquisition(void){
     #endif
 
     #ifdef BINEDGE_EXAMPLE
-    initPreprocessing();
+    deinitPreprocessing();
     #endif
 
     op_mode = OP_MODE_IDLE;
