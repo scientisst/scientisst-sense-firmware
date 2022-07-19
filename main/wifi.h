@@ -18,8 +18,10 @@
 #define COM_MODE_UDP_STA "udp_sta"
 #define COM_MODE_BT "bt"
 #define COM_MODE_SERIAL "serial"
+#define COM_MODE_WS_AP "ws_ap"
 
-typedef struct {
+typedef struct
+{
 	char ssid[SIZE_32];
 	char password[SIZE_64];
 
@@ -33,12 +35,12 @@ typedef struct {
 	char bit_mode[SIZE_10];
 	char port_o1[SIZE_5];
 	char port_o2[SIZE_5];
-}op_settings_info_t;
+} op_settings_info_t;
 
 int wifiInit(uint8_t force_ap);
 void wifi_init_softap();
 
-//Checks if com_mode is one of the wifi modes
+// Checks if com_mode is one of the wifi modes
 uint8_t isComModeWifi(void);
 
 int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);

@@ -13,6 +13,7 @@
 #include "tcp.h"
 #include "udp.h"
 #include "uart.h"
+#include "ws.h"
 
 #define BT_SEND_PRIORITY_TASK 10 //MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
@@ -152,12 +153,19 @@ void initScientisst(void){
 
     //If op_mode is Wifi or Serial
     if(isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
-        if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
-            if((listen_fd = initTcpServer(op_settings.port_number)) < 0){
-                DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
+         if(!strcmp(op_settings.com_mode, COM_MODE_WS_AP)){
+            DEBUG_PRINT_W("WS", "Starting web server");
+            start_webserver();
+            send_func = &wsSerialSend;
+        }else{
+            if(!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)){
+                if((listen_fd = initTcpServer(op_settings.port_number)) < 0){
+                    DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
+                }
             }
+            xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
         }
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
+
         //Wifi is mutually exclusive with ADC2
     }else{
         xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);

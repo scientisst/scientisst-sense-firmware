@@ -1,5 +1,5 @@
-set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "i2c.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c")
-set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs ecg-biometrics common)
+set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "i2c.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c" "ws.c")
+set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs esp_https_server)
 
 set(SRCS_PATH "scientisst-sense-firmware/main")
 
@@ -20,7 +20,8 @@ endif()
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "." "../../"
                        REQUIRES ${requires}
-                       )
+                       EMBED_TXTFILES "certs/cacert.pem" "certs/prvtkey.pem"
+                      )
 
 
 set(WEB_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/../www")
