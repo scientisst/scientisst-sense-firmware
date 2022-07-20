@@ -10,17 +10,16 @@ else()
     list(TRANSFORM srcs PREPEND "${SRCS_PATH}/")
 endif()
 
-#if(IS_BINEDGE_EXAMPLE)
-#    idf_build_set_property(BINEDGE_EXAMPLE property PROJECT_NAME) #N sei como fazer variaveis globais
-#    list(APPEND requires ${BINEDGE_EXAMPLE})
-#    list(APPEND requires common)
-#     message(SEND_ERROR "requires: ${requires}")
-#endif()
+idf_build_get_property(BINEDGE_EXAMPLE BINEDGE_EXAMPLE_PROPERTY)
+if(DEFINED BINEDGE_EXAMPLE)
+    list(APPEND requires ${BINEDGE_EXAMPLE})
+    list(APPEND requires common)
+endif()
 
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "." "../../"
                        REQUIRES ${requires}
-                       EMBED_TXTFILES "certs/cacert.pem" "certs/prvtkey.pem"
+                       EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/certs/cacert.pem" "${CMAKE_CURRENT_LIST_DIR}/certs/prvtkey.pem"
                       )
 
 
