@@ -6,14 +6,16 @@ SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export IDF_PATH="$SCRIPT_PATH/deps/esp-idf/"
 export IDF_TOOLS_PATH="$SCRIPT_PATH/esp-idf-tools/"
 
-
-if [ $# -eq 0 ]
-    #If an argument is not supplited (don't skip the export part)
-    then
+#If an argument is not supplited (don't skip the export part)
+if [ $# -eq 0 ]; then
+    #Export idf
     . $IDF_PATH/export.sh
 
-    #Check for arguments
-    else
+    #Create command to open serial monitor with ease
+    alias idf_monitor="idf.py monitor -p /dev/ttyUSB0"
+
+#Check for arguments
+else
     POSITIONAL_ARGS=()
     while [[ $# -gt 0 ]]; do
         case $1 in
