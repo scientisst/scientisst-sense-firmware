@@ -19,6 +19,7 @@
 #define COM_MODE_BT "bt"
 #define COM_MODE_SERIAL "serial"
 #define COM_MODE_WS_AP "ws_ap"
+#define COM_MODE_BLE "ble"
 
 typedef struct
 {

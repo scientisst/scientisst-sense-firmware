@@ -20,8 +20,6 @@
 #include "com.h"
 #include "scientisst.h"
 
-#define SEND_AFTER_C0NG 2
-
 void IRAM_ATTR sendData(){
     //Check if there's anything to send and if there is, check if it's enough to send
     xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
@@ -198,7 +196,7 @@ void initBt(){
         return;
     }
 
-    if ((ret = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT)) != ESP_OK) {
+    if ((ret = esp_bt_controller_enable(ESP_BT_MODE_BTDM)) != ESP_OK) {
         DEBUG_PRINT_E("init", "%s enable controller failed: %s\n", __func__, esp_err_to_name(ret));
         return;
     }

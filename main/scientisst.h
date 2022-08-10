@@ -1,5 +1,5 @@
-#ifndef _SCIENTISST_H
-#define _SCIENTISST_H
+#ifndef SCIENTISST_H
+#define SCIENTISST_H
 
 #include <stdint.h>
 #include <string.h>
@@ -32,7 +32,8 @@ extern TaskHandle_t acquiring_1_task;
 extern TaskHandle_t abat_task;
 extern TaskHandle_t acquiring_i2c_task;
 extern int send_fd;
-extern uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];                                
+extern uint8_t *snd_buff[NUM_BUFFERS];   
+extern uint32_t send_buff_len;                             
 extern uint8_t packet_size;
 extern uint16_t snd_buff_idx[];
 extern uint8_t bt_buffs_to_send[];                              

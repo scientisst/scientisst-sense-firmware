@@ -14,6 +14,7 @@
 #include "udp.h"
 #include "uart.h"
 #include "ws.h"
+#include "ble.h"
 
 #define BT_SEND_PRIORITY_TASK 10 //MAX priority in ESP32 is 25
 #define ABAT_PRIORITY_TASK 1
@@ -46,7 +47,8 @@ int send_fd = 0;
 //TCP server
 int listen_fd = 0;
 
-uint8_t snd_buff[NUM_BUFFERS][MAX_BUFFER_SIZE];       //Data structure to hold the data to be sent through bluetooth
+uint8_t *snd_buff[NUM_BUFFERS];       //Data structure to hold the data to be sent through bluetooth
+uint32_t send_buff_len = 0;           //Length of each send buff
 uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0};    //It contains, for each buffer, the index of the first free element in the respective buffer
 uint8_t bt_buffs_to_send[NUM_BUFFERS] = {0, 0, 0, 0}; //If element 0 is set to 1, bt task has to send snd_buff[0]
 uint8_t bt_curr_buff = 0;                             //Index of the buffer that bt task is currently sending
@@ -91,7 +93,7 @@ spi_transaction_t adc_ext_trans;
 
 //Op settings
 //TODO
-op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.com_mode = COM_MODE_BLE}; //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;                                                      //Flag that indicates if a valid op_settings has been read successfuly from flash
 
 /**
@@ -102,11 +104,6 @@ void initScientisst(void){
     if((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL){
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
-    }
-
-    //Inicialize send buffers
-    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
-        memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
     }
 
     //Init nvs (Non volatile storage)
@@ -184,6 +181,9 @@ void IRAM_ATTR sendTask(){
     if(!strcmp(op_settings.com_mode, COM_MODE_BT)){
         initBt();
         send_func = &esp_spp_write;
+    }else if(!strcmp(op_settings.com_mode, COM_MODE_BLE)){
+        initBle();
+        send_func = &sendBle;
     }
 
     while(1){
@@ -253,6 +253,21 @@ void IRAM_ATTR acqAdc1Task(){
     //Config LED control core
     configLedC();
 
+    if(!strcmp(op_settings.com_mode, COM_MODE_BLE)){
+        send_buff_len = GATTS_NOTIFY_LEN;
+    }else{
+        send_buff_len = MAX_BUFFER_SIZE;
+    }
+
+    //Allocate memory for send buffers
+    for(int i = 0; i < NUM_BUFFERS; i++){
+        snd_buff[i] = (uint8_t*)malloc(send_buff_len*sizeof(uint8_t));
+        if(snd_buff[i] == NULL){
+            DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
+            exit(-1);
+        }
+    }
+
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
 #if _ADC_EXT_ != NO_EXT_ADC
@@ -297,7 +312,7 @@ void IRAM_ATTR acqAdc1Task(){
                     xTaskNotifyGive(send_task);
                 }
                 //Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput
-                if(snd_buff_idx[acq_curr_buff] + packet_size >= MAX_BUFFER_SIZE && bt_buffs_to_send[(acq_curr_buff + 1) % 4] == 1){
+                if(snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len && bt_buffs_to_send[(acq_curr_buff + 1) % 4] == 1){
                     DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                     continue;
                 }

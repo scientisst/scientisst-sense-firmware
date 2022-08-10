@@ -286,42 +286,36 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
     //Get channels from mask
     api_config.select_ch_mask_func(buff);
 
-    // Clear send buffs, because of potential previous live mode
+    //Clear send buffs, because of potential previous live mode
     bt_curr_buff = 0;
     acq_curr_buff = 0;
-    // Clean send buff, because of send status and send firmware string
+    //Clean send buff, because of send status and send firmware string
     send_busy = 0;
     memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
     snd_buff_idx[bt_curr_buff] = 0;
     bt_buffs_to_send[bt_curr_buff] = 0;
 
-    // Clean send buffers, to be sure
-    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
-    {
-        memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
+    //Clean send buffers, to be sure
+    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
+        memset(snd_buff[i], 0, send_buff_len);
         snd_buff_idx[i] = 0;
     }
     #ifdef BINEDGE_EXAMPLE
     initPreprocessing();
     #endif
 
-    // WARINING: if changed, change same code in API
-    if (sample_rate > 100)
-    {
-        send_threshold = !(MAX_BUFFER_SIZE % packet_size) ? MAX_BUFFER_SIZE - packet_size : MAX_BUFFER_SIZE - (MAX_BUFFER_SIZE % packet_size);
-    }
-    else
-    {
+    //WARINING: if changed, change same code in API
+    if(sample_rate > 100){
+        send_threshold = !(send_buff_len % packet_size) ? send_buff_len - packet_size : send_buff_len - (send_buff_len % packet_size);
+    }else{
         send_threshold = packet_size;
     }
+    
 
-    if (cmd == 0b10)
-    {
+    if(cmd == 0b10){
         sim_flag = 1;
         DEBUG_PRINT_W("processRcv", "Simulation mode");
-    }
-    else
-    {
+    }else{
         sim_flag = 0;
     }
 
@@ -378,9 +372,8 @@ void stopAcquisition(void)
     sin_i = 0;
 
     // Clean send buffers
-    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
-    {
-        memset(snd_buff[i], 0, MAX_BUFFER_SIZE);
+    for(uint8_t i = 0; i < NUM_BUFFERS; i++){
+        memset(snd_buff[i], 0, send_buff_len);
         snd_buff_idx[i] = 0;
     }
 
