@@ -25,15 +25,6 @@
 
 #define CONFIG_EXAMPLE_SET_RAW_ADV_DATA 1
 
-/**********************************************************
- * Thread/Task reference
- **********************************************************/
-#ifdef CONFIG_BLUEDROID_PINNED_TO_CORE
-#define BLUETOOTH_TASK_PINNED_TO_CORE              (CONFIG_BLUEDROID_PINNED_TO_CORE < portNUM_PROCESSORS ? CONFIG_BLUEDROID_PINNED_TO_CORE : tskNO_AFFINITY)
-#else
-#define BLUETOOTH_TASK_PINNED_TO_CORE              (0)
-#endif
-
 #define SECOND_TO_USECOND          1000000
 
 #define GATTS_TAG "GATTS_DEMO"
@@ -58,7 +49,6 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 #define GATTS_DESCR_UUID_TEST_B     0x2222
 #define GATTS_NUM_HANDLE_TEST_B     4
 
-#define TEST_DEVICE_NAME            "THROUGHPUT_DEMO"
 #define TEST_MANUFACTURER_DATA_LEN  17
 
 #define GATTS_DEMO_CHAR_VAL_LEN_MAX 0x40
