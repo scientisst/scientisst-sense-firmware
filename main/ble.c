@@ -492,7 +492,6 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
     case ESP_GATTS_CONF_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_CONF_EVT, status %d", param->conf.status);
 
-        finalizeSend();
         //Try to send next buff
         if(!(param->congest.congested)){         //bt write is free   
             sendData();                             
@@ -551,6 +550,8 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff){
     if(res != ESP_OK){
         DEBUG_PRINT_E("sendBle", "ERROR: SEND FAILED\n");
     }
+
+    finalizeSend();
 
     // Try to send next buff
     sendData();
