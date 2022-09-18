@@ -1,6 +1,3 @@
 [submodule "deps/esp-idf"]
 	path = deps/esp-idf
 	url = https://github.com/espressif/esp-idf.git
-[submodule "www"]
-	path = www
-	url = git@github.com:scientisst/scientisst-sense-firmware-config.git
