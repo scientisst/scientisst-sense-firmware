@@ -551,7 +551,7 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff){
         DEBUG_PRINT_E("sendBle", "ERROR: SEND FAILED\n");
     }
 
-    //printf("Frame sn=%d (len=%d): %d %d %d\n", buff[2] >> 4, len, buff[0], buff[1], buff[2]);
+    printf("Frame sn=%d (len=%d): %d %d %d\n", buff[2] >> 4, len, buff[0], buff[1], buff[2]);
 
     finalizeSend();
 
