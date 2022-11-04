@@ -493,11 +493,11 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         DEBUG_PRINT_I(GATTS_TAG, "ESP_GATTS_CONF_EVT, status %d", param->conf.status);
 
         //Try to send next buff
-        if(!(param->congest.congested)){         //bt write is free   
+        /*if(!(param->congest.congested)){         //bt write is free   
             sendData();                             
         }else{
             send_busy = SEND_AFTER_C0NG;
-        }
+        }*/
         break;
     case ESP_GATTS_OPEN_EVT:
     case ESP_GATTS_CANCEL_OPEN_EVT:
@@ -506,7 +506,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         break;
     case ESP_GATTS_CONGEST_EVT:
         if(param->congest.congested == 0 && send_busy == SEND_AFTER_C0NG){
-            sendData();                             //bt write is free
+            //sendData();                             //bt write is free
         }else if(param->congest.congested){
             DEBUG_PRINT_W("gatts_profile_a_event_handler", "ESP_SPP_CONG_EVT");
         }
@@ -551,10 +551,12 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff){
         DEBUG_PRINT_E("sendBle", "ERROR: SEND FAILED\n");
     }
 
+    //printf("Frame sn=%d (len=%d): %d %d %d\n", buff[2] >> 4, len, buff[0], buff[1], buff[2]);
+
     finalizeSend();
 
     // Try to send next buff
-    //sendData();
+    sendData();
     return ESP_OK;
 }
 
