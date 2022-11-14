@@ -210,8 +210,11 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
     #elif _TIMESTAMP_ == 1
     if(num_extern_active_chs == 2){
-        *(uint64_t*)(frame+frame_next_wr) |= esp_timer_get_time() & 0xFFFFFFFFFFFF;
+        int64_t timestamp = esp_timer_get_time() & 0xFFFFFFFFFFFF;
+        *(uint64_t*)(frame+frame_next_wr) |= timestamp;
         frame_next_wr += 6;
+
+        printf("timestamp: %lld", timestamp);
     }
     #endif
 

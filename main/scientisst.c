@@ -93,7 +93,7 @@ spi_transaction_t adc_ext_trans;
 
 //Op settings
 //TODO
-op_settings_info_t op_settings = {.com_mode = COM_MODE_BLE}; //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; //Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;                                                      //Flag that indicates if a valid op_settings has been read successfuly from flash
 
 /**
