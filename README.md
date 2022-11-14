@@ -13,22 +13,6 @@ The firmware for the Scientisst - Sense development board
 - www               :   Configuration HTML Page
 ``` 
 
-## scientisst-firmware.py usage
-
-```
-ScientISST Firmware Tool
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -i, --install         Install esp-idf tools in order to build firmware
-  -b, --build           Build firmware
-  -c, --clean           Clean build outputs
-  -f, --flash           Flash firmware
-  -v, --version         Show firmware version
-  -m [MONITOR], --monitor [MONITOR]
-                        Open serial monitor in <MONITOR> port. Example: scientisst-firmware.py --monitor /dev/ttyUSB0
-```
-
 ## Installing
 ### 1) Prerequisites
 Install the ESP-IDF prerequisites following espressif's guide https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/#step-1-install-prerequisites
@@ -39,18 +23,20 @@ Install the ESP-IDF prerequisites following espressif's guide https://docs.espre
 
 ```sh
 # Getting this repository 
-git clone --recursive https://github.com/scientisst/scientisst-sense-firmware.git
+git clone --recursive git@github.com:scientisst/scientisst-sense-firmware.git
 ```
 ### 3) Install Xtensa's toolchain
 
-```
-python scientisst-firmware.py --install
+#### (Linux/MacOS)
+
+```sh
+. get_idf.sh --install
 ```
 
 ## Flash Firmware (Linux/MacOS)
 ```sh
 #Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
-python scientisst-firmware.py --flash
+idf.py flash
 ```
 
 ### Troubleshooting
@@ -59,19 +45,19 @@ This is not an issue with the ScientISST SENSE, and its not actually a bug at al
 
 To see the groups you are in simply type:
 
-```
+```sh
 groups
 ```
 
 To see all available groups type:
 
-```
+```sh
 compgen -g
 ```
 
 Most of them are self-explanatory, in this case you want to add yourself to either the tty group and dialout group, which you would do by:
 
-```
+```sh
 sudo usermod -a -G tty <your username>
 sudo usermod -a -G dialout <your username>
 ```
@@ -80,7 +66,7 @@ Then your user should have access to tty without use of sudo.
 
 ## Serial Monitor (Linux/MacOS)
 ```sh
-python scientisst-firmware.py --monitor
+idf_monitor
 ```
 To exit the serial monitor, press `CTRL+T` followed by `CTRL+X`
 

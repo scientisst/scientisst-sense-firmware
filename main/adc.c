@@ -6,6 +6,7 @@
 #include "cJSON.h"
 #include "gpio.h"
 #include "config.h"
+#include "esp_timer.h"
 
 #define DEFAULT_VREF 1100
 
@@ -209,7 +210,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
     #elif _TIMESTAMP_ == 1
     if(num_extern_active_chs == 2){
-        *(uint64_t*)(frame+frame_next_wr) |= esp_timer_get_time();
+        *(uint64_t*)(frame+frame_next_wr) |= esp_timer_get_time() & 0xFFFFFFFFFFFF;
         frame_next_wr += 6;
     }
     #endif
