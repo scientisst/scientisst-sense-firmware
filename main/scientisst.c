@@ -240,7 +240,7 @@ void IRAM_ATTR acqAdc1Task(){
 
 #if _ADC_EXT_ == ADC_MCP
     //gpio_set_level(SPI3_CS0_IO, 1);
-    adcExtInit(SPI3_CS1_IO);
+    adcExtInit();
     mcpSetupRoutine();
     adcExtStart();
 #elif _ADC_EXT_ == ADC_ADS
@@ -270,18 +270,18 @@ void IRAM_ATTR acqAdc1Task(){
 
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-#if _ADC_EXT_ != NO_EXT_ADC
-            if(num_extern_active_chs){
-                spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
-            }
-#endif
+            #if _ADC_EXT_ != NO_EXT_ADC
+                if(num_extern_active_chs){
+                    spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
+                }
+            #endif
 
             api_config.aquire_func(snd_buff[acq_curr_buff] + snd_buff_idx[acq_curr_buff]);
 
-#if _ADC_EXT_ == ADC_MCP
-            printf("%u\n", mcpReadRegister(0x00, 3));
-            continue;
-#elif _ADC_EXT_ == ADC_ADS
+            #if _ADC_EXT_ == ADC_MCP
+                printf("%u\n", mcpReadRegister(0x00, 3));
+                continue;
+            #elif _ADC_EXT_ == ADC_ADS
             //ADS TEST CODE-----------------------------------------------------------------------------------------
             spi_transaction_t *ads_rtrans;
             spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
@@ -295,7 +295,7 @@ void IRAM_ATTR acqAdc1Task(){
             swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8]));
             printf("%d\n", (int32_t)swag);
             continue;
-//~ADS TEST CODE-----------------------------------------------------------------------------------------
+            //~ADS TEST CODE-----------------------------------------------------------------------------------------
 #endif
 
             snd_buff_idx[acq_curr_buff] += packet_size;
@@ -316,7 +316,6 @@ void IRAM_ATTR acqAdc1Task(){
                     DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                     continue;
                 }
-                //printf("%d %d %d %d\n", bt_buffs_to_send[0], bt_buffs_to_send[1], bt_buffs_to_send[2], bt_buffs_to_send[3]);
 
                 //Next buffer is free, change buffer
                 acq_curr_buff = (acq_curr_buff + 1) % 4;

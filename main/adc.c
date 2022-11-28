@@ -10,6 +10,10 @@
 
 #define DEFAULT_VREF 1100
 
+#if _ADC_EXT_ != NO_EXT_ADC
+    extern volatile bool data_ready;
+#endif
+
 /*
     TUTORIAL: PRODUCE MASKS:
     ((1 << fieldLength) - 1) << (fieldIndex);               //fieldIndex >= 0
@@ -193,8 +197,25 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     #if _ADC_EXT_ != NO_EXT_ADC
     if(num_extern_active_chs){
         //Can be a huge bottleneck
-        spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
-        recv_ads = ads_rtrans->rx_buffer;
+        /*spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
+        recv_ads = ads_rtrans->rx_buffer;*/
+
+        while(1){
+            if(data_ready){
+                /* disable interrupts */ // begin critical region
+                gpio_intr_disable(INTR_PIN);
+
+                samples_arr[counter] = mcp3564_read_sample();
+                data_ready = false;
+                counter++;
+
+                /* enable interrupts */ // end critical region
+                gpio_intr_enable(INTR_PIN);
+                break;
+            }
+        }
+        /* print samples after reading N_SAMPLES */
+        print_arr_samples(samples_arr, N_SAMPLES);
 
         //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
         for(i = 0; i < num_extern_active_chs; i++){

@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "driver/dac.h"
+#include "config.h"
 
 #define MAX32664_MFIO_IO    GPIO_NUM_15
 #define MAX32664_RSTN_IO    GPIO_NUM_4
@@ -16,6 +17,17 @@
 #define I0_IO               GPIO_NUM_15
 #define I1_IO               GPIO_NUM_14
 #define CONFIG_BTN_IO       I1_IO
+
+#define SPI3_MISO_IO    GPIO_NUM_19
+#define SPI3_MOSI_IO    GPIO_NUM_23
+#define SPI3_SCLK_IO    GPIO_NUM_18
+#define SPI3_CS0_IO     GPIO_NUM_5
+#define SPI3_CS1_IO     GPIO_NUM_4
+#if _ADC_EXT_ == ADC_MCP
+#define MCP_DRDY_IO     I1_IO
+#elif _ADC_EXT_ == ADC_ADS
+#define ADS_DRDY_IO     GPIO_NUM_16
+#endif
 
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE

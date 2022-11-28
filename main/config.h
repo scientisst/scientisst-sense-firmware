@@ -4,7 +4,7 @@
 #define NO_EXT_ADC 0    //External ADC disabled
 #define ADC_ADS 1       //ADS
 #define ADC_MCP 2
-#define _ADC_EXT_ NO_EXT_ADC
+#define _ADC_EXT_ ADC_MCP
 
 #define _TIMESTAMP_ 1 //If both external ADC channels are enabled and _ADC_EXT_ == NO_EXT_ADC
 
