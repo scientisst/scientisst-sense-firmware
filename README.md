@@ -33,6 +33,13 @@ git clone --recursive git@github.com:scientisst/scientisst-sense-firmware.git
 . get_idf.sh --install
 ```
 
+
+#### (Windows)
+
+```sh
+. get_idf.bat --install
+```
+
 ## Flash Firmware (Linux/MacOS)
 ```sh
 . get_idf.sh
