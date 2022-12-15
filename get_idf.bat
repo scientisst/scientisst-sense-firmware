@@ -31,8 +31,7 @@ if not "%1" == "" (
     :arg_loop_end
     if "%INSTALL%" equ "1" (
         %SCRIPT_PATH%\deps\esp-idf\install.bat
-    ) else (
-)
+    ) 
     :unknown_arg
     echo Unknown option %1
     rem exit /b 1
