@@ -15,24 +15,28 @@
 #include "uart.h"
 #include "ws.h"
 #include "ble.h"
+#include "spi.h"
 
-#define BT_SEND_PRIORITY_TASK 10 //MAX priority in ESP32 is 25
-#define ABAT_PRIORITY_TASK 1
-#define WIFI_RCV_PRIORITY_TASK 1
-#define ACQ_PRIORITY_TASK 10
-#define I2C_ACQ_PRIORITY_TASK 1
+#define BT_SEND_PRIORITY 10 //MAX priority in ESP32 is 25
+#define ABAT_PRIORITY 1
+#define WIFI_RCV_PRIORITY 1
+#define ACQ_ADC1_PRIORITY 10
+#define ACQ_ADC_EXT_PRIORITY 11
+//#define I2C_ACQ_PRIORITY 1
 
 void IRAM_ATTR sendTask();
 void rcvTask();
 void IRAM_ATTR AbatTask();
 void IRAM_ATTR acqAdc1Task();
+void IRAM_ATTR acqAdcExtTask();
 void opModeConfig(void);
 //void acqI2cTask();
 
 TaskHandle_t send_task;
 TaskHandle_t abat_task;
 TaskHandle_t rcv_task;
-TaskHandle_t acquiring_1_task;
+TaskHandle_t acq_adc1_task;
+TaskHandle_t acq_adc_ext_task;
 //TaskHandle_t acquiring_i2c_task;
 
 //SemaphoreHandle_t snd_buff_mutex[NUM_BUFFERS];
@@ -147,7 +151,7 @@ void initScientisst(void){
         }
     }
 
-    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY_TASK, &send_task, 0);
+    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY, &send_task, 0);
 
     //If op_mode is Wifi or Serial
     if(isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)){
@@ -161,19 +165,21 @@ void initScientisst(void){
                     DEBUG_PRINT_E("serverTCP", "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...", op_settings.port_number);
                 }
             }
-            xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY_TASK, &rcv_task, 0);
+            xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
         }
 
         //Wifi is mutually exclusive with ADC2
     }else{
-        xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY_TASK, &abat_task, 0);
+        xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY, &abat_task, 0);
     }
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
-    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_PRIORITY_TASK, &acquiring_1_task, 1);
+    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
+
+    xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL, ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
 
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
-    //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY_TASK, &acquiring_i2c_task, 1);
+    //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY, &acquiring_i2c_task, 1);
 }
 
 //This task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck
@@ -229,26 +235,11 @@ void rcvTask(){
 
 //Task that adc reads using adc1, it's also the main task of CPU1 (APP CPU)
 void IRAM_ATTR acqAdc1Task(){
-//When there is an external adc, esp32 follows the ADC's clock
-#if _ADC_EXT_ == NO_EXT_ADC
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
-#endif
 
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
-
-#if _ADC_EXT_ == ADC_MCP
-    //gpio_set_level(SPI3_CS0_IO, 1);
-    adcExtInit();
-    mcpSetupRoutine();
-    adcExtStart();
-#elif _ADC_EXT_ == ADC_ADS
-    adcExtInit(SPI3_CS0_IO);
-    adsSetupRoutine();
-    adsConfigureChannels(2);
-    adcExtStart();
-#endif
 
     //Config LED control core
     configLedC();
@@ -270,34 +261,8 @@ void IRAM_ATTR acqAdc1Task(){
 
     while(1){
         if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-            #if _ADC_EXT_ != NO_EXT_ADC
-                if(num_extern_active_chs){
-                    spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
-                }
-            #endif
 
             api_config.aquire_func(snd_buff[acq_curr_buff] + snd_buff_idx[acq_curr_buff]);
-
-            #if _ADC_EXT_ == ADC_MCP
-                printf("%u\n", mcpReadRegister(0x00, 3));
-                continue;
-            #elif _ADC_EXT_ == ADC_ADS
-            //ADS TEST CODE-----------------------------------------------------------------------------------------
-            spi_transaction_t *ads_rtrans;
-            spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
-            uint8_t *recv_ads = ads_rtrans->rx_buffer;
-            int32_t swag = (((uint32_t)recv_ads[0] << 16) | ((uint32_t)recv_ads[1] << 8) | (recv_ads[2]));
-
-            //swag = SPI_SWAP_DATA_RX(*(uint32_t*)recv_ads, 24) & 0xFFFFFF;
-            printf("%d, ", (int32_t)swag);
-            swag = (((uint32_t)recv_ads[3] << 16) | ((uint32_t)recv_ads[4] << 8) | (recv_ads[5]));
-            printf("%.6x, ", (int32_t)swag);
-            swag = (((uint32_t)recv_ads[6] << 16) | ((uint32_t)recv_ads[7] << 8) | (recv_ads[8]));
-            printf("%d\n", (int32_t)swag);
-            continue;
-            //~ADS TEST CODE-----------------------------------------------------------------------------------------
-#endif
-
             snd_buff_idx[acq_curr_buff] += packet_size;
 
             //Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send acq_curr_buff, we need to update it
@@ -324,6 +289,22 @@ void IRAM_ATTR acqAdc1Task(){
             DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
         }
     }
+}
+
+void IRAM_ATTR acqAdcExtTask(){
+    #if _ADC_EXT_ == ADC_MCP
+        adcExtInit();
+    #elif _ADC_EXT_ == ADC_ADS
+        adcExtInit(SPI3_CS0_IO);
+        adsSetupRoutine();
+        adsConfigureChannels(2);
+    #endif
+
+        while(1){
+            if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
+                sample = mcpReadRegister(REG_ADCDATA, uint8_t rx_data_bytes)
+            }
+        }
 }
 
 void IRAM_ATTR AbatTask(){

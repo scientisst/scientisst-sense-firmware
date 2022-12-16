@@ -97,7 +97,7 @@ void gpioInit(){
 
 bool IRAM_ATTR gpioDrdyIsrHandler(){
     //Wake acqAdc1. This will only start when this handler is terminated.
-    vTaskNotifyGiveFromISR(acquiring_1_task, NULL);
+    vTaskNotifyGiveFromISR(acq_adc1_task, NULL);
 
     /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
     should be performed to ensure the interrupt returns directly to the highest

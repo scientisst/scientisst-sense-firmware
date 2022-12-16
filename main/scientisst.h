@@ -28,9 +28,11 @@
 #define FIRMWARE_VERSION_STR "ScientISST1.0\n"
 #define FIRMWARE_BITALINO_VERSION_STR "BITalino_v5.1\n"
 
-extern TaskHandle_t acquiring_1_task;
+extern TaskHandle_t send_task;
 extern TaskHandle_t abat_task;
-extern TaskHandle_t acquiring_i2c_task;
+extern TaskHandle_t rcv_task;
+extern TaskHandle_t acq_adc1_task;
+extern TaskHandle_t acq_adc_ext_task;
 extern int send_fd;
 extern uint8_t *snd_buff[NUM_BUFFERS];   
 extern uint32_t send_buff_len;                             

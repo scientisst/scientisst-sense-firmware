@@ -21,10 +21,11 @@ void IRAM_ATTR adsEndTransCb(spi_transaction_t* trans);
 void adsSendCmd(uint8_t cmd);
 
 #elif _ADC_EXT_ == ADC_MCP
-void mcpSetupRoutine(void);
+void mcpSetupRoutine(uint8_t channel_mask);
 uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes);
 void mcpStart();
 void mcpStop();
+void decodeSample(int32_t sample);
 #endif
 
 #endif

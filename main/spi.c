@@ -129,21 +129,39 @@ void adcExtStop(void){
 
 #if (_ADC_EXT_ == ADC_MCP)
 
+static uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd){
+	uint8_t cmd_byte = MCP_ADDR << 6;
+
+	//If it is a reg operation
+	if(cmd & 0b00000011){
+		cmd_byte |= addr << 2;
+		cmd_byte |= cmd;
+	
+	//If it is a command not envolving reg
+	}else{
+		cmd_byte |= cmd;
+	}
+
+	return cmd_byte;
+}
+
 void mcpSendCmd(uint8_t cmd){
 	spi_transaction_t transaction;
-	uint8_t first_opcode = 0;
+	uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
 
-	first_opcode = (uint8_t)MCP_ADDR << 6;
-	first_opcode |= cmd;
+	
 
     memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
     transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
     transaction.length = 8; 
 	transaction.rxlength = 8;
-    transaction.tx_data[0] = first_opcode;
+    transaction.tx_data[0] = cmd_byte;
 
 	vTaskDelay(10/portTICK_PERIOD_MS);
-	spi_device_polling_transmit(adc_ext_spi_handler, &transaction);
+
+	gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
+    spi_device_polling_transmit(adc_ext_spi_handler, &transaction);  //Transmit!
+	gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 
 	#if (_DEBUG_ > 0)
 	printf("STATUS recieved for mcpSendCmd(): %u \n", transaction.rx_data[0]);
@@ -152,11 +170,7 @@ void mcpSendCmd(uint8_t cmd){
 
 void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes){
 	spi_transaction_t transaction;
-	uint8_t first_opcode = 0;
-
-	first_opcode = (uint8_t)MCP_ADDR << 6;
-	first_opcode |= address << 2;
-	first_opcode |= WREG;
+	uint8_t cmd_byte = mcpGetCmdByte(address, WREG);
 	
 	if(tx_data_bytes > 1){
 		tx_data = SPI_SWAP_DATA_TX((tx_data), (tx_data_bytes*8));
@@ -166,7 +180,7 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes){
    	transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
    	transaction.length = (tx_data_bytes+1)*8;				// length is MAX(in_bits, out_bits)
 	transaction.rxlength = 8;								//Recieve status byte
-    transaction.tx_data[0] = first_opcode;
+    transaction.tx_data[0] = cmd_byte;
 	*(uint32_t*)(transaction.tx_data) |= tx_data << 8;
 	printf("Register write: %u %u %u %u\n", transaction.tx_data[0], transaction.tx_data[1], transaction.tx_data[2], transaction.tx_data[3]);
 	vTaskDelay(10/portTICK_PERIOD_MS);
@@ -183,17 +197,13 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes){
 
 uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
 	spi_transaction_t transaction;
-	uint8_t first_opcode;
-
-	first_opcode = MCP_ADDR << 6;
-	first_opcode |= address << 2;
-	first_opcode |= RREG;
+	uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
    
 	memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
    	transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
    	transaction.length = rx_data_bytes*8;				// length is MAX(in_bits, out_bits)
 	transaction.rxlength = rx_data_bytes*8;								//Recieve status byte
-    transaction.tx_data[0] = first_opcode;
+    transaction.tx_data[0] = cmd_byte;
 
     //Transmit
 	gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
@@ -212,7 +222,7 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
 	return (*(uint32_t*)(transaction.rx_data));
 }
 
-void mcpSetupRoutine(void){
+void mcpSetupRoutine(uint8_t channel_mask){
 	//Config Drdy GPIO and interrupt
 	adcExtDrdyGpio(MCP_DRDY_IO);
 
@@ -223,12 +233,25 @@ void mcpSetupRoutine(void){
 	mcpWriteRegister(REG_CONFIG3, (0b11 << 6) | (0b00 << 4) | (0b0 << 3) | (0b0 << 2) | (0b0 << 1) | (0b0), 1);
 	mcpWriteRegister(REG_IRQ, (0b0 << 7) | (0b111 << 4) | (0b01 << 2) | (0b1 << 1) | 0b0, 1);
 	mcpWriteRegister(REG_MUX, 0, 1);																				
-	mcpWriteRegister(REG_SCAN, (0b000 << 21) | (0b00000 << 16) | 0b1, 3);		//Delay time between conversions of each channel & Channels selection
-	mcpWriteRegister(REG_TIMER, 1000, 3);										//(Delay) number of DMCLK periods between SCAN cycles (aka sample rate)
+	mcpWriteRegister(REG_SCAN, (0b000 << 21) | (0b00000 << 16) | (0x00 << 8) | channel_mask, 3);	//Delay time between conversions of each channel & Channels selection
+	mcpWriteRegister(REG_TIMER, 0, 3);										    			//(Delay) number of DMCLK periods between consecutive SCAN cycles (aka sample rate)
 	mcpWriteRegister(REG_OFFSETCAL, 0, 3);
 	mcpWriteRegister(REG_GAINCAL, 0, 3);
 }
 
+/* function to read ADC data from register ADC_DATA currently with SPI in 32-bit only in DATA_FORMAT '11' */
+int32_t mcpReadSample(void){
+	int32_t data;
+
+	gpio_set_level(CS_PIN, 0); // manually set CS\ active low -> begin comm
+
+	mcp3564_send_command(STATIC_READ_ADC_DATA, false);
+	esp_err_t err = spi_read_32bit(mcp3564_handler, &data);
+
+	gpio_set_level(CS_PIN, 1); // manually set CS\ idle
+
+	return data;
+}
 
 void mcpStart(){
 	mcpSendCmd(START);
@@ -236,6 +259,20 @@ void mcpStart(){
 
 void mcpStop(){
 	mcpSendCmd(FSHUTDOWN);
+}
+
+/* Function to decode a sample*/
+void decodeSample(int32_t sample){
+	int32_t raw_data = sample;
+	int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
+	int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
+	int32_t sample = raw_data & 0x01FFFFFF;     // 
+	
+	if(sign){
+		printf("samplechannel: %d val: -%6ld\traw: 0x%lx\n", channel, sample, raw_data);
+	}else{
+		printf("samplechannel: %d val: +%6ld\traw: 0x%lx\n", channel, sample, raw_data);
+	}
 }
 
 #elif (_ADC_EXT_ == ADC_ADS)

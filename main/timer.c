@@ -79,7 +79,7 @@ bool IRAM_ATTR timerGrp0Isr(){
     swag = !swag;*/
 
     //Wake acqAdc1 in order to start ADC readings form adc1. This will only start when this handler is terminated.
-    vTaskNotifyGiveFromISR(acquiring_1_task, NULL);
+    vTaskNotifyGiveFromISR(acq_adc1_task, NULL);
 
     /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
     should be performed to ensure the interrupt returns directly to the highest
