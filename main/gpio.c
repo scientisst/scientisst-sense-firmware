@@ -96,8 +96,8 @@ void gpioInit(){
 }
 
 bool IRAM_ATTR gpioDrdyIsrHandler(){
-    //Wake acqAdc1. This will only start when this handler is terminated.
-    vTaskNotifyGiveFromISR(acq_adc1_task, NULL);
+    //Wake acq_adc_ext_task. This will only start when this handler is terminated.
+    vTaskNotifyGiveFromISR(acq_adc_ext_task, NULL);
 
     /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
     should be performed to ensure the interrupt returns directly to the highest
@@ -116,7 +116,7 @@ void adcExtDrdyGpio(int io_num){
     gpio_install_isr_service(0);
 
 	//hook isr handler for specific gpio pin
-    gpio_isr_handler_add(io_num, gpioDrdyIsrHandler, NULL);
+    gpio_isr_handler_add(io_num, (gpio_isr_t)gpioDrdyIsrHandler, NULL);
 }
 
 

@@ -76,6 +76,7 @@ esp_err_t (*send_func)(uint32_t, int, uint8_t *) = NULL; //Send function pointer
 DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {A0_ADC_CH, A1_ADC_CH, A2_ADC_CH, A3_ADC_CH, A4_ADC_CH, A5_ADC_CH};
 uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0}; //Active internal channels | If all channels are active: = {5, 4, 3, 2, 1, 0}
 uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};                      //Active external channels | If all channels are active: = {7, 6}
+uint32_t adc_ext_samples[EXT_ADC_CHANNELS] = {0, 0};                    //Samples from external adc get stored here before being incorporated into frame
 uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
 uint8_t op_mode = OP_MODE_IDLE; //Flag that indicastes if op mode is on (idle, live or config)
@@ -291,6 +292,7 @@ void IRAM_ATTR acqAdc1Task(){
     }
 }
 
+
 void IRAM_ATTR acqAdcExtTask(){
     #if _ADC_EXT_ == ADC_MCP
         adcExtInit();
@@ -300,11 +302,32 @@ void IRAM_ATTR acqAdcExtTask(){
         adsConfigureChannels(2);
     #endif
 
-        while(1){
-            if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-                sample = mcpReadRegister(REG_ADCDATA, uint8_t rx_data_bytes)
+    while(1){
+        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
+            gpio_intr_disable(MCP_DRDY_IO);
+            int32_t raw_data = mcpReadRegister(REG_ADCDATA, 4);
+
+            //Put CH_ID in right place
+            //sample = (raw_data & 0xF0000000) >> 8 | (raw_data & 0x00F00000) << 8 | (raw_data & 0x0F0FFFFF);
+
+            //channel = (uint32_t)sample >> 28;
+
+            //Convert scale from -Vref/2 <-> +Vref/2 to 0 <-> +Vref
+            //adc_ext_samples[channel] = sample + 0x01000000;
+
+            int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
+            int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
+            int32_t sample = raw_data & 0x01FFFFFF;     // 
+            
+            if(sign){
+                printf("channel: %d val: -%6d\traw: 0x%.6x\n", channel, sample, raw_data);
+            }else{
+                printf("channel: %d val: +%6d\traw: 0x%.6x\n", channel, sample, raw_data);
             }
+
+            gpio_intr_enable(MCP_DRDY_IO);
         }
+    }
 }
 
 void IRAM_ATTR AbatTask(){

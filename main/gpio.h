@@ -24,7 +24,7 @@
 #define SPI3_CS0_IO     GPIO_NUM_5
 #define SPI3_CS1_IO     GPIO_NUM_4
 #if _ADC_EXT_ == ADC_MCP
-#define MCP_DRDY_IO     I1_IO
+#define MCP_DRDY_IO     GPIO_NUM_16
 #elif _ADC_EXT_ == ADC_ADS
 #define ADS_DRDY_IO     GPIO_NUM_16
 #endif
@@ -46,7 +46,7 @@ void gpioInit();
 void configLedC();
 
 #if _ADC_EXT_ != NO_ADC_EXT
-void IRAM_ATTR gpioDrdyIsrHandler();
+bool IRAM_ATTR gpioDrdyIsrHandler();
 void adcExtDrdyGpio(int io_num);
 #endif
 

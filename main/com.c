@@ -15,10 +15,6 @@
 void processRcv(uint8_t *buff, int len){
     uint8_t cmd = buff[0] & 0b00000011;
 
-    DEBUG_PRINT_W("processRcv", "Recived %d bytes", len);
-    DEBUG_PRINT_I("processRcv", "Recived %d bytes", len);
-    DEBUG_PRINT_I("processRcv", "Command: %d", cmd);
-
     //Live mode with 0 channels selected
     if((api_config.api_mode == API_MODE_BITALINO && buff[0] == 1) || (api_config.api_mode != API_MODE_BITALINO && buff[0] == 1 && buff[1] == 0)){
         return;
@@ -280,7 +276,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
         if(num_extern_active_chs){
             uint8_t channel_mask = 0;
             for(int i = 0; i < num_extern_active_chs; i++){
-                channel_mask |= 0b1 << (active_ext_chs[i]-6)
+                channel_mask |= 0b1 << (active_ext_chs[i]-6);
             }
             mcpSetupRoutine(channel_mask);
             adcExtStart();
@@ -301,11 +297,9 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
 }
 
 void stopAcquisition(void){
-#if _ADC_EXT_ == NO_EXT_ADC
     timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
-#endif
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
 
+    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
 

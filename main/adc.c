@@ -160,16 +160,12 @@ extern void adcCallback(uint16_t *adc_internal_res, uint8_t *gpio_out_state);
 
 void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
-    #if _ADC_EXT_ != NO_EXT_ADC && _TIMESTAMP_ == 1
+    #if _ADC_EXT_ != NO_EXT_ADC
     uint32_t adc_external_res[2] = {0, 0};
     #endif
     uint8_t io_state = 0;
     int i;
     uint8_t crc = 0;
-    #if _ADC_EXT_ != NO_EXT_ADC
-    spi_transaction_t *ads_rtrans;
-    uint8_t* recv_ads;
-    #endif
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
 
@@ -183,7 +179,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
 
     #ifdef BINEDGE_EXAMPLE
-    adcCallback(adc_internal_res, gpio_out_state);
+        adcCallback(adc_internal_res, gpio_out_state);
     #endif
 
     //Get the IO states
@@ -195,46 +191,25 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     frame[packet_size-2] = io_state;
 
     #if _ADC_EXT_ != NO_EXT_ADC
-    if(num_extern_active_chs){
-        //Can be a huge bottleneck
-        /*spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
-        recv_ads = ads_rtrans->rx_buffer;*/
-
-        while(1){
-            if(data_ready){
-                /* disable interrupts */ // begin critical region
-                gpio_intr_disable(INTR_PIN);
-
-                samples_arr[counter] = mcp3564_read_sample();
-                data_ready = false;
-                counter++;
-
-                /* enable interrupts */ // end critical region
-                gpio_intr_enable(INTR_PIN);
-                break;
+        if(num_extern_active_chs){
+            //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
+            for(i = 0; i < num_extern_active_chs; i++){
+                if(sim_flag){
+                    adc_external_res[i] = sin10Hz[sin_i % 100];
+                }else{
+                    adc_external_res[i] = adc_ext_samples[i];
+                }
+                *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
+                frame_next_wr += 3;
+                //printf("AX%d: %.6x\n", i+1, adc_external_res[i]);
             }
         }
-        /* print samples after reading N_SAMPLES */
-        print_arr_samples(samples_arr, N_SAMPLES);
-
-        //Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-        for(i = 0; i < num_extern_active_chs; i++){
-            if(sim_flag){
-                adc_external_res[i] = sin10Hz[sin_i % 100];
-            }else{
-                adc_external_res[i] = (((uint32_t)recv_ads[3*(i+1)] << 16) | ((uint32_t)recv_ads[3*(i+1)+1] << 8) | (recv_ads[3*(i+1)+2]));
-            }
-            *(uint32_t*)(frame+frame_next_wr) |= adc_external_res[i];
-            frame_next_wr += 3;
-            //printf("AX%d: %.6x\n", i+1, adc_external_res[i]);
-        }
-    }
     #elif _TIMESTAMP_ == 1
-    if(num_extern_active_chs == 2){
-        int64_t timestamp = esp_timer_get_time() & 0xFFFFFFFFFFFF;
-        *(uint64_t*)(frame+frame_next_wr) |= timestamp;
-        frame_next_wr += 6;
-    }
+        if(num_extern_active_chs == 2){
+            int64_t timestamp = esp_timer_get_time() & 0xFFFFFFFFFFFF;
+            *(uint64_t*)(frame+frame_next_wr) |= timestamp;
+            frame_next_wr += 6;
+        }
     #endif
 
     sin_i++;    //Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions

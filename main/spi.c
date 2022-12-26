@@ -12,64 +12,6 @@
 
 #define MAX_TRANSFER_SIZE 0
 
-#if _ADC_EXT_ == ADC_ADS
-	#define DMA_CHAN        2
-	#define SPI_MODE		1		
-	#define ADC_EXT_SLCK_HZ 1*1000*1000           //Clock out at 1 MHz, divisors of 80MHz
-
-	// register address
-	#define ADS1292_REG_ID			0x00
-	#define ADS1292_REG_CONFIG1		0x01
-	#define ADS1292_REG_CONFIG2		0x02
-	#define ADS1292_REG_LOFF		0x03
-	#define ADS1292_REG_CH1SET		0x04
-	#define ADS1292_REG_CH2SET		0x05
-	#define ADS1292_REG_RLDSENS		0x06
-	#define ADS1292_REG_LOFFSENS	0x07
-	#define ADS1292_REG_LOFFSTAT    0x08
-	#define ADS1292_REG_RESP1	    0x09
-	#define ADS1292_REG_RESP2	    0x0A
-
-	#define START	0x08 	//start/restart (synchronize) conversions
-	#define STOP	0x0A 	//stop conversion
-	#define RDATAC  0x10 	//enable Read Data Continuous mode - the default at power-up
-	#define SDATAC	0x11 	//stop Read Data Continuously mode
-	#define RESET	0x06	//Reset ADS
-	#define RREG	0x20;	//read n nnnn registers starting at address r rrrr |||| first byte 001r rrrr (2xh)(2) - second byte 000n nnnn(2)
-	#define WREG 	0x40; 	//write n nnnn registers starting at address r rrrr |||| first byte 010r rrrr (2xh)(2) - second byte 000n nnnn(2)
-
-#elif _ADC_EXT_ == ADC_MCP
-	#define DMA_CHAN	0
-	#define SPI_MODE	0			//0 or 2, MCP Only supports these two modes
-	#define ADC_EXT_SLCK_HZ (APB_CLK_FREQ / 800)
-
-	#define MCP_ADDR	0b01
-
-	//Commands
-	#define RREG 0b01
-	#define WREG 0b10
-	#define RESET 0b111000
-	#define START 0b101000
-	#define FSHUTDOWN 0b110100				//Full Shutdown; the internal config registers keep the values
-
-	//Register Addresses
-	#define REG_ADCDATA 	0x00	//R
-	#define REG_CONFIG0 	0x01	//R/W
-	#define REG_CONFIG1 	0x02	//R/W
-	#define REG_CONFIG2 	0x03	//R/W
-	#define REG_CONFIG3 	0x04	//R/W
-	#define REG_IRQ			0x05	//R/W
-	#define REG_MUX 		0x06	//R/W
-	#define REG_SCAN 		0x07	//R/W
-	#define REG_TIMER 		0x08	//R/W
-	#define REG_OFFSETCAL 	0x09	//R/W
-	#define REG_GAINCAL 	0x0A	//R/W
-	#define REG_LOCK		0x0D	//R/W
-	#define REG_CRCCFG		0X0F	//R
-
-#endif
-
-
 #if _ADC_EXT_ != NO_ADC_EXT
 void adcExtInit(void){
     esp_err_t ret;
@@ -98,7 +40,6 @@ void adcExtInit(void){
         .cs_ena_pretrans = 0,              // this could be used instead of the manual workaround
         .cs_ena_posttrans = 0,             //  "
         .input_delay_ns = 0,               // this can be important for higher frequencies (over 8 MHz)
-        .spics_io_num = -1,                // not used, CS is manually controlled
         .flags = 0,
     };
     //Initialize the SPI bus
@@ -107,6 +48,13 @@ void adcExtInit(void){
     //Attach the device to the SPI bus
     ret=spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handler);
     ESP_ERROR_CHECK(ret);
+
+	//Config Drdy GPIO and interrupt
+	#if (_ADC_EXT_ == ADC_MCP)
+		adcExtDrdyGpio(MCP_DRDY_IO);
+	#elif (_ADC_EXT_ == ADC_ADS)
+		adcExtDrdyGpio(ADS_DRDY_IO);
+	#endif
 }
 
 void adcExtStart(void){
@@ -129,7 +77,7 @@ void adcExtStop(void){
 
 #if (_ADC_EXT_ == ADC_MCP)
 
-static uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd){
+static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd){
 	uint8_t cmd_byte = MCP_ADDR << 6;
 
 	//If it is a reg operation
@@ -149,23 +97,17 @@ void mcpSendCmd(uint8_t cmd){
 	spi_transaction_t transaction;
 	uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
 
-	
-
     memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
     transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
     transaction.length = 8; 
 	transaction.rxlength = 8;
     transaction.tx_data[0] = cmd_byte;
 
-	vTaskDelay(10/portTICK_PERIOD_MS);
+	vTaskDelay(50/portTICK_PERIOD_MS);
 
 	gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler, &transaction);  //Transmit!
 	gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
-
-	#if (_DEBUG_ > 0)
-	printf("STATUS recieved for mcpSendCmd(): %u \n", transaction.rx_data[0]);
-	#endif
 }
 
 void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes){
@@ -182,17 +124,13 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes){
 	transaction.rxlength = 8;								//Recieve status byte
     transaction.tx_data[0] = cmd_byte;
 	*(uint32_t*)(transaction.tx_data) |= tx_data << 8;
-	printf("Register write: %u %u %u %u\n", transaction.tx_data[0], transaction.tx_data[1], transaction.tx_data[2], transaction.tx_data[3]);
-	vTaskDelay(10/portTICK_PERIOD_MS);
+
+	vTaskDelay(50/portTICK_PERIOD_MS);
 
 	//Transmit
 	gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler, &transaction);  //Transmit!
 	gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
-
-	#if (_DEBUG_ > 0)
-	printf("STATUS recieved for mcpWriteRegister(): %u \n", transaction.rx_data[0]);
-	#endif
 }
 
 uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
@@ -202,7 +140,7 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
 	memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
    	transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
    	transaction.length = rx_data_bytes*8;				// length is MAX(in_bits, out_bits)
-	transaction.rxlength = rx_data_bytes*8;								//Recieve status byte
+	transaction.rxlength = rx_data_bytes*8;
     transaction.tx_data[0] = cmd_byte;
 
     //Transmit
@@ -214,43 +152,50 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
 		*(uint32_t*)(transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t*)(transaction.rx_data)), (rx_data_bytes*8));
 	}
 
-	//Check response
-	#if (_DEBUG_ > 0)
-		printf("Register read: %u %u %u %u\n", transaction.rx_data[0], transaction.rx_data[1], transaction.rx_data[2], transaction.rx_data[3]);
-	#endif
-
-	return (*(uint32_t*)(transaction.rx_data));
+	return *(uint32_t*)(transaction.rx_data);
 }
+
+#define VALUE_CONFIG0 	(0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
+#define VALUE_CONFIG1 	0
+#define VALUE_CONFIG2 	(0b10 << 6) | (0b001 << 3) | (0b0 << 2) | (0b11)
+#define VALUE_CONFIG3 	(0b11 << 6) | (0b11 << 4) | (0b0 << 3) | (0b0 << 2) | (0b0 << 1) | (0b0)
+#define VALUE_IRQ     	(0b0 << 7) | (0b111 << 4) | (0b01 << 2) | (0b1 << 1) | 0b1
+#define VALUE_MUX	  	(0xF0)
+#define VALUE_SCAN	  	((0b000 << 21) | (0b00000 << 16))
+#define VALUE_TIMER		0
+#define VALUE_OFFSETCAL	0
+#define VALUE_GAINCAL	(0x00800000)
+
 
 void mcpSetupRoutine(uint8_t channel_mask){
-	//Config Drdy GPIO and interrupt
-	adcExtDrdyGpio(MCP_DRDY_IO);
-
 	mcpSendCmd(RESET);
-	mcpWriteRegister(REG_CONFIG0, (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00), 1);
-	mcpWriteRegister(REG_CONFIG1, 0, 1);
-	mcpWriteRegister(REG_CONFIG2, (0b10 << 6) | (0b001 << 3) | (0b0 << 2) | (0b11), 1);
-	mcpWriteRegister(REG_CONFIG3, (0b11 << 6) | (0b00 << 4) | (0b0 << 3) | (0b0 << 2) | (0b0 << 1) | (0b0), 1);
-	mcpWriteRegister(REG_IRQ, (0b0 << 7) | (0b111 << 4) | (0b01 << 2) | (0b1 << 1) | 0b0, 1);
-	mcpWriteRegister(REG_MUX, 0, 1);																				
-	mcpWriteRegister(REG_SCAN, (0b000 << 21) | (0b00000 << 16) | (0x00 << 8) | channel_mask, 3);	//Delay time between conversions of each channel & Channels selection
-	mcpWriteRegister(REG_TIMER, 0, 3);										    			//(Delay) number of DMCLK periods between consecutive SCAN cycles (aka sample rate)
-	mcpWriteRegister(REG_OFFSETCAL, 0, 3);
-	mcpWriteRegister(REG_GAINCAL, 0, 3);
-}
+	mcpWriteRegister(REG_CONFIG0, VALUE_CONFIG0, 1);
+	mcpWriteRegister(REG_CONFIG1, VALUE_CONFIG1, 1);
+	mcpWriteRegister(REG_CONFIG2, VALUE_CONFIG2, 1);
+	mcpWriteRegister(REG_CONFIG3, VALUE_CONFIG3, 1);
+	mcpWriteRegister(REG_IRQ, VALUE_IRQ, 1);
+	mcpWriteRegister(REG_MUX, VALUE_MUX, 1);																				
+	mcpWriteRegister(REG_SCAN, VALUE_SCAN | channel_mask, 3);	//Delay time between conversions of each channel & Channels selection
+	mcpWriteRegister(REG_TIMER, VALUE_TIMER, 3);										    			//(Delay) number of DMCLK periods between consecutive SCAN cycles (aka sample rate)
+	mcpWriteRegister(REG_OFFSETCAL, VALUE_OFFSETCAL, 3);
+	mcpWriteRegister(REG_GAINCAL, VALUE_GAINCAL, 3);
 
-/* function to read ADC data from register ADC_DATA currently with SPI in 32-bit only in DATA_FORMAT '11' */
-int32_t mcpReadSample(void){
-	int32_t data;
+	vTaskDelay(50/portTICK_PERIOD_MS);
 
-	gpio_set_level(CS_PIN, 0); // manually set CS\ active low -> begin comm
+	//Print reg values for debug
+	for(int reg = REG_CONFIG0; reg <= REG_GAINCAL; reg++){
+		uint32_t value;
+		uint32_t num_bytes;
 
-	mcp3564_send_command(STATIC_READ_ADC_DATA, false);
-	esp_err_t err = spi_read_32bit(mcp3564_handler, &data);
+		if(reg >= REG_SCAN){
+			num_bytes = 3;
+		}else{
+			num_bytes = 1;
+		}
 
-	gpio_set_level(CS_PIN, 1); // manually set CS\ idle
-
-	return data;
+		value = mcpReadRegister(reg, num_bytes+1);
+		printf("Reg:%.2x, value:%.6x\n", reg, value);
+	}
 }
 
 void mcpStart(){
@@ -259,20 +204,6 @@ void mcpStart(){
 
 void mcpStop(){
 	mcpSendCmd(FSHUTDOWN);
-}
-
-/* Function to decode a sample*/
-void decodeSample(int32_t sample){
-	int32_t raw_data = sample;
-	int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
-	int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
-	int32_t sample = raw_data & 0x01FFFFFF;     // 
-	
-	if(sign){
-		printf("samplechannel: %d val: -%6ld\traw: 0x%lx\n", channel, sample, raw_data);
-	}else{
-		printf("samplechannel: %d val: +%6ld\traw: 0x%lx\n", channel, sample, raw_data);
-	}
 }
 
 #elif (_ADC_EXT_ == ADC_ADS)
