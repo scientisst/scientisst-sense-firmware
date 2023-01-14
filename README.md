@@ -33,9 +33,22 @@ git clone --recursive git@github.com:scientisst/scientisst-sense-firmware.git
 . get_idf.sh --install
 ```
 
+
+#### (Windows)
+
+```sh
+get_idf.bat --install
+```
+
 ## Flash Firmware (Linux/MacOS)
 ```sh
 . get_idf.sh
+#Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
+idf.py flash
+```
+## Flash Firmware (Windows)
+```sh
+get_idf.bat
 #Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
 idf.py flash
 ```
