@@ -6,8 +6,6 @@
 #include "macros.h"
 #include "scientisst.h"
 
-//TODO: Meter os pins SPI3_MISO, U2RXD, U2TXD, SDA0, SCL0 a pull up
-
 /* About this example
  * 1. Start with initializing LEDC module:
  *    a. Set the timer of LEDC first, this determines the frequency
@@ -48,16 +46,23 @@ void configLedC(void){
      *         will be the same
      */
     ledc_channel_config_t ledc_channel = {
-        .channel    = LEDC_CHANNEL_USED,
+        .channel    = LEDC_CHANNEL_R,
         .duty       = 0,
-        .gpio_num   = STATE_LED_IO,
+        .gpio_num   = STATE_LED_R_IO,
         .speed_mode = LEDC_SPEED_MODE_USED,
         .hpoint     = 0,
         .timer_sel  = LEDC_LS_TIMER
     };
-
     // Set LED Controller with previously prepared configuration
     ledc_channel_config(&ledc_channel);
+
+    /*ledc_channel.channel = LEDC_CHANNEL_G;
+    ledc_channel.gpio_num = STATE_LED_G_IO;
+    ledc_channel_config(&ledc_channel);
+
+    ledc_channel.channel = LEDC_CHANNEL_B;
+    ledc_channel.gpio_num = STATE_LED_B_IO;
+    ledc_channel_config(&ledc_channel);*/
     
     // Initialize fade service.
     //ledc_fade_func_install(0);
@@ -90,9 +95,49 @@ void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_ma
 }
 
 void gpioInit(){
-    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_IO) | (1ULL<< BAT_LED_STATUS_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO) | (1ULL<< SPI3_CS0_IO)), 0, 0);       
+    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_R_IO) | (1ULL<< STATE_LED_G_IO) | (1ULL<< STATE_LED_B_IO) | (1ULL<< BAT_LED_STATUS_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO) | (1ULL<< SPI3_CS0_IO)), 0, 0);       
     gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 1, 0);                                //The 2 IO inputs
-    //gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< A2_IO) | (1ULL<< A3_IO) | (1ULL<< A4_IO)), 1, 0);                            
+
+    /*gpio_set_direction(STATE_LED_R_IO, GPIO_MODE_OUTPUT);
+    gpio_set_direction(STATE_LED_G_IO, GPIO_MODE_OUTPUT);
+    gpio_set_direction(STATE_LED_B_IO, GPIO_MODE_OUTPUT);
+
+    while(1){
+        gpio_set_level(STATE_LED_R_IO, 0);
+        gpio_set_level(STATE_LED_G_IO, 0);
+        gpio_set_level(STATE_LED_B_IO, 0);
+
+        printf("white\n");
+        
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+        gpio_set_level(STATE_LED_R_IO, 0);
+        gpio_set_level(STATE_LED_G_IO, 1);
+        gpio_set_level(STATE_LED_B_IO, 1);
+
+        printf("red\n");
+
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+        gpio_set_level(STATE_LED_R_IO, 1);
+        gpio_set_level(STATE_LED_G_IO, 0);
+        gpio_set_level(STATE_LED_B_IO, 1);
+
+        printf("green\n");
+
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+        gpio_set_level(STATE_LED_R_IO, 1);
+        gpio_set_level(STATE_LED_G_IO, 1);
+        gpio_set_level(STATE_LED_B_IO, 0);
+
+        printf("blue\n");
+
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }*/
+    
+
+    
 }
 
 bool IRAM_ATTR gpioDrdyIsrHandler(){

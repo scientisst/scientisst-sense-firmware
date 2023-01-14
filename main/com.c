@@ -288,9 +288,14 @@ void startAcquisition(uint8_t *buff, uint8_t cmd){
 
     //Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+
     //Set live mode duty cycle for state led
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+    /*ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);*/
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition started");
     op_mode = OP_MODE_LIVE;
@@ -300,8 +305,13 @@ void stopAcquisition(void){
     timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
 
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED, LEDC_IDLE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_USED);
+
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+    /*ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);*/
 
     //Stop external
     #if _ADC_EXT_ != NO_ADC_EXT

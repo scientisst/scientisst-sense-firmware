@@ -10,7 +10,7 @@
 #include "driver/gpio.h"
 #include <math.h>
 
-#define MAX_TRANSFER_SIZE 0
+#define MAX_TRANSFER_SIZE 4
 
 #if _ADC_EXT_ != NO_ADC_EXT
 void adcExtInit(void){
@@ -23,7 +23,7 @@ void adcExtInit(void){
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = MAX_TRANSFER_SIZE,
-		.intr_flags = ESP_INTR_FLAG_IRAM
+		//.intr_flags = ESP_INTR_FLAG_IRAM
     };
 
     spi_device_interface_config_t devcfg = {
@@ -43,7 +43,7 @@ void adcExtInit(void){
         .flags = 0,
     };
     //Initialize the SPI bus
-    ret=spi_bus_initialize(SPI3_HOST, &buscfg, DMA_CHAN);
+    ret=spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_DISABLED);
     ESP_ERROR_CHECK(ret);
     //Attach the device to the SPI bus
     ret=spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handler);
@@ -139,6 +139,8 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes){
    
 	memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
    	transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+	transaction.cmd = 0;
+	transaction.addr = 0;
    	transaction.length = rx_data_bytes*8;				// length is MAX(in_bits, out_bits)
 	transaction.rxlength = rx_data_bytes*8;
     transaction.tx_data[0] = cmd_byte;

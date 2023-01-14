@@ -10,7 +10,10 @@
 #define MAX32664_MFIO_IO    GPIO_NUM_15
 #define MAX32664_RSTN_IO    GPIO_NUM_4
 
-#define STATE_LED_IO        GPIO_NUM_22     //GPIO_NUM_27
+#define STATE_LED_R_IO      GPIO_NUM_13
+#define STATE_LED_B_IO      GPIO_NUM_22
+#define STATE_LED_G_IO      GPIO_NUM_17
+
 #define BAT_LED_STATUS_IO   GPIO_NUM_21
 #define O0_IO               GPIO_NUM_0      
 #define O1_IO               GPIO_NUM_2
@@ -31,7 +34,9 @@
 
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE
-#define LEDC_CHANNEL_USED       LEDC_CHANNEL_0
+#define LEDC_CHANNEL_R          LEDC_CHANNEL_0
+#define LEDC_CHANNEL_G          LEDC_CHANNEL_1
+#define LEDC_CHANNEL_B          LEDC_CHANNEL_2
 #define LEDC_LIVE_DUTY          512                     //Half the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_IDLE_DUTY          50                     //10% the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_LIVE_PWM_FREQ      4

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "sdkconfig.h"
 #include "scientisst.h"
 #include "adc.h"
@@ -244,6 +245,9 @@ void IRAM_ATTR acqAdc1Task(){
 
     //Config LED control core
     configLedC();
+    //gpio_set_level(STATE_LED_R_IO, 0);
+    //gpio_set_level(STATE_LED_G_IO, 1);
+    //gpio_set_level(STATE_LED_B_IO, 0);
 
     if(!strcmp(op_settings.com_mode, COM_MODE_BLE)){
         send_buff_len = GATTS_NOTIFY_LEN;
@@ -319,10 +323,25 @@ void IRAM_ATTR acqAdcExtTask(){
             int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
             int32_t sample = raw_data & 0x01FFFFFF;     // 
             
-            if(sign){
-                printf("channel: %d val: -%6d\traw: 0x%.6x\n", channel, sample, raw_data);
-            }else{
-                printf("channel: %d val: +%6d\traw: 0x%.6x\n", channel, sample, raw_data);
+            const int32_t VREF = 3.3;
+
+            /* como a eletronica de momento não suporta resolucoes elevadas 
+            * esta conversao simula um conversor AD de N bits (10 bits devem chegar para validar nesta fase) */
+            const uint8_t N_BITS = 10;
+            int32_t sample_n_bits = (raw_data & 0x00FFFFFF) >> (24 - N_BITS); 	// descartar N bits
+            float voltage = 0.0;
+
+            if(true)
+            //if(channel == 4)  	// útil caso estejas a excitar apenas um canal com tensão conhecida (aumentar o número de amostras "N_SAMPLES")
+            {
+                if(sign){
+                    printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x sign: -\n", channel, sample, raw_data);
+                }else{
+                    /* só fazer a conversão para tensões positivas*/
+                    voltage = ((float) sample_n_bits) * (VREF*2 ) / (pow(2, N_BITS) - 1);
+
+                    printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x s_10b: 0x%.3x voltage: %.3f V\n", channel, sample, raw_data, sample_n_bits, voltage);
+                }
             }
 
             gpio_intr_enable(MCP_DRDY_IO);
@@ -370,7 +389,9 @@ void IRAM_ATTR AbatTask(){
 void opModeConfig(void){
     op_mode = OP_MODE_CONFIG;
     initRestServer();
-    gpio_set_level(STATE_LED_IO, 1);
+    gpio_set_level(STATE_LED_R_IO, 1);
+    gpio_set_level(STATE_LED_G_IO, 1);
+    gpio_set_level(STATE_LED_B_IO, 1);
 
     //Hang here until user successfully submites a new config in the web page
     while(1){

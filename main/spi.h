@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "driver/spi_master.h"
+#include "driver/spi_slave.h"
 #include "config.h"
 
 #if _ADC_EXT_ == ADC_ADS
@@ -33,7 +34,7 @@
 
 #elif _ADC_EXT_ == ADC_MCP
 	#define DMA_CHAN	0
-	#define SPI_MODE	0			//0 or 2, MCP Only supports these two modes
+	#define SPI_MODE	0			//0 or 3, MCP Only supports these two modes
 	#define ADC_EXT_SLCK_HZ (APB_CLK_FREQ / 800)
 
 	#define MCP_ADDR	0b01
