@@ -40,7 +40,7 @@ extern uint8_t packet_size;
 extern uint16_t snd_buff_idx[];
 extern uint8_t bt_buffs_to_send[];                              
 extern DRAM_ATTR const uint8_t crc_table[];
-extern uint8_t crc_seq;
+extern uint16_t crc_seq;
 extern DRAM_ATTR const uint8_t analog_channels[];
 extern uint8_t active_internal_chs[];                                               
 extern uint8_t num_intern_active_chs;

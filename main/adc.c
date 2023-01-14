@@ -228,19 +228,24 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame){
     }
 
     //Calculate CRC & SEQ Number---------------------------------------------------------
+
+    //Store seq number
+    *(uint16_t*)(frame+packet_size-2) = crc_seq << 4;
+
     //calculate CRC (except last byte (seq+CRC) )
-    for(i = 0; i < packet_size-1; i++){
+    for(i = 0; i < packet_size-2; i++){
         // calculate CRC nibble by nibble
         CALC_BYTE_CRC(crc, frame[i], crc_table);
     }
 
-    //calculate CRC for last byte (seq+CRC)
-    crc = crc_table[crc] ^ (crc_seq & 0x0F);
-    crc = (crc_seq << 4) | crc_table[crc];
+    //calculate CRC for seq
+    crc = crc_table[crc] ^ (frame[packet_size-2] >> 4);     //Calculate CRC for first 4 bits of seq
+    CALC_BYTE_CRC(crc, frame[packet_size-1], crc_table);    //Calcultate CRC for last byte of seq
 
-    //store CRC and Seq in the last byte of the packet
-    frame[packet_size-1] = crc;
-    
+    crc = crc_table[crc];
+
+    frame[packet_size-2] |= crc;
+
     crc_seq++;
 }
 

@@ -114,7 +114,7 @@ uint8_t getPacketSize(){
         }else{
             _packet_size += (((num_intern_active_chs * 12) - 4) / 8); //-4 because 4 bits can go in the I/0 byte
         }
-        _packet_size += 2; //for the I/Os and seq+crc bytes
+        _packet_size += 3; //for the I/Os and seq+crc bytes
     }else if(api_config.api_mode == API_MODE_JSON){
         const char *json_str = cJSON_Print(json);
         _packet_size = strlen(json_str) + 1;

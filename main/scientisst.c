@@ -64,7 +64,7 @@ uint8_t send_busy = 0;
 uint16_t send_threshold = MAX_BUFFER_SIZE; //Amount of bytes a buffer needs to have filled with packets in order to trigger a send
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
-uint8_t crc_seq = 0;
+uint16_t crc_seq = 0;
 
 uint16_t battery_threshold = DEFAULT_BATTERY_THRESHOLD;
 
