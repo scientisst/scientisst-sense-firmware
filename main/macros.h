@@ -1,4 +1,13 @@
-#ifndef _MACROS_H
+/** \file macros.h
+    \brief This file contains the definitions of the macros used in the project.
+
+    This file contains the definitions of the macros used in the project. It contains MIN, DEBUG_PRINT, and GEN_ERR and
+    GEN_OK macros (among some others). The DEBUG_PRINT macro is used to print debug messages. It can be used in two ways:
+    _DEBUG_ = 1: DEBUG_PRINT_I, DEBUG_PRINT_W, DEBUG_PRINT_E (all debug messages)
+    _DEBUG_ = 2: DEBUG_PRINT_W, DEBUG_PRINT_E (only warnings and errors)
+*/
+
+ifndef _MACROS_H
 #define _MACROS_H
 
 #include <stdio.h>
@@ -8,7 +17,7 @@
 #define GEN_ERR -1
 #define GEN_OK 1
 #define DEFAULT_TASK_STACK_SIZE 2048
-#define _DEBUG_ 2
+#define _DEBUG_ 2  ///< 0: No debug, 1: Debug, 2: Warning and Error only
 #define ONE_HOUR_MS 3600000
 
 

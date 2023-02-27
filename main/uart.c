@@ -1,3 +1,9 @@
+/** \file uart.c
+    \brief UART functions
+    
+    This file contains the functions for the UART communication. Only has the init function for now.
+    //Todo: add details and what undesrtand what this is for
+*/
 #include "driver/uart.h"
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"

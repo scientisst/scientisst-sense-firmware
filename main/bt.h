@@ -1,3 +1,9 @@
+/** \file bt.h
+    \brief Bluetooth header file
+    
+    This file contains the bluetooth header file and relevant macros.
+*/
+
 #ifndef _BT_H
 #define _BT_H
 
@@ -11,9 +17,9 @@
 
 #define SEND_AFTER_C0NG 2
 
-void IRAM_ATTR sendData();
-void IRAM_ATTR finalizeSend();
-void initBt();
-void getDeviceName();
+void IRAM_ATTR sendData(void);
+void IRAM_ATTR finalizeSend(void);
+void initBt(void);
+void getDeviceName(void);
 
 #endif

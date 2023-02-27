@@ -1,3 +1,9 @@
+/** \file tcp.h
+    \brief Header file for the TCP server and client functions.
+
+    This file contains the declarations for the TCP server and communications functions.
+*/
+
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
@@ -10,62 +16,88 @@
 
 int bind_err;
 
-int initTcpServer(char *port_str){
+/**
+ * \brief Initializes a TCP server.
+ *
+ * \param port_str The port to listen to.
+ *
+ * \return The file descriptor of the TCP server.
+ */
+int initTcpServer(char *port_str)
+{
     int port;
     struct sockaddr_in listen_addr;
     int listen_fd;
-
+    
     sscanf(port_str, "%d", &port); // Transform port string to int
-
-    if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ // Verificar se não houve erro a criar a socket
+    
+    if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    { // Verificar se não houve erro a criar a socket
         DEBUG_PRINT_E("initTcpServer", "socket error");
     }
-
+    
     listen_addr.sin_family = AF_INET;
     listen_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     listen_addr.sin_port = htons(port);
-
-    bind_err = bind(listen_fd, (struct sockaddr *)&listen_addr, sizeof(listen_addr));
+    
+    bind_err = bind(listen_fd, (struct sockaddr *) &listen_addr, sizeof(listen_addr));
     if (bind_err != 0)
     { // Verificar se não houve erro a fazer bind
         DEBUG_PRINT_E("initTcpServer", "bind error %d", bind_err);
     }
-
+    
     if (listen(listen_fd, 2) == -1)
     { // Verificar se não houve erro a fazer listen
         DEBUG_PRINT_E("initTcpServer", "listen error");
     }
-
+    
     return listen_fd;
 }
 
-int initTcpConnection(int listen_fd){
+/**
+ * \brief Initializes a TCP connection.
+ *
+ * \param listen_fd The file descriptor of the TCP server.
+ *
+ * \return The file descriptor of the TCP connection.
+ */
+int initTcpConnection(int listen_fd)
+{
     struct sockaddr_in client_addr;
     socklen_t client_addr_len;
     int client_fd;
-    if ((client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0){
+    if ((client_fd = accept(listen_fd, (struct sockaddr *) &client_addr, &client_addr_len)) < 0)
+    {
         DEBUG_PRINT_E("initTcpServer", "accept error");
         return -1;
     }
     return client_fd;
 }
 
+/**
+ * \brief Initializes a TCP client.
+ *
+ * \param ip The IP address of the server.
+ * \param port The port of the server.
+ *
+ * \return The file descriptor of the TCP client.
+ */
 int initTcpClient(char *ip, char *port)
 {
     struct addrinfo hints, *res;
     int server_fd;
-
+    
     server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP); // TCP socket
     if (server_fd == -1)
     {
         DEBUG_PRINT_E("initTcpClient", "ERROR: SOCKET CREATION FAILED");
         return -1;
     }
-
+    
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;       // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP socket
-
+    
     if (getaddrinfo(ip, port, &hints, &res) != 0)
     {
         DEBUG_PRINT_E("initTcpClient", "ERROR: GETADDRINFO FAILED");
@@ -84,19 +116,32 @@ int initTcpClient(char *ip, char *port)
         server_fd = 0;
         return -1;
     }
-
+    
     DEBUG_PRINT_I("initTcpClient", "Client successfully connected");
     return server_fd;
 }
 
+/**
+ * \brief Sends data through a TCP connection.
+ *
+ * This function sends data through a TCP connection. It is called by the sendData() function when in TCP mode.
+ *
+ * \param fd The file descriptor of the TCP connection.
+ * \param len The length of the data to send.
+ * \param buff The data to send.
+ *
+ * \return:
+ *      - ESP_OK if the data was sent successfully
+ *      - ESP_FAIL otherwise
+ */
 esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
 {
-    uint8_t *ptr;
+    uint8_t * ptr;
     ssize_t n_left = len;
     ssize_t n_written;
-
+    
     ptr = buff;
-
+    
     while (n_left > 0)
     {
         n_written = write(fd, ptr, n_left);
@@ -109,18 +154,25 @@ esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
         ptr += n_written;
     }
     finalizeSend();
-
+    
     // Try to send next buff
     sendData();
     return ESP_OK;
 }
 
-void wifiSerialRcv()
+/**
+ * \brief Receives data through a TCP connection and then call processRcv on the data.
+ *
+ * This function receives data through a TCP connection and then call processRcv on the data. If connection is closed
+ * unexpectedly, it will try to reconnect in a loop. If connection is closed gracefully, it will stop acquiring data.
+ *
+ */
+void wifiSerialRcv(void)
 {
     uint8_t buff[CMD_MAX_BYTES];
     int len;
     int read_bytes;
-
+    
     while (1)
     {
         // Wait until a connection is made
@@ -128,7 +180,7 @@ void wifiSerialRcv()
         {
             vTaskDelay(500 / portTICK_PERIOD_MS);
         }
-
+        
         while (1)
         {
             if ((read_bytes = read(send_fd, buff, CMD_MAX_BYTES)) == 0)
@@ -136,31 +188,49 @@ void wifiSerialRcv()
                 DEBUG_PRINT_W("wifiSerialRcv", "Connection closed gracefully");
                 buff[0] = 0;
                 len = 1;
-            }
-            else if (read_bytes < 0)
+            } else if (read_bytes < 0)
             {
                 DEBUG_PRINT_W("wifiSerialRcv", "Connection closed with errno %d", errno);
                 buff[0] = 0;
                 len = 1;
-            }
-            else
+            } else
             {
                 // TODO: implement walk around (if a message is 3bytes, it may happen that it is divided into a read of 2bytes and a read of 1byte, thus the check below will give a false positive error)
                 if (read_bytes != CMD_MAX_BYTES)
                 {
-                    DEBUG_PRINT_E("wifiSerialRcv", "Recieved %d bytes and the acceptable amount is %d", read_bytes, CMD_MAX_BYTES);
+                    DEBUG_PRINT_E("wifiSerialRcv", "Recieved %d bytes and the acceptable amount is %d", read_bytes,
+                                  CMD_MAX_BYTES);
                 }
                 len = CMD_MAX_BYTES;
             }
             processRcv(buff, len);
-
+            
             // If connection was broken, close socket and return
-            if (read_bytes <= 0)
+            if (read_bytes < 0)
+            {
+                
+                shutdown(send_fd, 0);
+                close(send_fd);
+                DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
+                
+                while (wifi_init_sta() == ESP_FAIL) // If an error occurs, try to reconnect to Wifi
+                {
+                    vTaskDelay(500 / portTICK_PERIOD_MS);
+                    DEBUG_PRINT_E("wifiSerialRcv", "Reconnecting to Wifi...");
+                }
+                if ((send_fd = initTcpServer(op_settings.port_number)) < 0)
+                {
+                    DEBUG_PRINT_E("serverTCP",
+                                  "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...",
+                                  op_settings.port_number);
+                }
+            } else if (read_bytes == 0) // If connection was closed gracefully, close socket, stop acquisition and return
             {
                 shutdown(send_fd, 0);
                 close(send_fd);
+                
                 send_fd = 0;
-
+                
                 stopAcquisition();
                 return;
             }

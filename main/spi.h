@@ -1,3 +1,9 @@
+/** \file spi.h
+    \brief This file contains the definitions of the functions used to communicate with the external ADCs.
+    
+    //TODO: Add more info
+    
+*/
 #ifndef _SPI_H
 #define _SPI_H
 
@@ -81,8 +87,8 @@ void adsSendCmd(uint8_t cmd);
 #elif _ADC_EXT_ == ADC_MCP
 void mcpSetupRoutine(uint8_t channel_mask);
 uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes);
-void mcpStart();
-void mcpStop();
+void mcpStart(void);
+void mcpStop(void);
 void decodeSample(int32_t sample);
 #endif
 

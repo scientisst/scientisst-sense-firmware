@@ -1,3 +1,9 @@
+/** \file ws.h
+    \brief Websocket server
+    
+    This file contains the websocket server code. It is used to send data to the web interface.
+    //TODO: Confirm it is imcomplete and undestand what it's supposed to do.
+*/
 #ifndef _WS_H
 #define _WS_H
 

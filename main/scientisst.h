@@ -1,3 +1,7 @@
+/** \file scientisst.h
+    \brief Main header file for the Scientisst firmware.
+*/
+
 #ifndef SCIENTISST_H
 #define SCIENTISST_H
 

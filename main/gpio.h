@@ -1,3 +1,8 @@
+/** \file gpio.h
+    \brief GPIO interactions
+    
+    //TODO: Add more details
+*/
 #ifndef _GPIO_H
 #define _GPIO_H
 
@@ -47,11 +52,11 @@
 #define ABAT_DIVIDER_FACTOR 2
 
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
-void gpioInit();
-void configLedC();
+void gpioInit(void);
+void configLedC(void);
 
 #if _ADC_EXT_ != NO_ADC_EXT
-bool IRAM_ATTR gpioDrdyIsrHandler();
+bool IRAM_ATTR gpioDrdyIsrHandler(void);
 void adcExtDrdyGpio(int io_num);
 #endif
 

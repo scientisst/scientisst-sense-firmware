@@ -1,3 +1,10 @@
+/** \file timer.h
+    \brief Timer functions for the Scientisst firmware.
+ 
+    This file contains the functions for the timer used in the Scientisst firmware.
+*/
+
+
 #ifndef _TIMER_H
 #define _TIMER_H
 
@@ -17,8 +24,8 @@
 #define TIMER_IDX_ABAT 1
 
 
-bool IRAM_ATTR timerGrp0Isr();
-bool IRAM_ATTR timerGrp1Isr();
+bool IRAM_ATTR timerGrp0Isr(void);
+bool IRAM_ATTR timerGrp1Isr(void);
 void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)());
 void timerStart(int timer_group, int timer_idx, uint32_t frequency);
 void timerPause(int timer_group, int timer_idx);

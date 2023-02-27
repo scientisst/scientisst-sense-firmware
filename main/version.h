@@ -1,3 +1,9 @@
+/** \file version.h
+    \brief Auto-generated file containing the firmware version number.
+    
+    //TODO: add details aboout implementation
+*/
+
 #ifndef VERSION_H
 #define VERSION_H
 

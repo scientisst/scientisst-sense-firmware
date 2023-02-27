@@ -1,3 +1,7 @@
+/** \file wifi.h
+    \brief Wifi functions definitions and relevant defines
+*/
+
 #ifndef _WIFI_H
 #define _WIFI_H
 
@@ -38,7 +42,8 @@ typedef struct{
 }op_settings_info_t;
 
 int wifiInit(uint8_t force_ap);
-void wifi_init_softap();
+void wifi_init_softap(void);
+int wifi_init_sta(void);
 
 // Checks if com_mode is one of the wifi modes
 uint8_t isComModeWifi(void);

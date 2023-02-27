@@ -1,3 +1,9 @@
+/** \file com.h
+    \brief This file contains the definitions of the functions used to process the received data.
+    
+    //TODO: Add more info
+*/
+
 #ifndef _COM_H
 #define _COM_H
 
@@ -23,8 +29,7 @@
 #define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) // If changed, change in API
 //#define MAX_BUFFER_SIZE CONFIG_LWIP_TCP_SND_BUF_DEFAULT
 
-typedef struct
-{
+typedef struct{
     uint8_t api_mode;
     void (*aquire_func)();
     void (*select_ch_mask_func)();
