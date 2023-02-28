@@ -1,4 +1,4 @@
-/** \file uart.c
+/** \file udp.c
     \brief Contains functions to send data over UDP
     
     This file contains functions to send data over UDP. The data is sent to the server specified in the config file.

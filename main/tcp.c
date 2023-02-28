@@ -1,4 +1,4 @@
-/** \file tcp.h
+/** \file tcp.c
     \brief Header file for the TCP server and client functions.
 
     This file contains the declarations for the TCP server and communications functions.

@@ -1,3 +1,9 @@
+/** \file gpio.c
+    \brief GPIO interactions
+
+    This file contains the functions to initialize the GPIOs and the LEDC module.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
