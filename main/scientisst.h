@@ -25,6 +25,7 @@
 #include "esp_adc_cal.h"
 #include "driver/spi_master.h"
 #include "cJSON.h"
+#include "esp_netif.h"
 
 #include "wifi.h"
 #include "com.h"
@@ -75,6 +76,7 @@ extern uint8_t com_mode;
 extern op_settings_info_t op_settings;
 extern esp_err_t (*send_func)(uint32_t, int, uint8_t*);
 extern uint8_t is_op_settings_valid;
+extern esp_netif_t* netif_object;
 
 void initScientisst(void);
 

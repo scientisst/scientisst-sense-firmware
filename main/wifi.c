@@ -13,6 +13,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "esp_netif.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -173,7 +174,12 @@ int wifi_init_sta(void)
     int ret = 0; // Return if connection to Wifi fails or not
     s_wifi_event_group = xEventGroupCreate();
     
-    esp_netif_create_default_wifi_sta();
+    if (netif_object != NULL)
+    {
+        esp_netif_destroy(netif_object);
+        netif_object = NULL;
+    }
+    netif_object = esp_netif_create_default_wifi_sta();
     
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -332,6 +338,14 @@ void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo)
  */
 int wifiInit(uint8_t force_ap)
 {
+    // Stop and free all the resources used by the Wi-Fi
+    // This allows reconnection without causing a crash because they are already initialized
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    esp_event_loop_delete_default();
+    mdns_free();
+    netbiosns_stop();
+    
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     

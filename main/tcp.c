@@ -208,22 +208,9 @@ void wifiSerialRcv(void)
             // If connection was broken, close socket and return
             if (read_bytes < 0)
             {
-                
                 shutdown(send_fd, 0);
                 close(send_fd);
                 DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
-                
-                while (wifi_init_sta() == ESP_FAIL) // If an error occurs, try to reconnect to Wifi
-                {
-                    vTaskDelay(500 / portTICK_PERIOD_MS);
-                    DEBUG_PRINT_E("wifiSerialRcv", "Reconnecting to Wifi...");
-                }
-                if ((send_fd = initTcpServer(op_settings.port_number)) < 0)
-                {
-                    DEBUG_PRINT_E("serverTCP",
-                                  "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...",
-                                  op_settings.port_number);
-                }
             } else if (read_bytes == 0) // If connection was closed gracefully, close socket, stop acquisition and return
             {
                 shutdown(send_fd, 0);

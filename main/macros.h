@@ -7,7 +7,7 @@
     _DEBUG_ = 2: DEBUG_PRINT_W, DEBUG_PRINT_E (only warnings and errors)
 */
 
-ifndef _MACROS_H
+#ifndef _MACROS_H
 #define _MACROS_H
 
 #include <stdio.h>

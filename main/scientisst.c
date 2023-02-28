@@ -107,6 +107,8 @@ spi_transaction_t adc_ext_trans;
 op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;        ///< Flag that indicates if a valid op_settings has been read successfuly from flash
 
+//Netif
+esp_netif_t* netif_object = NULL; ///< Netif object used to get the ip address of the wifi interface
 
 /**
  * \brief scientisst-firmware main function
@@ -135,7 +137,11 @@ void initScientisst(void)
     }
     ESP_ERROR_CHECK(ret);
     
-    is_op_settings_valid = 1;
+    if(!getOpSettingsInfo(&op_settings)){
+        is_op_settings_valid = 1;
+    }else{
+        is_op_settings_valid = 0;
+    }
     
     //Determine and save device name in device_name
     getDeviceName();
@@ -146,8 +152,9 @@ void initScientisst(void)
     //Enable DAC
     dac_output_enable(DAC_CH);
     
+    
     //Check if CONFIG pin is 1 on startup
-    if (true)//gpio_get_level(CONFIG_BTN_IO))
+    if (gpio_get_level(CONFIG_BTN_IO))
     {
         wifiInit(1);
         opModeConfig();
@@ -248,6 +255,11 @@ void rcvTask(void)
         {
             while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
+                while (wifiInit(0) == ESP_FAIL) // Make sure it is connected to wifi
+                {
+                    vTaskDelay(2000 / portTICK_PERIOD_MS);
+                    DEBUG_PRINT_E("wifiSerialRcv", "Reconnecting to Wifi...");
+                }
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...",
