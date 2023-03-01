@@ -12,17 +12,6 @@
 #include "macros.h"
 #include "scientisst.h"
 
-/* About this example
- * 1. Start with initializing LEDC module:
- *    a. Set the timer of LEDC first, this determines the frequency
- *       and resolution of PWM.
- *    b. Then set the LEDC channel you want to use,
- *       and bind with one of the timers.
- * 2. You need first to install a default fade function,
- *    then you can use fade APIs.
- * 3. You can also set a target duty directly without fading.
- */
-
 
 /**
  * \brief Configure LED Controller

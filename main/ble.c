@@ -181,26 +181,6 @@ static prepare_type_env_t a_prepare_write_env;
 void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 
-/*
-static uint8_t check_sum(uint8_t *addr, uint16_t count){
-    uint32_t sum = 0;
-
-    if(addr == NULL || count == 0){
-        return 0;
-    }
-
-    for(int i = 0; i < count; i++){
-        sum = sum + addr[i];
-    }
-
-    while (sum >> 8){
-        sum = (sum & 0xff) + (sum >> 8);
-    }
-
-    return (uint8_t)~sum;
-}
-*/
-
 
 /**
  * \brief ESP32 BLE GATT Server Event Handler.
@@ -690,31 +670,6 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff)
     return ESP_OK;
 }
 
-/*void throughput_server_task(void *param){
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-    uint8_t sum = check_sum(indicate_data, sizeof(indicate_data) - 1);
-    // Added the check sum in the last data value.
-    indicate_data[GATTS_NOTIFY_LEN - 1] = sum;
-
-    while(1){
-        if(!can_send_notify){
-            int res = xSemaphoreTake(gatts_semaphore, portMAX_DELAY);
-            assert(res == pdTRUE);
-        }else{
-            if(is_connect){
-                int free_buff_num = esp_ble_get_cur_sendable_packets_num(gl_profile_tab[PROFILE_A_APP_ID].conn_id);
-                if(free_buff_num > 0){
-                    for( ; free_buff_num > 0; free_buff_num--){
-                        esp_ble_gatts_send_indicate(gl_profile_tab[PROFILE_A_APP_ID].gatts_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle, sizeof(indicate_data), indicate_data, false);
-                    }
-                }else{ //Add the vTaskDelay to prevent this task from consuming the CPU all the time, causing low-priority tasks to not be executed at all.
-                    vTaskDelay( 10 / portTICK_PERIOD_MS );
-                }
-            }
-        }
-    }
-}*/
-
 
 /**
  * \brief BLE GATT Server Initialization.
@@ -778,13 +733,6 @@ void initBle(void)
     {
         DEBUG_PRINT_E(GATTS_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
-    // The task is only created on the CPU core that Bluetooth is working on,
-    // preventing the sending task from using the un-updated Bluetooth state on another CPU.
-    //xTaskCreatePinnedToCore(&throughput_server_task, "throughput_server_task", 4096, NULL, 15, NULL, BLUETOOTH_TASK_PINNED_TO_CORE);
-    /*gatts_semaphore = xSemaphoreCreateBinary();
-    if(!gatts_semaphore){
-        DEBUG_PRINT_E(GATTS_TAG, "%s, init fail, the gatts semaphore create fail.", __func__);
-        exit(-1);
-    }*/
+    
     return;
 }

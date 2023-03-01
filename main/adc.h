@@ -68,8 +68,4 @@ void acquireChannelsJson(uint8_t* frame);
     adc2_get_raw((channel), ADC_RESOLUTION, &(value));       \
 })
 
-/*#define READ_ADC(adc, value, channel)({\
-    (READ_ADC##adc)((value), (channel));       \
-})*/
-
 #endif

@@ -48,18 +48,6 @@
 #endif
 
 
-/*
-#if (_DEBUG_ == 1)
-    //Usage: mode= E (ERROR), I (INFO), W (WARNING) | Rest of arguments: just like in printf, string followed by the respective args
-    //This macros is only define if _DEBUG_ is defined
-    #define DEBUG_PRINT(mode, func, ... )({\
-        ESP_LOG##mode((func), __VA_ARGS__);       \
-    })
-#else
-    #define DEBUG_PRINT(...)
-#endif
-*/
-
 #ifndef MIN
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #endif

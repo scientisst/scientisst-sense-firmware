@@ -285,14 +285,6 @@ void setSampleRate(uint8_t *buff)
         //The other APIs need more bits for the sample rate
     } else
     {
-        /*coded_3bit_sr = *(uint16_t*)(buff) >> 6;
-        if(coded_3bit_sr <= 0b011){
-            for(i = 0; i < (buff[0] >> 6); i++){
-                aux *= 10;
-            }
-        }else{
-            aux = 2000 + (coded_3bit_sr & 0b011)*2000;
-        }*/
         aux = (*(uint16_t * )(buff + 1) & 0xFFFF);
     }
     
