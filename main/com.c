@@ -486,12 +486,11 @@ void sendStatusPacket(void)
     uint8_t i;
     uint16_t true_send_threshold;
     
-    bt_curr_buff = 0;
-    memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
-    snd_buff_idx[bt_curr_buff] = 0;
-    bt_buffs_to_send[bt_curr_buff] = 1;
-    true_send_threshold = send_threshold;
-    send_threshold = 0;
+    memset(snd_buff[4], 0, snd_buff_idx[4]);
+    snd_buff_idx[4] = 0;
+    bt_buffs_to_send[4] = 1;
+    //true_send_threshold = send_threshold;
+    //send_threshold = 0;
     
     //-------------------Bytes 0 - 11-------------------------------------------------
     /**(uint16_t*)(snd_buff[bt_curr_buff]) = i2c_sensor_values.oxygen;
@@ -507,8 +506,8 @@ void sendStatusPacket(void)
     for (i = 0; i < STATUS_PACKET_SIZE - 1; i++)
     {
         //calculate CRC nibble by nibble
-        crc = crc_table[crc] ^ (snd_buff[bt_curr_buff][i] >> 4);
-        crc = crc_table[crc] ^ (snd_buff[bt_curr_buff][i] & 0x0F);
+        crc = crc_table[crc] ^ (snd_buff[4][i] >> 4);
+        crc = crc_table[crc] ^ (snd_buff[4][i] & 0x0F);
     }
     
     //calculate CRC for last byte (I1|I2|O1|O2|CRC)
@@ -516,14 +515,17 @@ void sendStatusPacket(void)
     crc = (0) | crc_table[crc]; //TODO: Onde está 0, meter os valores de I1|I2|O1|O2
     
     //store CRC and Seq in the last byte of the packet
-    snd_buff[bt_curr_buff][STATUS_PACKET_SIZE - 1] = crc;
+    snd_buff[4][STATUS_PACKET_SIZE - 1] = crc;
     
     //----------------------------Store packet size-------------------------------------
-    snd_buff_idx[bt_curr_buff] += STATUS_PACKET_SIZE;
+    snd_buff_idx[4] += STATUS_PACKET_SIZE;
     
     //send new data
     sendData();
-    send_threshold = true_send_threshold;
+    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+    bt_curr_buff = 4;
+    xSemaphoreGive(bt_buffs_to_send_mutex);
+    //send_threshold = true_send_threshold;
 }
 
 
