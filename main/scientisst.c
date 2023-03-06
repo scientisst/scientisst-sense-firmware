@@ -60,8 +60,8 @@ int listen_fd = 0;
 
 uint8_t *snd_buff[NUM_BUFFERS];       ///< Data structure to hold the data to be sent through bluetooth
 uint32_t send_buff_len = 0;           ///< Length of each send buff
-uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0};    ///< It contains, for each buffer, the index of the first free element in the respective buffer
-uint8_t bt_buffs_to_send[NUM_BUFFERS] = {0, 0, 0, 0}; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
+uint16_t snd_buff_idx[NUM_BUFFERS] = {0, 0, 0, 0, 0};    ///< It contains, for each buffer, the index of the first free element in the respective buffer
+uint8_t bt_buffs_to_send[NUM_BUFFERS] = {0, 0, 0, 0, 0}; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
 uint8_t bt_curr_buff = 0;                             ///< Index of the buffer that bt task is currently sending
 uint8_t acq_curr_buff = 0;                            ///< Index of the buffer that adc task is currently using
 
@@ -107,8 +107,8 @@ spi_transaction_t adc_ext_trans;
 op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;        ///< Flag that indicates if a valid op_settings has been read successfuly from flash
 
-//Netif
-esp_netif_t* netif_object = NULL; ///< Netif object used to get the ip address of the wifi interface
+//Firmware version
+uint8_t first_failed_send = 0;
 
 /**
  * \brief scientisst-firmware main function
@@ -236,6 +236,7 @@ void IRAM_ATTR sendTask(void)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         sendData();
+        send_busy = 0;
     }
 }
 
@@ -255,11 +256,6 @@ void rcvTask(void)
         {
             while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
-                while (wifiInit(0) == ESP_FAIL) // Make sure it is connected to wifi
-                {
-                    vTaskDelay(2000 / portTICK_PERIOD_MS);
-                    DEBUG_PRINT_E("wifiSerialRcv", "Reconnecting to Wifi...");
-                }
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...",
@@ -335,6 +331,7 @@ void IRAM_ATTR acqAdc1Task(void)
     }
     
     //Allocate memory for send buffers
+    //+1 for firmware version buffer
     for (int i = 0; i < NUM_BUFFERS; i++)
     {
         snd_buff[i] = (uint8_t * )
@@ -367,18 +364,21 @@ void IRAM_ATTR acqAdc1Task(void)
                 {
                     xTaskNotifyGive(send_task);
                 }
-                //int acq_next_buff = (acq_curr_buff + 1) % 4;
-                acq_next_buff = (acq_curr_buff + 1) & 0x03;
+                acq_next_buff = (acq_curr_buff + 1) % 4;
+                //acq_next_buff = (acq_curr_buff + 1) & 0x03;
                 //Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput
                 if (snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len && bt_buffs_to_send[acq_next_buff] == 1)
                 {
-                    //TODO: Confirm the following code then remove commented code
-                    /*DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");*/
-                    //continue;
-                    while (bt_buffs_to_send[acq_next_buff] == 1)
+                    //Wait until next buffer is free
+                    do
                     {
-                        vTaskDelay(200 / portTICK_PERIOD_MS);
-                    }
+                        DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
+                        vTaskDelay(2000 / portTICK_PERIOD_MS);
+                        if (send_busy == 0)
+                        {
+                            xTaskNotifyGive(send_task);
+                        }
+                    } while (bt_buffs_to_send[acq_curr_buff] == 1);
                 }
                 
                 //Next buffer is free, change buffer

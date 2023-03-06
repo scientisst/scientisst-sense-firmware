@@ -25,7 +25,7 @@
 #define OP_MODE_CONFIG 2
 
 #define CMD_MAX_BYTES 4
-#define NUM_BUFFERS 4
+#define NUM_BUFFERS 5 //4 + 1 for version packet
 #define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) // If changed, change in API
 //#define MAX_BUFFER_SIZE CONFIG_LWIP_TCP_SND_BUF_DEFAULT
 

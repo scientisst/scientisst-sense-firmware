@@ -41,7 +41,7 @@ void IRAM_ATTR sendData(void)
     if (bt_buffs_to_send[bt_curr_buff])
     {
         xSemaphoreGive(bt_buffs_to_send_mutex);
-        if (snd_buff_idx[bt_curr_buff] < send_threshold)
+        if (snd_buff_idx[bt_curr_buff] < send_threshold && bt_curr_buff != 4)
         {
             send_busy = 0;
             return;

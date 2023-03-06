@@ -364,7 +364,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 #endif
     
     //WARNING: if changed, change same code in API
-    if (sample_rate > 100)
+    if (sample_rate >= 100)
     {
         send_threshold = !(send_buff_len % packet_size) ? send_buff_len - packet_size : send_buff_len -
                                                                                         (send_buff_len % packet_size);
@@ -538,30 +538,36 @@ void sendStatusPacket(void)
 void sendFirmwareVersionPacket(void)
 {
     uint16_t true_send_threshold;
+
     
-    bt_curr_buff = 0;
-    memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
-    snd_buff_idx[bt_curr_buff] = 0;
-    bt_buffs_to_send[bt_curr_buff] = 1;
-    true_send_threshold = send_threshold;
-    send_threshold = 0;
+    memset(snd_buff[4], 0, snd_buff_idx[4]);
+    snd_buff_idx[4] = 0;
+    bt_buffs_to_send[4] = 1;
+    //true_send_threshold = send_threshold;
+    //send_threshold = 0;
     
     if (api_config.api_mode != API_MODE_BITALINO)
     {
-        memcpy(snd_buff[bt_curr_buff], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
-        snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_VERSION) + 1;
+        memcpy(snd_buff[4], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
+        snd_buff_idx[4] += strlen(FIRMWARE_VERSION) + 1;
         
         //Send ADC1 configurations for raw2voltage precision conversions
-        memcpy(snd_buff[bt_curr_buff] + snd_buff_idx[bt_curr_buff], &adc1_chars,
+        memcpy(snd_buff[4] + snd_buff_idx[4], &adc1_chars,
                6 * sizeof(uint32_t)); //We don't want to send the 2 last pointers of adc1_chars struct
-        snd_buff_idx[bt_curr_buff] += 6 * sizeof(uint32_t);
+        snd_buff_idx[4] += 6 * sizeof(uint32_t);
     } else
     {
-        memcpy(snd_buff[bt_curr_buff], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
-        snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_BITALINO_VERSION);
+        memcpy(snd_buff[4], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
+        snd_buff_idx[4] += strlen(FIRMWARE_BITALINO_VERSION);
     }
     
+    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+    bt_curr_buff = 4;
+    xSemaphoreGive(bt_buffs_to_send_mutex);
+    
+
     sendData();
+    
     DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
-    send_threshold = true_send_threshold;
+    //send_threshold = true_send_threshold;
 }

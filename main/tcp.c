@@ -94,6 +94,10 @@ int initTcpClient(char *ip, char *port)
         return -1;
     }
     
+    int reuse = 1;
+    //setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse));
+    //setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
+    
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;       // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP socket
@@ -141,6 +145,12 @@ esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
     ssize_t n_written;
     
     ptr = buff;
+    
+    if (fd <= 0)
+    {
+        DEBUG_PRINT_E("tcpSerialSend", "ERROR: INVALID FD\n");
+        return ESP_FAIL;
+    }
     
     while (n_left > 0)
     {
@@ -203,24 +213,24 @@ void wifiSerialRcv(void)
                 }
                 len = CMD_MAX_BYTES;
             }
-            processRcv(buff, len);
             
             // If connection was broken, close socket and return
-            if (read_bytes < 0)
+            if (read_bytes <= 0)
             {
                 shutdown(send_fd, 0);
                 close(send_fd);
-                DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
-            } else if (read_bytes == 0) // If connection was closed gracefully, close socket, stop acquisition and return
-            {
-                shutdown(send_fd, 0);
-                close(send_fd);
-                
                 send_fd = 0;
-                
+    
+                //sendFirmwareVersionPacket();
                 stopAcquisition();
+                
+                DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
+                
                 return;
+                
             }
+    
+            processRcv(buff, len);
         }
     }
 }
