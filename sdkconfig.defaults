@@ -54,8 +54,20 @@ CONFIG_LWIP_IRAM_OPTIMIZATION=y
 # In order to save some memory, since IPv6 is not used
 CONFIG_LWIP_IPV6=n
 
+
+#
+# Ethernet
+#
+# CONFIG_ETH_USE_ESP32_EMAC is not set
+# CONFIG_ETH_USE_SPI_ETHERNET is not set
+# CONFIG_ETH_USE_OPENETH is not set
+# end of Ethernet
+
+
 #
 # Wi-Fi
 #
 CONFIG_ESP32_WIFI_RX_IRAM_OPT=n
+
+
 
