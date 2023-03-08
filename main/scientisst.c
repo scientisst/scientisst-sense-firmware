@@ -148,7 +148,10 @@ void initScientisst(void)
     
     //Init GPIOs
     gpioInit();
-    
+
+    //Config LED control core
+    configLedC();
+
     //Enable DAC
     dac_output_enable(DAC_CH);
     
@@ -315,15 +318,8 @@ void IRAM_ATTR acqAdc1Task(void)
     
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
-    
-    //Config LED control core
-    configLedC();
-    //gpio_set_level(STATE_LED_R_IO, 0);
-    //gpio_set_level(STATE_LED_G_IO, 1);
-    //gpio_set_level(STATE_LED_B_IO, 0);
-    
-    if (!strcmp(op_settings.com_mode, COM_MODE_BLE))
-    {
+
+    if(!strcmp(op_settings.com_mode, COM_MODE_BLE)){
         send_buff_len = GATTS_NOTIFY_LEN;
     } else
     {

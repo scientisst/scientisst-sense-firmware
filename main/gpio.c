@@ -57,20 +57,25 @@ void configLedC(void)
     };
     // Set LED Controller with previously prepared configuration
     ledc_channel_config(&ledc_channel);
-    
-    /*ledc_channel.channel = LEDC_CHANNEL_G;
+
+    ledc_channel.channel = LEDC_CHANNEL_G;
     ledc_channel.gpio_num = STATE_LED_G_IO;
     ledc_channel_config(&ledc_channel);
 
     ledc_channel.channel = LEDC_CHANNEL_B;
     ledc_channel.gpio_num = STATE_LED_B_IO;
-    ledc_channel_config(&ledc_channel);*/
+    ledc_channel_config(&ledc_channel);
     
     // Initialize fade service.
     //ledc_fade_func_install(0);
-    
-    ledc_set_duty(ledc_channel.speed_mode, ledc_channel.channel, LEDC_IDLE_DUTY);
-    ledc_update_duty(ledc_channel.speed_mode, ledc_channel.channel);
+
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
+
 }
 
 /**
