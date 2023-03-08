@@ -364,7 +364,7 @@ void IRAM_ATTR acqAdc1Task(void)
                 {
                     xTaskNotifyGive(send_task);
                 }
-                acq_next_buff = (acq_curr_buff + 1) % 4;
+                acq_next_buff = (acq_curr_buff + 1) % (NUM_BUFFERS-1);
                 //acq_next_buff = (acq_curr_buff + 1) & 0x03;
                 //Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput
                 if (snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len && bt_buffs_to_send[acq_next_buff] == 1)
@@ -374,7 +374,7 @@ void IRAM_ATTR acqAdc1Task(void)
                     {
                         DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                         vTaskDelay(2000 / portTICK_PERIOD_MS);
-                        if (send_busy == 0)
+                        if (send_busy == 0 && op_mode == OP_MODE_LIVE)
                         {
                             xTaskNotifyGive(send_task);
                         }

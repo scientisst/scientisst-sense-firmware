@@ -220,9 +220,8 @@ void wifiSerialRcv(void)
                 shutdown(send_fd, 0);
                 close(send_fd);
                 send_fd = 0;
-    
-                //sendFirmwareVersionPacket();
-                stopAcquisition();
+                
+                stopAcquisition(0);
                 
                 DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
                 

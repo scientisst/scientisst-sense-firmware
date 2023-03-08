@@ -41,8 +41,12 @@ void IRAM_ATTR sendData(void)
     if (bt_buffs_to_send[bt_curr_buff])
     {
         xSemaphoreGive(bt_buffs_to_send_mutex);
-        if (snd_buff_idx[bt_curr_buff] < send_threshold && bt_curr_buff != 4)
+        if (snd_buff_idx[bt_curr_buff] < send_threshold)
         {
+            send_busy = 0;
+            return;
+        } else if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS-1)) {
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
             send_busy = 0;
             return;
         }
@@ -77,7 +81,7 @@ void IRAM_ATTR finalizeSend(void)
     snd_buff_idx[bt_curr_buff] = 0;
     
     //Change send buffer
-    bt_curr_buff = (bt_curr_buff + 1) % 4;
+    bt_curr_buff = (bt_curr_buff + 1) % (NUM_BUFFERS-1);
 }
 
 
@@ -119,7 +123,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
             DEBUG_PRINT_E("esp_spp_cb", "ESP_SPP_CLOSE_EVT");
             
             send_fd = 0;
-            stopAcquisition();
+            stopAcquisition(1);
             //Make sure that sendBtTask doesn't stay's stuck waiting for a sucessful write
             break;
         case ESP_SPP_START_EVT:                         //server started

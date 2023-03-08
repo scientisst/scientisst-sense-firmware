@@ -49,7 +49,7 @@ void processRcv(uint8_t *buff, int len)
     {
         if (!buff[0])
         {
-            stopAcquisition();
+            stopAcquisition(1);
         }
         //If in idle mode
     } else
@@ -358,13 +358,14 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
     {
         memset(snd_buff[i], 0, send_buff_len);
         snd_buff_idx[i] = 0;
+        bt_buffs_to_send[i] = 0;
     }
 #ifdef BINEDGE_EXAMPLE
     initPreprocessing();
 #endif
     
     //WARNING: if changed, change same code in API
-    if (sample_rate >= 100)
+    if (sample_rate > 100)
     {
         send_threshold = !(send_buff_len % packet_size) ? send_buff_len - packet_size : send_buff_len -
                                                                                         (send_buff_len % packet_size);
@@ -422,9 +423,12 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
  * This function stops the acquisition. It stops the ADC and the timer.
  * It also changes the LED state. It cleans all buffers and active channels.
  */
-void stopAcquisition(void)
+void stopAcquisition(int fully_stop)
 {
-    timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
+    if (fully_stop)
+    {
+        timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
+    }
     
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
     
@@ -448,27 +452,33 @@ void stopAcquisition(void)
 #endif
     
     op_mode = OP_MODE_IDLE;
-    crc_seq = 0;
     
     vTaskDelay(100 / portTICK_PERIOD_MS);
     
     //Reset simulation's signal iterator
     sin_i = 0;
     
-    //Clean send buffers
-    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
+    if (fully_stop)
     {
-        memset(snd_buff[i], 0, send_buff_len);
-        snd_buff_idx[i] = 0;
+        crc_seq = 0;
+        
+        //Clean send buffers
+        for (uint8_t i = 0; i < NUM_BUFFERS; i++)
+        {
+            memset(snd_buff[i], 0, send_buff_len);
+            snd_buff_idx[i] = 0;
+            bt_buffs_to_send[i] = 0;
+        }
+    
+        bt_curr_buff = 0;
+        acq_curr_buff = 0;
+        send_busy = 0;
+    
+        //Reset previous active chs
+        num_intern_active_chs = 0;
+        num_extern_active_chs = 0;
     }
     
-    bt_curr_buff = 0;
-    acq_curr_buff = 0;
-    send_busy = 0;
-    
-    //Reset previous active chs
-    num_intern_active_chs = 0;
-    num_extern_active_chs = 0;
     
     DEBUG_PRINT_W("startAcquisition", "Acquisition stopped");
 }
@@ -486,11 +496,11 @@ void sendStatusPacket(void)
     uint8_t i;
     uint16_t true_send_threshold;
     
-    memset(snd_buff[4], 0, snd_buff_idx[4]);
-    snd_buff_idx[4] = 0;
-    bt_buffs_to_send[4] = 1;
-    //true_send_threshold = send_threshold;
-    //send_threshold = 0;
+    memset(snd_buff[NUM_BUFFERS-1], 0, snd_buff_idx[NUM_BUFFERS-1]);
+    snd_buff_idx[NUM_BUFFERS-1] = 0;
+    bt_buffs_to_send[NUM_BUFFERS-1] = 1;
+    true_send_threshold = send_threshold;
+    send_threshold = 0;
     
     //-------------------Bytes 0 - 11-------------------------------------------------
     /**(uint16_t*)(snd_buff[bt_curr_buff]) = i2c_sensor_values.oxygen;
@@ -506,8 +516,8 @@ void sendStatusPacket(void)
     for (i = 0; i < STATUS_PACKET_SIZE - 1; i++)
     {
         //calculate CRC nibble by nibble
-        crc = crc_table[crc] ^ (snd_buff[4][i] >> 4);
-        crc = crc_table[crc] ^ (snd_buff[4][i] & 0x0F);
+        crc = crc_table[crc] ^ (snd_buff[NUM_BUFFERS-1][i] >> 4);
+        crc = crc_table[crc] ^ (snd_buff[NUM_BUFFERS-1][i] & 0x0F);
     }
     
     //calculate CRC for last byte (I1|I2|O1|O2|CRC)
@@ -515,17 +525,17 @@ void sendStatusPacket(void)
     crc = (0) | crc_table[crc]; //TODO: Onde está 0, meter os valores de I1|I2|O1|O2
     
     //store CRC and Seq in the last byte of the packet
-    snd_buff[4][STATUS_PACKET_SIZE - 1] = crc;
+    snd_buff[NUM_BUFFERS-1][STATUS_PACKET_SIZE - 1] = crc;
     
     //----------------------------Store packet size-------------------------------------
-    snd_buff_idx[4] += STATUS_PACKET_SIZE;
+    snd_buff_idx[NUM_BUFFERS-1] += STATUS_PACKET_SIZE;
     
     //send new data
     sendData();
     xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
-    bt_curr_buff = 4;
+    bt_curr_buff = NUM_BUFFERS-1;
     xSemaphoreGive(bt_buffs_to_send_mutex);
-    //send_threshold = true_send_threshold;
+    send_threshold = true_send_threshold;
 }
 
 
@@ -542,34 +552,34 @@ void sendFirmwareVersionPacket(void)
     uint16_t true_send_threshold;
 
     
-    memset(snd_buff[4], 0, snd_buff_idx[4]);
-    snd_buff_idx[4] = 0;
-    bt_buffs_to_send[4] = 1;
-    //true_send_threshold = send_threshold;
-    //send_threshold = 0;
+    memset(snd_buff[NUM_BUFFERS-1], 0, snd_buff_idx[NUM_BUFFERS-1]);
+    snd_buff_idx[NUM_BUFFERS-1] = 0;
+    bt_buffs_to_send[NUM_BUFFERS-1] = 1;
+    true_send_threshold = send_threshold;
+    send_threshold = 0;
     
     if (api_config.api_mode != API_MODE_BITALINO)
     {
-        memcpy(snd_buff[4], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
-        snd_buff_idx[4] += strlen(FIRMWARE_VERSION) + 1;
+        memcpy(snd_buff[NUM_BUFFERS-1], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
+        snd_buff_idx[NUM_BUFFERS-1] += strlen(FIRMWARE_VERSION) + 1;
         
         //Send ADC1 configurations for raw2voltage precision conversions
-        memcpy(snd_buff[4] + snd_buff_idx[4], &adc1_chars,
+        memcpy(snd_buff[NUM_BUFFERS-1] + snd_buff_idx[NUM_BUFFERS-1], &adc1_chars,
                6 * sizeof(uint32_t)); //We don't want to send the 2 last pointers of adc1_chars struct
-        snd_buff_idx[4] += 6 * sizeof(uint32_t);
+        snd_buff_idx[NUM_BUFFERS-1] += 6 * sizeof(uint32_t);
     } else
     {
-        memcpy(snd_buff[4], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
-        snd_buff_idx[4] += strlen(FIRMWARE_BITALINO_VERSION);
+        memcpy(snd_buff[NUM_BUFFERS-1], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
+        snd_buff_idx[NUM_BUFFERS-1] += strlen(FIRMWARE_BITALINO_VERSION);
     }
     
     xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
-    bt_curr_buff = 4;
+    bt_curr_buff = NUM_BUFFERS-1;
     xSemaphoreGive(bt_buffs_to_send_mutex);
     
 
     sendData();
     
     DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
-    //send_threshold = true_send_threshold;
+    send_threshold = true_send_threshold;
 }
