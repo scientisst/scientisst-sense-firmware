@@ -119,33 +119,30 @@ uint8_t first_failed_send = 0;
  * Either start web server (config mode), TCP server (wifi mode) or bluetooth.
  * Starts send data task, adc task and adcExt task. If wifi start rcv task; else, start battery task (adc2) task.
  */
-void initScientisst(void)
-{
+void initScientisst(void) {
     //Create a mutex type semaphore
-    if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL)
-    {
+    if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL) {
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
     }
-    
+
     //Init nvs (Non volatile storage)
     esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-    
-    if(!getOpSettingsInfo(&op_settings)){
+
+    if (!getOpSettingsInfo(&op_settings)) {
         is_op_settings_valid = 1;
-    }else{
+    } else {
         is_op_settings_valid = 0;
     }
-    
+
     //Determine and save device name in device_name
     getDeviceName();
-    
+
     //Init GPIOs
     gpioInit();
 
@@ -154,42 +151,34 @@ void initScientisst(void)
 
     //Enable DAC
     dac_output_enable(DAC_CH);
-    
-    
+
+
     //Check if CONFIG pin is 1 on startup
-    if (gpio_get_level(CONFIG_BTN_IO))
-    {
+    if (gpio_get_level(CONFIG_BTN_IO)) {
         wifiInit(1);
         opModeConfig();
     }
-    
+
     //If it's a wifi com mode, let's first try to setup the wifi and (if it's station) try to connect to the access point. If it doesn't work, enter immediatly to config mode in order for the user to update SSID and password
-    if (isComModeWifi())
-    {
+    if (isComModeWifi()) {
         //If the wifi configuration fails, start softap to enable the user to change op_settings
-        if (wifiInit(0) == ESP_FAIL)
-        {
+        if (wifiInit(0) == ESP_FAIL) {
             wifi_init_softap();
             opModeConfig();
         }
     }
-    
+
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY, &send_task, 0);
-    
+
     //If op_mode is Wifi or Serial
-    if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL))
-    {
-        if (!strcmp(op_settings.com_mode, COM_MODE_WS_AP))
-        {
+    if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)) {
+        if (!strcmp(op_settings.com_mode, COM_MODE_WS_AP)) {
             DEBUG_PRINT_W("WS", "Starting web server");
             start_webserver();
             send_func = &wsSerialSend;
-        } else
-        {
-            if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
-            {
-                if ((listen_fd = initTcpServer(op_settings.port_number)) < 0)
-                {
+        } else {
+            if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)) {
+                if ((listen_fd = initTcpServer(op_settings.port_number)) < 0) {
                     DEBUG_PRINT_E("serverTCP",
                                   "Cannot init TCP Server on port %s specified in the configuration. Redo the configuration. Trying again...",
                                   op_settings.port_number);
@@ -197,18 +186,17 @@ void initScientisst(void)
             }
             xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
         }
-        
+
         //Wifi is mutually exclusive with ADC2
-    } else
-    {
+    } else {
         xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY, &abat_task, 0);
     }
-    
+
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
-    
+
     xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL, ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
-    
+
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
     //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY, &acquiring_i2c_task, 1);
 }
@@ -223,23 +211,19 @@ void initScientisst(void)
  *
  * This task can be removed and acqAdc1Task can do the sendData() when !send_busy. But, atm acqAdc1Task is the bottleneck
  */
-void IRAM_ATTR sendTask(void)
-{
-    if (!strcmp(op_settings.com_mode, COM_MODE_BT))
-    {
+void IRAM_ATTR sendTask(void) {
+    if (!strcmp(op_settings.com_mode, COM_MODE_BT)) {
         initBt();
         send_func = &esp_spp_write;
-    } else if (!strcmp(op_settings.com_mode, COM_MODE_BLE))
-    {
+    } else if (!strcmp(op_settings.com_mode, COM_MODE_BLE)) {
         initBle();
         send_func = &sendBle;
     }
-    
-    while (1)
-    {
+
+    while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         sendData();
-        send_busy = 0;
+        //send_busy = 0; //TODO: confirm if this is necessary
     }
 }
 
@@ -250,15 +234,11 @@ void IRAM_ATTR sendTask(void)
  * This task is responsible for receiving data from the client.
  */
 
-void rcvTask(void)
-{
-    while (1)
-    {
+void rcvTask(void) {
+    while (1) {
         //TCP client
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA))
-        {
-            while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
-            {
+        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)) {
+            while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0) {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...",
@@ -266,10 +246,8 @@ void rcvTask(void)
             }
             send_func = &tcpSerialSend;
             //TCP server
-        } else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
-        {
-            while ((send_fd = initTcpConnection(listen_fd)) < 0)
-            {
+        } else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)) {
+            while ((send_fd = initTcpConnection(listen_fd)) < 0) {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the configuration. Redo the configuration. Trying again...",
@@ -277,10 +255,8 @@ void rcvTask(void)
             }
             send_func = &tcpSerialSend;
             //UDP client
-        } else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
-        {
-            while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0)
-            {
+        } else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)) {
+            while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0) {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to UDP Server %s:%s specified in the configuration. Redo the configuration. Trying again...",
@@ -288,10 +264,8 @@ void rcvTask(void)
             }
             send_func = &udpSend;
             //Serial
-        } else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL))
-        {
-            while ((send_fd = serialInit()) < 0)
-            {
+        } else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL)) {
+            while ((send_fd = serialInit()) < 0) {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask", "Cannot connect to host USB Serial port. Trying again...");
             }
@@ -309,80 +283,69 @@ void rcvTask(void)
  * It notifies the sendTask when there is data to send.
  * It is also the main task of CPU1 (APP CPU)
  */
-void IRAM_ATTR acqAdc1Task(void)
-{
+void IRAM_ATTR acqAdc1Task(void) {
     int acq_next_buff = 0;
-    
+
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
-    
+
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
 
-    if(!strcmp(op_settings.com_mode, COM_MODE_BLE)){
+    if (!strcmp(op_settings.com_mode, COM_MODE_BLE)) {
         send_buff_len = GATTS_NOTIFY_LEN;
-    } else
-    {
+    } else {
         send_buff_len = MAX_BUFFER_SIZE;
     }
-    
+
     //Allocate memory for send buffers
     //+1 for firmware version buffer
-    for (int i = 0; i < NUM_BUFFERS; i++)
-    {
+    for (int i = 0; i < NUM_BUFFERS; i++) {
         snd_buff[i] = (uint8_t * )
         malloc(send_buff_len * sizeof(uint8_t));
-        if (snd_buff[i] == NULL)
-        {
+        if (snd_buff[i] == NULL) {
             DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
             exit(-1);
         }
     }
-    
-    while (1)
-    {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
-        {
-            
+
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+
             api_config.aquire_func(snd_buff[acq_curr_buff] + snd_buff_idx[acq_curr_buff]);
             snd_buff_idx[acq_curr_buff] += packet_size;
-            
+
             //Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send acq_curr_buff, we need to update it
-            if (snd_buff_idx[acq_curr_buff] >= send_threshold)
-            {
+            if (snd_buff_idx[acq_curr_buff] >= send_threshold) {
                 //Tell bt task that it has acq_curr_buff to send (but it will only send after the buffer is filled above the threshold)
                 xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
                 bt_buffs_to_send[acq_curr_buff] = 1;
                 xSemaphoreGive(bt_buffs_to_send_mutex);
-                
+
                 //If send task is idle, wake it up
-                if (send_busy == 0)
-                {
+                if (send_busy == 0) {
                     xTaskNotifyGive(send_task);
                 }
 
-                acq_next_buff = (acq_curr_buff + 1) % (NUM_BUFFERS-1);
+                acq_next_buff = (acq_curr_buff + 1) % (NUM_BUFFERS - 1);
                 //acq_next_buff = (acq_curr_buff + 1) & 0x03;
                 //Check if next buffer is full. If this happens, it means all 4 buffers are full and bt task can't handle this sending throughput
-                if (snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len && bt_buffs_to_send[acq_next_buff] == 1)
-                {
+                if (snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len &&
+                    bt_buffs_to_send[acq_next_buff] == 1) {
                     //Wait until next buffer is free
-                    do
-                    {
+                    do {
                         DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
                         vTaskDelay(100 / portTICK_PERIOD_MS);
-                        if (send_busy == 0)
-                        {
+                        if (send_busy == 0) {
                             xTaskNotifyGive(send_task);
                         }
                     } while (bt_buffs_to_send[acq_curr_buff] == 1 && op_mode == OP_MODE_LIVE);
                 }
-                
+
                 //Next buffer is free, change buffer
                 acq_curr_buff = acq_next_buff;
             }
-        } else
-        {
+        } else {
             DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
         }
     }
@@ -398,8 +361,7 @@ void IRAM_ATTR acqAdc1Task(void)
  * It notifies the sendTask when there is data to send.
  * It is also the main task of CPU0 (PRO CPU)
  */
-void IRAM_ATTR acqAdcExtTask(void)
-{
+void IRAM_ATTR acqAdcExtTask(void) {
 #if _ADC_EXT_ == ADC_MCP
     adcExtInit();
 #elif _ADC_EXT_ == ADC_ADS
@@ -407,50 +369,46 @@ void IRAM_ATTR acqAdcExtTask(void)
     adsSetupRoutine();
     adsConfigureChannels(2);
 #endif
-    
-    while (1)
-    {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
-        {
+
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
             gpio_intr_disable(MCP_DRDY_IO);
             int32_t raw_data = mcpReadRegister(REG_ADCDATA, 4);
-            
+
             //Put CH_ID in right place
             //sample = (raw_data & 0xF0000000) >> 8 | (raw_data & 0x00F00000) << 8 | (raw_data & 0x0F0FFFFF);
-            
+
             //channel = (uint32_t)sample >> 28;
-            
+
             //Convert scale from -Vref/2 <-> +Vref/2 to 0 <-> +Vref
             //adc_ext_samples[channel] = sample + 0x01000000;
-            
+
             int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
             int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
             int32_t sample = raw_data & 0x01FFFFFF;     // 
-            
+
             const int32_t VREF = 3.3;
-            
+
             /* como a eletronica de momento não suporta resolucoes elevadas 
             * esta conversao simula um conversor AD de N bits (10 bits devem chegar para validar nesta fase) */
             const uint8_t N_BITS = 10;
             int32_t sample_n_bits = (raw_data & 0x00FFFFFF) >> (24 - N_BITS);    // descartar N bits
             float voltage = 0.0;
-            
+
             if (true)
                 //if(channel == 4)  	// útil caso estejas a excitar apenas um canal com tensão conhecida (aumentar o número de amostras "N_SAMPLES")
             {
-                if (sign)
-                {
+                if (sign) {
                     printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x sign: -\n", channel, sample, raw_data);
-                } else
-                {
+                } else {
                     /* só fazer a conversão para tensões positivas*/
                     voltage = ((float) sample_n_bits) * (VREF * 2) / (pow(2, N_BITS) - 1);
-                    
+
                     printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x s_10b: 0x%.3x voltage: %.3f V\n", channel, sample,
                            raw_data, sample_n_bits, voltage);
                 }
             }
-            
+
             gpio_intr_enable(MCP_DRDY_IO);
         }
     }
@@ -466,47 +424,40 @@ void IRAM_ATTR acqAdcExtTask(void)
  * It notifies the sendTask when there is data to send.
  * It is also the main task of CPU0 (PRO CPU)
  */
-void IRAM_ATTR AbatTask(void)
-{
+void IRAM_ATTR AbatTask(void) {
     uint16_t raw;
     uint16_t abat; //Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;
     uint8_t turn_led_on; //Flag that indicates wether the bat_led_status should turn on or not
-    
+
     //Init Timer 1_0 (timer 0 from group 1) and register it's interupt handler
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
     timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, (uint32_t)
     ABAT_CHECK_FREQUENCY);
-    
-    while (1)
-    {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
-        {
-            if (adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int *) &raw) != ESP_OK)
-            {
+
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+            if (adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int *) &raw) != ESP_OK) {
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
             }
             abat = esp_adc_cal_raw_to_voltage((uint32_t)
             raw, &adc2_chars)*ABAT_DIVIDER_FACTOR;
-            
+
             turn_led_on = abat <= battery_threshold;
-            
+
             //Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the threshold
-            if (!bat_led_status_gpio && turn_led_on)
-            {
+            if (!bat_led_status_gpio && turn_led_on) {
                 battery_threshold += 50;
-                
+
                 //It already charged passed the real threshold, so update the battery_threshold to its real value
-            } else if (bat_led_status_gpio && !turn_led_on)
-            {
+            } else if (bat_led_status_gpio && !turn_led_on) {
                 battery_threshold -= 50;
             }
-            
+
             bat_led_status_gpio = turn_led_on;
-            
+
             gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
-        } else
-        {
+        } else {
             DEBUG_PRINT_W("AbatTask", "ulTaskNotifyTake timed out!");
         }
     }
@@ -518,17 +469,15 @@ void IRAM_ATTR AbatTask(void)
  *
  * This function puts the device in config mode. It initializes the rest server and turns on the state led (white).
  */
-void opModeConfig(void)
-{
+void opModeConfig(void) {
     op_mode = OP_MODE_CONFIG;
     initRestServer();
     gpio_set_level(STATE_LED_R_IO, 1);
     gpio_set_level(STATE_LED_G_IO, 1);
     gpio_set_level(STATE_LED_B_IO, 1);
-    
+
     //Hang here until user successfully submites a new config in the web page
-    while (1)
-    {
+    while (1) {
         vTaskDelay(portMAX_DELAY);
     }
 }

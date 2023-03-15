@@ -73,8 +73,7 @@ static bool is_connect = false;
 static uint8_t char1_str[] = {0x11,0x22,0x33};
 static esp_gatt_char_prop_t a_property = 0;
 
-static esp_attr_value_t gatts_demo_char1_val =
-{
+static esp_attr_value_t gatts_demo_char1_val = {
     .attr_max_len = GATTS_DEMO_CHAR_VAL_LEN_MAX,
     .attr_len     = sizeof(char1_str),
     .attr_value   = char1_str,
@@ -188,10 +187,8 @@ void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble
  * \param event ESP32 BLE GATT Server Event.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
-{
-    switch (event)
-    {
+static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
+    switch (event) {
 #ifdef CONFIG_EXAMPLE_SET_RAW_ADV_DATA
         case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
             adv_config_done &= (~adv_config_flag);
@@ -208,32 +205,27 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 #else
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
             adv_config_done &= (~adv_config_flag);
-            if (adv_config_done == 0)
-            {
+            if (adv_config_done == 0) {
                 esp_ble_gap_start_advertising(&adv_params);
             }
             break;
         case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
             adv_config_done &= (~scan_rsp_config_flag);
-            if (adv_config_done == 0)
-            {
+            if (adv_config_done == 0) {
                 esp_ble_gap_start_advertising(&adv_params);
             }
             break;
 #endif
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
             //advertising start complete event to indicate advertising start successfully or failed
-            if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS)
-            {
+            if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
                 DEBUG_PRINT_E(GATTS_TAG, "Advertising start failed\n");
             }
             break;
         case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:
-            if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS)
-            {
+            if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS) {
                 DEBUG_PRINT_E(GATTS_TAG, "Advertising stop failed\n");
-            } else
-            {
+            } else {
                 DEBUG_PRINT_I(GATTS_TAG, "Stop adv successfully\n");
             }
             break;
@@ -260,34 +252,27 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
  * \param prepare_write_env Prepare Write Environment.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
-{
+void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param) {
     esp_gatt_status_t status = ESP_GATT_OK;
-    if (param->write.need_rsp)
-    {
-        if (param->write.is_prep)
-        {
-            if (prepare_write_env->prepare_buf == NULL)
-            {
+    if (param->write.need_rsp) {
+        if (param->write.is_prep) {
+            if (prepare_write_env->prepare_buf == NULL) {
                 prepare_write_env->prepare_buf = (uint8_t * )
                 malloc(PREPARE_BUF_MAX_SIZE * sizeof(uint8_t));
                 prepare_write_env->prepare_len = 0;
-                if (prepare_write_env->prepare_buf == NULL)
-                {
+                if (prepare_write_env->prepare_buf == NULL) {
                     DEBUG_PRINT_E(GATTS_TAG, "Gatt_server prep no mem\n");
                     status = ESP_GATT_NO_RESOURCES;
                 }
-            } else
-            {
-                if (param->write.offset > PREPARE_BUF_MAX_SIZE || prepare_write_env->prepare_len > param->write.offset)
-                {
+            } else {
+                if (param->write.offset > PREPARE_BUF_MAX_SIZE ||
+                    prepare_write_env->prepare_len > param->write.offset) {
                     status = ESP_GATT_INVALID_OFFSET;
-                } else if ((param->write.offset + param->write.len) > PREPARE_BUF_MAX_SIZE)
-                {
+                } else if ((param->write.offset + param->write.len) > PREPARE_BUF_MAX_SIZE) {
                     status = ESP_GATT_INVALID_ATTR_LEN;
                 }
             }
-            
+
             esp_gatt_rsp_t *gatt_rsp = (esp_gatt_rsp_t *) malloc(sizeof(esp_gatt_rsp_t));
             gatt_rsp->attr_value.len = param->write.len;
             gatt_rsp->attr_value.handle = param->write.handle;
@@ -296,21 +281,18 @@ void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare
             memcpy(gatt_rsp->attr_value.value, param->write.value, param->write.len);
             esp_err_t response_err = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id,
                                                                  status, gatt_rsp);
-            
-            if (response_err != ESP_OK)
-            {
+
+            if (response_err != ESP_OK) {
                 DEBUG_PRINT_E(GATTS_TAG, "Send response error\n");
             }
             free(gatt_rsp);
-            if (status != ESP_GATT_OK)
-            {
+            if (status != ESP_GATT_OK) {
                 return;
             }
             memcpy(prepare_write_env->prepare_buf + param->write.offset, param->write.value, param->write.len);
             prepare_write_env->prepare_len += param->write.len;
-            
-        } else
-        {
+
+        } else {
             esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, status, NULL);
         }
     }
@@ -323,17 +305,13 @@ void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare
  * \param prepare_write_env Prepare Write Environment.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
-{
-    if (param->exec_write.exec_write_flag == ESP_GATT_PREP_WRITE_EXEC)
-    {
+void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param) {
+    if (param->exec_write.exec_write_flag == ESP_GATT_PREP_WRITE_EXEC) {
         esp_log_buffer_hex(GATTS_TAG, prepare_write_env->prepare_buf, prepare_write_env->prepare_len);
-    } else
-    {
+    } else {
         DEBUG_PRINT_I(GATTS_TAG, "ESP_GATT_PREP_WRITE_CANCEL");
     }
-    if (prepare_write_env->prepare_buf)
-    {
+    if (prepare_write_env->prepare_buf) {
         free(prepare_write_env->prepare_buf);
         prepare_write_env->prepare_buf = NULL;
     }
@@ -350,10 +328,8 @@ void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble
  * \param gatts_if GATT Server Interface.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
-{
-    switch (event)
-    {
+static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
+    switch (event) {
         case ESP_GATTS_REG_EVT:
             DEBUG_PRINT_I(GATTS_TAG, "REGISTER_APP_EVT, status %d, app_id %d\n", param->reg.status, param->reg.app_id);
             gl_profile_tab[PROFILE_A_APP_ID].service_id.is_primary = true;
@@ -362,8 +338,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             gl_profile_tab[PROFILE_A_APP_ID].service_id.id.uuid.uuid.uuid16 = GATTS_SERVICE_UUID_TEST_A;
             gl_profile_tab[PROFILE_A_APP_ID].gatts_if = gatts_if;
             esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(device_name);
-            if (set_dev_name_ret)
-            {
+            if (set_dev_name_ret) {
                 DEBUG_PRINT_E(GATTS_TAG, "set device name failed, error code = %x", set_dev_name_ret);
             }
 #ifdef CONFIG_EXAMPLE_SET_RAW_ADV_DATA
@@ -380,15 +355,13 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 #else
             //config adv data
             esp_err_t ret = esp_ble_gap_config_adv_data(&adv_data);
-            if (ret)
-            {
+            if (ret) {
                 DEBUG_PRINT_E(GATTS_TAG, "config adv data failed, error code = %x", ret);
             }
             adv_config_done |= adv_config_flag;
             //config scan response data
             ret = esp_ble_gap_config_adv_data(&scan_rsp_data);
-            if (ret)
-            {
+            if (ret) {
                 DEBUG_PRINT_E(GATTS_TAG, "config scan response data failed, error code = %x", ret);
             }
             adv_config_done |= scan_rsp_config_flag;
@@ -397,8 +370,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_A_APP_ID].service_id,
                                          GATTS_NUM_HANDLE_TEST_A);
             break;
-        case ESP_GATTS_READ_EVT:
-        {
+        case ESP_GATTS_READ_EVT: {
             DEBUG_PRINT_I(GATTS_TAG, "GATT_READ_EVT, conn_id %d, trans_id %d, handle %d\n", param->read.conn_id,
                           param->read.trans_id, param->read.handle);
             esp_gatt_rsp_t rsp;
@@ -457,8 +429,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             */
 #if(_DEBUG_ == 1 || _DEBUG_ == 2)
             printf("BT data recieved\n length:%d  data:", param->write.len);
-            for (int i = 0; i < param->write.len; i++)
-            {
+            for (int i = 0; i < param->write.len; i++) {
                 printf("%d ", param->write.value[i]);
             }
             printf("\n");
@@ -467,7 +438,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             //This function is used to handle write requeset of client. Because server should send write response when receive write request.
             example_write_event_env(gatts_if, &a_prepare_write_env, param);
             break;
-        
+
         case ESP_GATTS_EXEC_WRITE_EVT:
             DEBUG_PRINT_I(GATTS_TAG, "ESP_GATTS_EXEC_WRITE_EVT");
             esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
@@ -484,47 +455,42 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             gl_profile_tab[PROFILE_A_APP_ID].service_handle = param->create.service_handle;
             gl_profile_tab[PROFILE_A_APP_ID].char_uuid.len = ESP_UUID_LEN_16;
             gl_profile_tab[PROFILE_A_APP_ID].char_uuid.uuid.uuid16 = GATTS_CHAR_UUID_TEST_A;
-            
+
             esp_ble_gatts_start_service(gl_profile_tab[PROFILE_A_APP_ID].service_handle);
             a_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
             esp_err_t add_char_ret = esp_ble_gatts_add_char(gl_profile_tab[PROFILE_A_APP_ID].service_handle,
                                                             &gl_profile_tab[PROFILE_A_APP_ID].char_uuid,
                                                             ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, a_property,
                                                             &gatts_demo_char1_val, NULL);
-            if (add_char_ret)
-            {
+            if (add_char_ret) {
                 DEBUG_PRINT_E(GATTS_TAG, "add char failed, error code =%x", add_char_ret);
             }
             break;
         case ESP_GATTS_ADD_INCL_SRVC_EVT:
             break;
-        case ESP_GATTS_ADD_CHAR_EVT:
-        {
+        case ESP_GATTS_ADD_CHAR_EVT: {
             uint16_t length = 0;
             const uint8_t *prf_char;
-            
+
             DEBUG_PRINT_I(GATTS_TAG, "ADD_CHAR_EVT, status %d,  attr_handle %d, service_handle %d\n",
                           param->add_char.status, param->add_char.attr_handle, param->add_char.service_handle);
             gl_profile_tab[PROFILE_A_APP_ID].char_handle = param->add_char.attr_handle;
             gl_profile_tab[PROFILE_A_APP_ID].descr_uuid.len = ESP_UUID_LEN_16;
             gl_profile_tab[PROFILE_A_APP_ID].descr_uuid.uuid.uuid16 = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
             esp_err_t get_attr_ret = esp_ble_gatts_get_attr_value(param->add_char.attr_handle, &length, &prf_char);
-            if (get_attr_ret == ESP_FAIL)
-            {
+            if (get_attr_ret == ESP_FAIL) {
                 DEBUG_PRINT_E(GATTS_TAG, "ILLEGAL HANDLE");
             }
-            
+
             DEBUG_PRINT_I(GATTS_TAG, "the gatts demo char length = %x\n", length);
-            for (int i = 0; i < length; i++)
-            {
+            for (int i = 0; i < length; i++) {
                 DEBUG_PRINT_I(GATTS_TAG, "prf_char[%x] =%x\n", i, prf_char[i]);
             }
             esp_err_t add_descr_ret = esp_ble_gatts_add_char_descr(gl_profile_tab[PROFILE_A_APP_ID].service_handle,
                                                                    &gl_profile_tab[PROFILE_A_APP_ID].descr_uuid,
                                                                    ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, NULL,
                                                                    NULL);
-            if (add_descr_ret)
-            {
+            if (add_descr_ret) {
                 DEBUG_PRINT_E(GATTS_TAG, "add char descr failed, error code =%x", add_descr_ret);
             }
             break;
@@ -543,8 +509,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             break;
         case ESP_GATTS_STOP_EVT:
             break;
-        case ESP_GATTS_CONNECT_EVT:
-        {
+        case ESP_GATTS_CONNECT_EVT: {
             is_connect = true;
             esp_ble_conn_update_params_t conn_params = {0};
             memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
@@ -569,7 +534,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
             break;
         case ESP_GATTS_CONF_EVT:
             DEBUG_PRINT_I(GATTS_TAG, "ESP_GATTS_CONF_EVT, status %d", param->conf.status);
-            
+
             //Try to send next buff
             /*if(!(param->congest.congested)){         //bt write is free
                 sendData();
@@ -583,11 +548,9 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         case ESP_GATTS_LISTEN_EVT:
             break;
         case ESP_GATTS_CONGEST_EVT:
-            if (param->congest.congested == 0 && send_busy == SEND_AFTER_C0NG)
-            {
+            if (param->congest.congested == 0 && send_busy == SEND_AFTER_C0NG) {
                 //sendData();                             //bt write is free
-            } else if (param->congest.congested)
-            {
+            } else if (param->congest.congested) {
                 DEBUG_PRINT_W("gatts_profile_a_event_handler", "ESP_SPP_CONG_EVT");
             }
             break;
@@ -606,38 +569,30 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
  * \param gatts_if GATT Server Interface.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
-{
+static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     /* If event is register event, store the gatts_if for each profile */
-    if (event == ESP_GATTS_REG_EVT)
-    {
-        if (param->reg.status == ESP_GATT_OK)
-        {
+    if (event == ESP_GATTS_REG_EVT) {
+        if (param->reg.status == ESP_GATT_OK) {
             gl_profile_tab[param->reg.app_id].gatts_if = gatts_if;
-        } else
-        {
+        } else {
             DEBUG_PRINT_I(GATTS_TAG, "Reg app failed, app_id %04x, status %d\n", param->reg.app_id, param->reg.status);
             return;
         }
     }
-    
+
     /* If the gatts_if equal to profile A, call profile A cb handler,
      * so here call each profile's callback */
-    do
-    {
+    do {
         int idx;
-        for (idx = 0; idx < PROFILE_NUM; idx++)
-        {
+        for (idx = 0; idx < PROFILE_NUM; idx++) {
             /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call every profile cb function */
-            if (gatts_if == ESP_GATT_IF_NONE || gatts_if == gl_profile_tab[idx].gatts_if)
-            {
-                if (gl_profile_tab[idx].gatts_cb)
-                {
+            if (gatts_if == ESP_GATT_IF_NONE || gatts_if == gl_profile_tab[idx].gatts_if) {
+                if (gl_profile_tab[idx].gatts_cb) {
                     gl_profile_tab[idx].gatts_cb(event, gatts_if, param);
                 }
             }
         }
-    } while (0);
+    } while (0); //TODO: check this
 }
 
 
@@ -648,23 +603,21 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
  * \param len Length of data.
  * \param buff Data to send.
  */
-esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff)
-{
+esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff) {
     esp_err_t res;
-    
+
     res = esp_ble_gatts_send_indicate(gl_profile_tab[PROFILE_A_APP_ID].gatts_if,
                                       gl_profile_tab[PROFILE_A_APP_ID].conn_id,
                                       gl_profile_tab[PROFILE_A_APP_ID].char_handle, len, buff, false);
-    
-    if (res != ESP_OK)
-    {
+
+    if (res != ESP_OK) {
         DEBUG_PRINT_E("sendBle", "ERROR: SEND FAILED\n");
     }
-    
+
     //printf("Frame sn=%d (len=%d): %d %d %d\n", buff[2] >> 4, len, buff[0], buff[1], buff[2]);
-    
+
     finalizeSend();
-    
+
     // Try to send next buff
     sendData();
     return ESP_OK;
@@ -676,63 +629,54 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff)
  *
  * This function initializes the BLE GATT Server.
  */
-void initBle(void)
-{
+void initBle(void) {
     esp_err_t ret;
-    
+
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
-    
+
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     ret = esp_bt_controller_init(&bt_cfg);
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "%s initialize controller failed\n", __func__);
         exit(-1);
     }
-    
+
     ret = esp_bt_controller_enable(ESP_BT_MODE_BTDM);
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "%s enable controller failed\n", __func__);
         exit(-1);
     }
     ret = esp_bluedroid_init();
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "%s init bluetooth failed\n", __func__);
         exit(-1);
     }
     ret = esp_bluedroid_enable();
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "%s enable bluetooth failed\n", __func__);
         exit(-1);
     }
-    
+
     ret = esp_ble_gatts_register_callback(gatts_event_handler);
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "gatts register error, error code = %x", ret);
         exit(-1);
     }
     ret = esp_ble_gap_register_callback(gap_event_handler);
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "gap register error, error code = %x", ret);
         exit(-1);
     }
     ret = esp_ble_gatts_app_register(PROFILE_A_APP_ID);
-    if (ret)
-    {
+    if (ret) {
         DEBUG_PRINT_E(GATTS_TAG, "gatts app register error, error code = %x", ret);
         exit(-1);
     }
-    
+
     esp_err_t local_mtu_ret = esp_ble_gatt_set_local_mtu(GATTS_NOTIFY_LEN);
-    if (local_mtu_ret)
-    {
+    if (local_mtu_ret) {
         DEBUG_PRINT_E(GATTS_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
-    
+
     return;
 }

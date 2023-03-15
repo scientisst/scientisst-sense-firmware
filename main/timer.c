@@ -24,8 +24,7 @@
  * \param timer_idx The timer number to initialize
  *
  */
-void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)())
-{
+void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)()) {
     /* Select and initialize basic parameters of the timer */
     timer_config_t config = {
             .divider = TIMER_DIVIDER,
@@ -37,9 +36,9 @@ void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)())
             config.clk_src = TIMER_SRC_CLK_APB;
 #endif
     };
-    
+
     timer_init(timer_group, timer_idx, &config);
-    
+
     /* Configure the interrupt on alarm. */
     timer_enable_intr(timer_group, timer_idx);
     timer_isr_callback_add(timer_group, timer_idx, timer_isr, NULL, 0);
@@ -56,14 +55,13 @@ void timerGrpInit(int timer_group, int timer_idx, bool(*timer_isr)())
  * \param frequency The frequency of the alarm
  *
  */
-void timerStart(int timer_group, int timer_idx, uint32_t frequency)
-{
+void timerStart(int timer_group, int timer_idx, uint32_t frequency) {
     /* Timer's counter will initially start from value below.
        Also, if auto_reload is set, this value will be automatically reload on alarm */
     timer_set_counter_value(timer_group, timer_idx, 0x00000000ULL);
-    
+
     DEBUG_PRINT_I("timerStart", "Starting timer with alarm period %f s", ((double) 1 / (double) frequency));
-    
+
     //Configure the alarm value (seconds*TIMER_SCALE = ticks)
     timer_set_alarm_value(timer_group, timer_idx, (uint64_t)(((double) 1 / (double) frequency) * TIMER_SCALE));
     timer_start(timer_group, timer_idx);
@@ -76,8 +74,7 @@ void timerStart(int timer_group, int timer_idx, uint32_t frequency)
  * \param timer_idx The timer number to stop
  *
  */
-void timerPause(int timer_group, int timer_idx)
-{
+void timerPause(int timer_group, int timer_idx) {
     timer_pause(timer_group, timer_idx);
 }
 
@@ -93,8 +90,7 @@ void timerPause(int timer_group, int timer_idx)
  * \return 1 Always returns 1
  */
 //uint8_t swag = 0;
-bool IRAM_ATTR timerGrp0Isr(void)
-{
+bool IRAM_ATTR timerGrp0Isr(void) {
     /*
     timer_spinlock_take(TIMER_GROUP_USED);
 
@@ -123,8 +119,7 @@ bool IRAM_ATTR timerGrp0Isr(void)
  *
  * \return 1 Always returns 1
  */
-bool IRAM_ATTR timerGrp1Isr(void)
-{
+bool IRAM_ATTR timerGrp1Isr(void) {
     vTaskNotifyGiveFromISR(abat_task, NULL);
     return 1;
 }
@@ -139,8 +134,7 @@ bool IRAM_ATTR timerGrp1Isr(void)
  * be called and livemode will be stop on its own. The ESP32 will then restart.
  *
  */
-void esp_task_wdt_isr_user_handler(void)
-{
+void esp_task_wdt_isr_user_handler(void) {
     stopAcquisition();
     esp_restart();
 }

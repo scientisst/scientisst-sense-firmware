@@ -20,16 +20,16 @@
 const uart_port_t serial_com_uart_num = UART_NUM_0;
 
 //Based on https://github.com/espressif/esp-idf/blob/master/examples/peripherals/uart/uart_select/main/uart_select_example_main.c
-int serialInit(void){
+int serialInit(void) {
     int fd;
 
     uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_APB,
+            .baud_rate = 115200,
+            .data_bits = UART_DATA_8_BITS,
+            .parity    = UART_PARITY_DISABLE,
+            .stop_bits = UART_STOP_BITS_1,
+            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .source_clk = UART_SCLK_APB,
     };
 
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, 512, 2048, 0, NULL, 0));
@@ -37,8 +37,8 @@ int serialInit(void){
     //Configure UART parameters
     ESP_ERROR_CHECK(uart_param_config(serial_com_uart_num, &uart_config));
 
-    if ((fd = open("/dev/uart/0", O_RDWR)) == -1){
-        DEBUG_PRINT_E("serialInit", "ERROR: OPENING UART PORT FAILED"); 
+    if ((fd = open("/dev/uart/0", O_RDWR)) == -1) {
+        DEBUG_PRINT_E("serialInit", "ERROR: OPENING UART PORT FAILED");
         return -1;
     }
 

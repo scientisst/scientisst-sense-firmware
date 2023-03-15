@@ -11,8 +11,7 @@
  *
  * This function initializes the Scientisst firmware and then deletes itself.
  */
-void app_main(void)
-{
+void app_main(void) {
     initScientisst();
     vTaskDelete(NULL);
 }
