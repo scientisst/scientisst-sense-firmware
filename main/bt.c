@@ -123,7 +123,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
             DEBUG_PRINT_E("esp_spp_cb", "ESP_SPP_CLOSE_EVT");
             
             send_fd = 0;
-            stopAcquisition(1);
+            stopAcquisition();
             //Make sure that sendBtTask doesn't stay's stuck waiting for a sucessful write
             break;
         case ESP_SPP_START_EVT:                         //server started

@@ -221,7 +221,7 @@ void wifiSerialRcv(void)
                 close(send_fd);
                 send_fd = 0;
                 
-                stopAcquisition(0);
+                stopAcquisition();
                 
                 DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
                 

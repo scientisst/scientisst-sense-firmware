@@ -141,6 +141,6 @@ bool IRAM_ATTR timerGrp1Isr(void)
  */
 void esp_task_wdt_isr_user_handler(void)
 {
-    stopAcquisition(1);
+    stopAcquisition();
     esp_restart();
 }

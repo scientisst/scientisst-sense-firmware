@@ -49,7 +49,7 @@ void processRcv(uint8_t *buff, int len)
     {
         if (!buff[0])
         {
-            stopAcquisition(1);
+            stopAcquisition();
         }
         //If in idle mode
     } else
@@ -423,12 +423,9 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
  * This function stops the acquisition. It stops the ADC and the timer.
  * It also changes the LED state. It cleans all buffers and active channels.
  */
-void stopAcquisition(int fully_stop)
+void stopAcquisition(void)
 {
-    if (fully_stop)
-    {
-        timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
-    }
+    timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
     
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
     
@@ -458,26 +455,23 @@ void stopAcquisition(int fully_stop)
     //Reset simulation's signal iterator
     sin_i = 0;
     
-    if (fully_stop)
+    crc_seq = 0;
+    
+    //Clean send buffers
+    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
     {
-        crc_seq = 0;
-        
-        //Clean send buffers
-        for (uint8_t i = 0; i < NUM_BUFFERS; i++)
-        {
-            memset(snd_buff[i], 0, send_buff_len);
-            snd_buff_idx[i] = 0;
-            bt_buffs_to_send[i] = 0;
-        }
-    
-        bt_curr_buff = 0;
-        acq_curr_buff = 0;
-        send_busy = 0;
-    
-        //Reset previous active chs
-        num_intern_active_chs = 0;
-        num_extern_active_chs = 0;
+        memset(snd_buff[i], 0, send_buff_len);
+        snd_buff_idx[i] = 0;
+        bt_buffs_to_send[i] = 0;
     }
+
+    bt_curr_buff = 0;
+    acq_curr_buff = 0;
+    send_busy = 0;
+
+    //Reset previous active chs
+    num_intern_active_chs = 0;
+    num_extern_active_chs = 0;
     
     
     DEBUG_PRINT_W("startAcquisition", "Acquisition stopped");
