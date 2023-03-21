@@ -381,16 +381,8 @@ void IRAM_ATTR acqAdcExtTask(void) {
             gpio_intr_disable(MCP_DRDY_IO);
             int32_t raw_data = mcpReadRegister(REG_ADCDATA, 4);
 
-            //Put CH_ID in right place
-            //sample = (raw_data & 0xF0000000) >> 8 | (raw_data & 0x00F00000) << 8 | (raw_data & 0x0F0FFFFF);
-
-            //channel = (uint32_t)sample >> 28;
-
-            //Convert scale from -Vref/2 <-> +Vref/2 to 0 <-> +Vref
-            //adc_ext_samples[channel] = sample + 0x01000000;
-
-            int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
             int8_t channel = (raw_data >> 28) & 0x0F;   // 4 MSBs [31-28] represent the CH (SCAN MODE)
+            int8_t sign = (raw_data >> 24) & 0x01;      // bits [27:34] represent the sign (extended)
             int32_t sample = raw_data & 0x01FFFFFF;     // 
 
             const int32_t VREF = 3.3;

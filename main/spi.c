@@ -141,23 +141,36 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes) 
 }
 
 uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
-    spi_transaction_t transaction;
+    spi_transaction_t read_transaction;
+    spi_transaction_t cmd_transaction;
     uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
 
-    memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
-    transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
-    transaction.cmd = 0;
-    transaction.addr = 0;
-    transaction.length = rx_data_bytes * 8;                // length is MAX(in_bits, out_bits)
-    transaction.rxlength = rx_data_bytes * 8;
-    transaction.tx_data[0] = cmd_byte;
 
-    //Transmit
+    memset(&read_transaction, 0, sizeof(read_transaction)); // zero out the transaction
+    read_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction.cmd = 0;
+    read_transaction.addr = 0;
+    read_transaction.length = rx_data_bytes*8;				// length is MAX(in_bits, out_bits)
+    read_transaction.rxlength = rx_data_bytes*8;
+    read_transaction.tx_data[0] = 0;
+
+    memset(&cmd_transaction, 0, sizeof(cmd_transaction)); // zero out the transaction
+    cmd_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    cmd_transaction.length = 8;
+    cmd_transaction.rxlength = 8;
+    cmd_transaction.tx_data[0] = cmd_byte;
+
+
+    vTaskDelay(50/portTICK_PERIOD_MS);
+
+
     gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
-    spi_device_polling_transmit(adc_ext_spi_handler, &transaction);  //Transmit!
+    spi_device_polling_transmit(adc_ext_spi_handler, &cmd_transaction);  //Transmit command
+    spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction);  //Receive data
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 
-    if (rx_data_bytes > 1) {
+
+if (rx_data_bytes > 1) {
         *(uint32_t * )(transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(transaction.rx_data)),
                                                                (rx_data_bytes * 8));
     }
