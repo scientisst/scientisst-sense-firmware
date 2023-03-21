@@ -107,7 +107,7 @@ void wifi_init_softap(void) {
 
 // wifi station--------------------------------------------------------------------------------------------------------------------
 
-#define EXAMPLE_ESP_MAXIMUM_RETRY 1 // Default is 5
+#define EXAMPLE_ESP_MAXIMUM_RETRY 5 // Default is 5
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -134,16 +134,16 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGI("wifi station", "option 2");
-        if (true)//s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY)
-        {
+        //if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             //s_retry_num++;
             ESP_LOGI("wifi station", "retrying to connect to the AP...");
-        } else {
+        /*} else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-            DEBUG_PRINT_I("wifi station", "connect to the AP fail");
-        }
+            DEBUG_PRINT_E("wifi station", "connect to the AP fail");
+            s_retry_num = 0;
+            esp_wifi_connect();
+        }*/
 
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
@@ -227,7 +227,7 @@ int wifi_init_sta(void) {
         ret = ESP_FAIL;
     }
 
-    /* The event will not be processed after unregister */
+    /* The event will not be processed after unregister */ //TODO: Remove this as it stops wifi reconnection
     //ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     //ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     //vEventGroupDelete(s_wifi_event_group);

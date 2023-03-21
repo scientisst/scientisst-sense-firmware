@@ -104,7 +104,13 @@ spi_device_handle_t adc_ext_spi_handler;
 spi_transaction_t adc_ext_trans;
 
 //Op settings
-op_settings_info_t op_settings = {.com_mode = COM_MODE_BT}; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+op_settings_info_t op_settings = {
+    .com_mode = COM_MODE_TCP_STA,
+    .host_ip = "192.168.1.100",
+    .port_number = "8883",
+    .ssid = "riot",
+    .password = "",
+}; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;        ///< Flag that indicates if a valid op_settings has been read successfuly from flash
 
 //Firmware version
