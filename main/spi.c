@@ -171,11 +171,11 @@ uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
 
 
 if (rx_data_bytes > 1) {
-        *(uint32_t * )(transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(transaction.rx_data)),
+        *(uint32_t * )(read_transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction.rx_data)),
                                                                (rx_data_bytes * 8));
     }
 
-    return *(uint32_t * )(transaction.rx_data);
+    return *(uint32_t * )(read_transaction.rx_data);
 }
 
 #define VALUE_CONFIG0 	(0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)

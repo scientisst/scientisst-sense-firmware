@@ -107,7 +107,7 @@ spi_transaction_t adc_ext_trans;
 op_settings_info_t op_settings = {
     .com_mode = COM_MODE_TCP_STA,
     .host_ip = "192.168.1.100",
-    .port_number = "8883",
+    .port_number = "8881",
     .ssid = "riot",
     .password = "",
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
@@ -140,11 +140,11 @@ void initScientisst(void) {
     }
     ESP_ERROR_CHECK(ret);
 
-    if (!getOpSettingsInfo(&op_settings)) {
+    //if (!getOpSettingsInfo(&op_settings)) {
         is_op_settings_valid = 1;
-    } else {
-        is_op_settings_valid = 0;
-    }
+    //} else {
+    //    is_op_settings_valid = 0;
+    //}
 
     //Determine and save device name in device_name
     getDeviceName();
