@@ -46,9 +46,6 @@ TaskHandle_t acq_adc1_task;
 TaskHandle_t acq_adc_ext_task;
 //TaskHandle_t acquiring_i2c_task;
 
-//SemaphoreHandle_t snd_buff_mutex[NUM_BUFFERS];
-SemaphoreHandle_t bt_buffs_to_send_mutex;
-
 // BT
 char device_name[17] = BT_DEFAULT_DEVICE_NAME;
 
@@ -105,13 +102,15 @@ spi_transaction_t adc_ext_trans;
 
 //Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_TCP_STA,
-    .host_ip = "192.168.1.100",
-    .port_number = "8881",
-    .ssid = "riot",
-    .password = "",
+    .com_mode = COM_MODE_BT,
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 uint8_t is_op_settings_valid = 0;        ///< Flag that indicates if a valid op_settings has been read successfuly from flash
+
+/*.com_mode = COM_MODE_TCP_STA,
+    .host_ip = "192.168.1.100",
+    .port_number = "8888",
+    .ssid = "NOS-4399",
+    .password = "MV3NJW9K",*/
 
 //Firmware version
 uint8_t first_failed_send = 0;
@@ -126,11 +125,6 @@ uint8_t first_failed_send = 0;
  * Starts send data task, adc task and adcExt task. If wifi start rcv task; else, start battery task (adc2) task.
  */
 void initScientisst(void) {
-    //Create a mutex type semaphore
-    if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL) {
-        DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
-        abort();
-    }
 
     //Init nvs (Non volatile storage)
     esp_err_t ret = nvs_flash_init();
@@ -201,7 +195,7 @@ void initScientisst(void) {
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
 
-    xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL, ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
+    //xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL, ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
 
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
     //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY, &acquiring_i2c_task, 1);
@@ -295,6 +289,13 @@ void IRAM_ATTR acqAdc1Task(void) {
     //Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
 
+#if _ADC_EXT_ == ADC_MCP
+    //uint8_t channel_mask = 0b11;
+    adcExtInit();
+    //mcpSetupRoutine(channel_mask);
+    //adcExtStart();
+#endif
+
     //Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
 
@@ -324,9 +325,7 @@ void IRAM_ATTR acqAdc1Task(void) {
             //Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send acq_curr_buff, we need to update it
             if (snd_buff_idx[acq_curr_buff] >= send_threshold) {
                 //Tell bt task that it has acq_curr_buff to send (but it will only send after the buffer is filled above the threshold)
-                xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
                 bt_buffs_to_send[acq_curr_buff] = 1;
-                xSemaphoreGive(bt_buffs_to_send_mutex);
 
                 //If send task is idle, wake it up
                 if (send_busy == 0) {
@@ -367,9 +366,12 @@ void IRAM_ATTR acqAdc1Task(void) {
  * It notifies the sendTask when there is data to send.
  * It is also the main task of CPU0 (PRO CPU)
  */
-void IRAM_ATTR acqAdcExtTask(void) {
+/*void IRAM_ATTR acqAdcExtTask(void) {
 #if _ADC_EXT_ == ADC_MCP
+    uint8_t channel_mask = 0b01;
     adcExtInit();
+    mcpSetupRoutine(channel_mask);
+    adcExtStart();
 #elif _ADC_EXT_ == ADC_ADS
     adcExtInit(SPI3_CS0_IO);
     adsSetupRoutine();
@@ -387,8 +389,8 @@ void IRAM_ATTR acqAdcExtTask(void) {
 
             const int32_t VREF = 3.3;
 
-            /* como a eletronica de momento não suporta resolucoes elevadas 
-            * esta conversao simula um conversor AD de N bits (10 bits devem chegar para validar nesta fase) */
+            // como a eletronica de momento não suporta resolucoes elevadas 
+            // esta conversao simula um conversor AD de N bits (10 bits devem chegar para validar nesta fase)
             const uint8_t N_BITS = 10;
             int32_t sample_n_bits = (raw_data & 0x00FFFFFF) >> (24 - N_BITS);    // descartar N bits
             float voltage = 0.0;
@@ -396,21 +398,13 @@ void IRAM_ATTR acqAdcExtTask(void) {
             if (true)
                 //if(channel == 4)  	// útil caso estejas a excitar apenas um canal com tensão conhecida (aumentar o número de amostras "N_SAMPLES")
             {
-                if (sign) {
-                    printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x sign: -\n", channel, sample, raw_data);
-                } else {
-                    /* só fazer a conversão para tensões positivas*/
-                    voltage = ((float) sample_n_bits) * (VREF * 2) / (pow(2, N_BITS) - 1);
-
-                    printf("CH: %d data_hex: 0x%.7x raw: 0x%.8x s_10b: 0x%.3x voltage: %.3f V\n", channel, sample,
-                           raw_data, sample_n_bits, voltage);
-                }
+                
             }
 
             gpio_intr_enable(MCP_DRDY_IO);
         }
     }
-}
+}*/
 
 
 

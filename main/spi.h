@@ -86,7 +86,7 @@ void adsSendCmd(uint8_t cmd);
 
 #elif _ADC_EXT_ == ADC_MCP
 void mcpSetupRoutine(uint8_t channel_mask);
-uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes);
+uint32_t * IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes);
 void mcpStart(void);
 void mcpStop(void);
 void decodeSample(int32_t sample);

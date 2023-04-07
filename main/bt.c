@@ -36,20 +36,16 @@
  */
 void IRAM_ATTR sendData(void) {
     //Check if there's anything to send and if there is, check if it's enough to send
-    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
     if (bt_buffs_to_send[bt_curr_buff]) {
-        xSemaphoreGive(bt_buffs_to_send_mutex);
         if (snd_buff_idx[bt_curr_buff] < send_threshold) {
             send_busy = 0;
             return;
         } else if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1)) {
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
             send_busy = 0;
             return;
         }
         //There's nothing to send
     } else {
-        xSemaphoreGive(bt_buffs_to_send_mutex);
         send_busy = 0;
         return;
     }
@@ -67,9 +63,7 @@ void IRAM_ATTR sendData(void) {
  * This function clears the sent buffer and changes the current buffer to send.
  */
 void IRAM_ATTR finalizeSend(void) {
-    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
     bt_buffs_to_send[bt_curr_buff] = 0;
-    xSemaphoreGive(bt_buffs_to_send_mutex);
 
     //Clear recently sent buffer
     memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);

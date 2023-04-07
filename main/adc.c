@@ -200,6 +200,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
 
 #if _ADC_EXT_ != NO_EXT_ADC
+    uint32_t * adc_external_raw_data;
     uint32_t adc_external_res[2] = {0, 0};
 #endif
 
@@ -231,17 +232,40 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
     frame[packet_size - 2] = io_state;
 
 #if _ADC_EXT_ != NO_EXT_ADC
-    if (num_extern_active_chs) {
+    if (num_extern_active_chs > 0) {
         // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-        for (i = 0; i < num_extern_active_chs; i++) {
-            if (sim_flag) {
+        /*if (sim_flag) {
+            for (i = 0; i < num_extern_active_chs; i++)
                 adc_external_res[i] = sin10Hz[sin_i % 100];
-            } else {
+        } else {
+            for (i = 0; i < num_extern_active_chs; i++)
                 adc_external_res[i] = adc_ext_samples[i];
+        }*/
+
+        gpio_intr_disable(MCP_DRDY_IO);
+        adc_external_raw_data = mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
+        gpio_intr_enable(MCP_DRDY_IO);
+
+        for (i = 0; i < num_extern_active_chs; i++) {
+            for (size_t j = 0; j < 3; j++) {
+                adc_external_res[i] = *(adc_external_raw_data + j);
+                if ((adc_external_res[i]>>28) == i) {
+                    if ((adc_external_res[i] >> 24) & 0x01) {
+                        adc_external_res[i] = 0;
+                    }else {
+                        adc_external_res[i] = adc_external_res[i] & 0x00FFFFFF;
+                    }
+                    break;
+                } else {
+                    adc_external_res[i] = -1;
+                }
             }
+        }
+
+        for (i = 0; i < num_extern_active_chs; i++) {
             *(uint32_t * )(frame + frame_next_wr) |= adc_external_res[i];
+            //DEBUG_PRINT_W("acquireChannelsScientisst", "adc_external_res[%d] = %d", i, adc_external_res[i]);
             frame_next_wr += 3;
-            // printf("AX%d: %.6x\n", i+1, adc_external_res[i]);
         }
     }
 #elif _TIMESTAMP_ == 1

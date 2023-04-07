@@ -170,7 +170,7 @@ uint8_t getPacketSize(void) {
 /**
  * \brief Selects the active channels
  *
- * This function selects the active channels according to the received command for the JSON API mode.
+ * This function selects the active channels according to the received command for the ScientISST and JSON API modes.
  *
  * \param buff The received command
  */
@@ -268,6 +268,7 @@ void selectChsFromMask(uint8_t *buff) {
 
     //Reset previous active chs
     num_intern_active_chs = 0;
+    num_extern_active_chs = 0;
 
     //Select the channels that are activated (with corresponding bit equal to 1)
     for (i = 1 << (DEFAULT_ADC_CHANNELS + NUM_UNUSED_BITS_FOR_CH_MASK - 1); i > NUM_UNUSED_BITS_FOR_CH_MASK; i >>= 1) {
@@ -306,9 +307,6 @@ void startAcquisition(uint8_t *buff, uint8_t cmd) {
     acq_curr_buff = 0;
     //Clean send buff, because of send status and send firmware string
     send_busy = 0;
-    memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
-    snd_buff_idx[bt_curr_buff] = 0;
-    bt_buffs_to_send[bt_curr_buff] = 0;
 
     //Clean send buffers, to be sure
     for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
@@ -321,7 +319,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd) {
 #endif
 
     //WARNING: if changed, change same code in API
-    if (sample_rate > 100) {
+    if (sample_rate >= 100) {
         send_threshold = !(send_buff_len % packet_size) ? send_buff_len - packet_size : send_buff_len -
                                                                                         (send_buff_len % packet_size);
     } else {
@@ -398,7 +396,7 @@ void stopAcquisition(void) {
 
     op_mode = OP_MODE_IDLE;
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(50 / portTICK_PERIOD_MS);
 
     //Reset simulation's signal iterator
     sin_i = 0;
@@ -419,7 +417,6 @@ void stopAcquisition(void) {
     //Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
-
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition stopped");
 }
@@ -469,11 +466,10 @@ void sendStatusPacket(void) {
     //----------------------------Store packet size-------------------------------------
     snd_buff_idx[NUM_BUFFERS - 1] += STATUS_PACKET_SIZE;
 
+    bt_curr_buff = NUM_BUFFERS - 1;
     //send new data
     sendData();
-    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
-    bt_curr_buff = NUM_BUFFERS - 1;
-    xSemaphoreGive(bt_buffs_to_send_mutex);
+    bt_curr_buff = 0;
     send_threshold = true_send_threshold;
 }
 
@@ -509,13 +505,12 @@ void sendFirmwareVersionPacket(void) {
         snd_buff_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_BITALINO_VERSION);
     }
 
-    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
     bt_curr_buff = NUM_BUFFERS - 1;
-    xSemaphoreGive(bt_buffs_to_send_mutex);
-
 
     sendData();
 
-    DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
+    bt_curr_buff = 0;
     send_threshold = true_send_threshold;
+
+    DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
 }

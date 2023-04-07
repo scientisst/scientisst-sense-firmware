@@ -20,6 +20,11 @@
 
 #if _ADC_EXT_ != NO_ADC_EXT
 
+spi_transaction_t read_transaction;
+spi_transaction_t read_transaction2;
+spi_transaction_t read_transaction3;
+spi_transaction_t cmd_transaction;
+
 void adcExtInit(void) {
     esp_err_t ret;
 
@@ -59,6 +64,33 @@ void adcExtInit(void) {
     //Config Drdy GPIO and interrupt
 #if (_ADC_EXT_ == ADC_MCP)
     adcExtDrdyGpio(MCP_DRDY_IO);
+
+    memset(&read_transaction, 0, sizeof(read_transaction)); // zero out the transaction
+    read_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction.cmd = 0;
+    read_transaction.addr = 0;
+    read_transaction.length = 32;				// length is MAX(in_bits, out_bits)
+    read_transaction.rxlength = 32;
+
+    memset(&read_transaction2, 0, sizeof(read_transaction2)); // zero out the transaction
+    read_transaction2.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction2.cmd = 0;
+    read_transaction2.addr = 0;
+    read_transaction2.length = 32;				// length is MAX(in_bits, out_bits)
+    read_transaction2.rxlength = 32;
+
+    memset(&read_transaction3, 0, sizeof(read_transaction3)); // zero out the transaction
+    read_transaction3.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction3.cmd = 0;
+    read_transaction3.addr = 0;
+    read_transaction3.length = 32;				// length is MAX(in_bits, out_bits)
+    read_transaction3.rxlength = 32;
+
+    memset(&cmd_transaction, 0, sizeof(cmd_transaction)); // zero out the transaction
+    cmd_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    cmd_transaction.length = 8;
+    cmd_transaction.rxlength = 8;
+
 #elif (_ADC_EXT_ == ADC_ADS)
     adcExtDrdyGpio(ADS_DRDY_IO);
 #endif
@@ -100,7 +132,7 @@ static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd) {
     return cmd_byte;
 }
 
-void mcpSendCmd(uint8_t cmd) {
+void IRAM_ATTR mcpSendCmd(uint8_t cmd) {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
 
@@ -117,7 +149,7 @@ void mcpSendCmd(uint8_t cmd) {
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 }
 
-void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes) {
+void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes) {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(address, WREG);
 
@@ -140,42 +172,42 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes) 
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 }
 
-uint32_t IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
-    spi_transaction_t read_transaction;
-    spi_transaction_t cmd_transaction;
-    uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
+uint32_t * IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
+    static uint32_t return_value[3];
+    
+    //uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
 
+    //*(uint32_t * )read_transaction.rx_data = 0;
+    //*(uint32_t * )read_transaction2.rx_data = 0;
+    //*(uint32_t * )read_transaction3.rx_data = 0;
+    //*(uint32_t * )read_transaction.tx_data = 0;
+    //*(uint32_t * )read_transaction2.tx_data = 0;
+    //*(uint32_t * )read_transaction3.tx_data = 0;
 
-    memset(&read_transaction, 0, sizeof(read_transaction)); // zero out the transaction
-    read_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
-    read_transaction.cmd = 0;
-    read_transaction.addr = 0;
-    read_transaction.length = rx_data_bytes*8;				// length is MAX(in_bits, out_bits)
-    read_transaction.rxlength = rx_data_bytes*8;
-    read_transaction.tx_data[0] = 0;
+    //*(uint32_t * )cmd_transaction.tx_data = 0;
 
-    memset(&cmd_transaction, 0, sizeof(cmd_transaction)); // zero out the transaction
-    cmd_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
-    cmd_transaction.length = 8;
-    cmd_transaction.rxlength = 8;
-    cmd_transaction.tx_data[0] = cmd_byte;
-
-
-    vTaskDelay(50/portTICK_PERIOD_MS);
-
+    cmd_transaction.tx_data[0] = 0b00000001;
 
     gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler, &cmd_transaction);  //Transmit command
     spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction);  //Receive data
+    if (rx_data_bytes == 8) {
+        spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction2);  //Receive data
+        spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction3);  //Receive data
+        *(uint32_t * )(read_transaction2.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction2.rx_data)), (32));
+        *(uint32_t * )(read_transaction3.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction3.rx_data)), (32));
+        return_value[1] = *(uint32_t * )read_transaction2.rx_data;
+        return_value[2] = *(uint32_t * )read_transaction3.rx_data;
+    }
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 
 
-if (rx_data_bytes > 1) {
-        *(uint32_t * )(read_transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction.rx_data)),
-                                                               (rx_data_bytes * 8));
-    }
+    //if (rx_data_bytes > 1)
+    *(uint32_t * )(read_transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction.rx_data)), (32));
 
-    return *(uint32_t * )(read_transaction.rx_data);
+    return_value[0] = *(uint32_t * )read_transaction.rx_data;
+
+    return return_value;
 }
 
 #define VALUE_CONFIG0 	(0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
@@ -187,7 +219,7 @@ if (rx_data_bytes > 1) {
 #define VALUE_SCAN	  	((0b000 << 21) | (0b00000 << 16))
 #define VALUE_TIMER		0
 #define VALUE_OFFSETCAL	0
-#define VALUE_GAINCAL	(0x00800000)
+#define VALUE_GAINCAL	(0x800000)
 
 
 void mcpSetupRoutine(uint8_t channel_mask) {
@@ -208,7 +240,7 @@ void mcpSetupRoutine(uint8_t channel_mask) {
     vTaskDelay(50 / portTICK_PERIOD_MS);
 
     //Print reg values for debug
-    for (int reg = REG_CONFIG0; reg <= REG_GAINCAL; reg++) {
+    /*for (int reg = REG_CONFIG0; reg <= REG_GAINCAL; reg++) {
         uint32_t value;
         uint32_t num_bytes;
 
@@ -220,7 +252,7 @@ void mcpSetupRoutine(uint8_t channel_mask) {
 
         value = mcpReadRegister(reg, num_bytes + 1);
         printf("Reg:%.2x, value:%.6x\n", reg, value);
-    }
+    }*/
 }
 
 void mcpStart(void) {

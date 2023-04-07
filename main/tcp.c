@@ -86,7 +86,7 @@ int initTcpClient(char *ip, char *port) {
         return -1;
     }
 
-    int reuse = 1;
+    //int reuse = 1;
     //setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse));
     //setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
 
