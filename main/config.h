@@ -6,6 +6,10 @@
 #define ADC_MCP 2
 #define _ADC_EXT_ ADC_MCP
 
+#define HW_VERSION_LEGACY 0
+#define HW_VERSION_NANO 1
+#define HW_VERSION HW_VERSION_NANO
+
 #define _TIMESTAMP_ 0 //If both external ADC channels are enabled and _ADC_EXT_ == NO_EXT_ADC
 
 #if _TIMESTAMP_ == 1 && _ADC_EXT_ != NO_EXT_ADC

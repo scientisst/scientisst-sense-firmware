@@ -7,12 +7,15 @@
 #include "driver/dac.h"
 #include "config.h"
 
-#define MAX32664_MFIO_IO    GPIO_NUM_15
-#define MAX32664_RSTN_IO    GPIO_NUM_4
-
+#if HW_VERSION == HW_VERSION_LEGACY
 #define STATE_LED_R_IO      GPIO_NUM_22
 #define STATE_LED_B_IO      GPIO_NUM_13
 #define STATE_LED_G_IO      GPIO_NUM_17
+#elif HW_VERSION == HW_VERSION_NANO
+#define STATE_LED_R_IO      GPIO_NUM_13
+#define STATE_LED_B_IO      GPIO_NUM_22
+#define STATE_LED_G_IO      GPIO_NUM_10
+#endif
 
 #define BAT_LED_STATUS_IO   GPIO_NUM_21
 #define O0_IO               GPIO_NUM_0      
@@ -27,10 +30,17 @@
 #define SPI3_CS0_IO     GPIO_NUM_5
 #define SPI3_CS1_IO     GPIO_NUM_4
 #if _ADC_EXT_ == ADC_MCP
-#define MCP_DRDY_IO     GPIO_NUM_16
+    #if HW_VERSION == HW_VERSION_LEGACY
+    #define MCP_DRDY_IO     GPIO_NUM_16
+    #elif HW_VERSION == HW_VERSION_NANO
+    #define MCP_DRDY_IO     GPIO_NUM_9
+    #endif
 #elif _ADC_EXT_ == ADC_ADS
 #define ADS_DRDY_IO     GPIO_NUM_16
 #endif
+
+#define SDA_IO    GPIO_NUM_26
+#define SCL_IO    GPIO_NUM_27
 
 #define LEDC_LS_TIMER           LEDC_TIMER_1            //Low speed timer
 #define LEDC_SPEED_MODE_USED    LEDC_LOW_SPEED_MODE
@@ -42,7 +52,7 @@
 #define LEDC_LIVE_PWM_FREQ      4
 #define LEDC_IDLE_PWM_FREQ      1
 
-#define DAC_CH   DAC_CHANNEL_1
+#define DAC_CH   DAC_CHANNEL_1  //GPIO25
 
 #define ABAT_DIVIDER_FACTOR 2
 
