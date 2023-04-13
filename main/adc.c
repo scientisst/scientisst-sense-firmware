@@ -201,7 +201,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
 
 #if _ADC_EXT_ != NO_EXT_ADC
     uint32_t * adc_external_raw_data;
-    uint32_t adc_external_res[2] = {0, 0};
+    uint32_t adc_external_res[2] = {-1, -1};
 #endif
 
     uint8_t io_state = 0;
@@ -216,7 +216,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
         } else {
             adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
         }
-        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
+        //DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
 
 #ifdef BINEDGE_EXAMPLE
@@ -234,30 +234,44 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
 #if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs > 0) {
         // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-        /*if (sim_flag) {
+        if (sim_flag) {
             for (i = 0; i < num_extern_active_chs; i++)
                 adc_external_res[i] = sin10Hz[sin_i % 100];
         } else {
             for (i = 0; i < num_extern_active_chs; i++)
                 adc_external_res[i] = adc_ext_samples[i];
-        }*/
+        }
 
         gpio_intr_disable(MCP_DRDY_IO);
-        adc_external_raw_data = mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
+        /*adc_external_raw_data =*/ mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
+        //adc_external_raw_data = mcpReadRegister(REG_ADCDATA, 4<<(num_extern_active_chs-1));
+        //mcpReadRegister(REG_ADCDATA, 4<<(num_extern_active_chs-1));
         gpio_intr_enable(MCP_DRDY_IO);
 
-        for (i = 0; i < num_extern_active_chs; i++) {
-            for (size_t j = 0; j < 3; j++) {
-                adc_external_res[i] = *(adc_external_raw_data + j);
-                if ((adc_external_res[i]>>28) == i) {
-                    if ((adc_external_res[i] >> 24) & 0x01) {
+        /*for (i = 0; i < num_extern_active_chs; i++) {
+            for (uint8_t j = 0; j < 3; j++) {
+                //adc_external_res[i] = *(adc_external_raw_data + j);
+                if ((*(adc_external_raw_data + j)>>28) == (active_ext_chs[i] - 6)) {
+                    if ((*(adc_external_raw_data + j) >> 24) & 0x01) {
                         adc_external_res[i] = 0;
                     }else {
-                        adc_external_res[i] = adc_external_res[i] & 0x00FFFFFF;
+                        adc_external_res[i] = *(adc_external_raw_data + j) & 0x00FFFFFF;
                     }
                     break;
-                } else {
-                    adc_external_res[i] = -1;
+                }
+            }
+        }*/
+
+        for (i = 0; i < num_extern_active_chs; i++) {
+            for (uint8_t j = 0; j < 3; j++) {
+                //adc_external_res[i] = *(adc_external_raw_data + j);
+                if ((ext_adc_raw_data[j]>>28) == (active_ext_chs[i] - 6)) {
+                    if ((ext_adc_raw_data[j] >> 24) & 0x01) {
+                        adc_external_res[i] = 0;
+                    }else {
+                        adc_external_res[i] = ext_adc_raw_data[j] & 0x00FFFFFF;
+                    }
+                    break;
                 }
             }
         }

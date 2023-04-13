@@ -66,25 +66,28 @@ void adcExtInit(void) {
     adcExtDrdyGpio(MCP_DRDY_IO);
 
     memset(&read_transaction, 0, sizeof(read_transaction)); // zero out the transaction
-    read_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction.flags = SPI_TRANS_USE_TXDATA /*| SPI_TRANS_USE_RXDATA*/;
     read_transaction.cmd = 0;
     read_transaction.addr = 0;
     read_transaction.length = 32;				// length is MAX(in_bits, out_bits)
     read_transaction.rxlength = 32;
+    read_transaction.rx_buffer = ext_adc_raw_data;
 
     memset(&read_transaction2, 0, sizeof(read_transaction2)); // zero out the transaction
-    read_transaction2.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction2.flags = SPI_TRANS_USE_TXDATA /*| SPI_TRANS_USE_RXDATA*/;
     read_transaction2.cmd = 0;
     read_transaction2.addr = 0;
     read_transaction2.length = 32;				// length is MAX(in_bits, out_bits)
     read_transaction2.rxlength = 32;
+    read_transaction2.rx_buffer = (ext_adc_raw_data +1);
 
     memset(&read_transaction3, 0, sizeof(read_transaction3)); // zero out the transaction
-    read_transaction3.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction3.flags = SPI_TRANS_USE_TXDATA /*| SPI_TRANS_USE_RXDATA*/;
     read_transaction3.cmd = 0;
     read_transaction3.addr = 0;
     read_transaction3.length = 32;				// length is MAX(in_bits, out_bits)
     read_transaction3.rxlength = 32;
+    read_transaction3.rx_buffer = (ext_adc_raw_data +2);
 
     memset(&cmd_transaction, 0, sizeof(cmd_transaction)); // zero out the transaction
     cmd_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
@@ -172,42 +175,48 @@ void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_da
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 }
 
-uint32_t * IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
-    static uint32_t return_value[3];
+void IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
+    
     
     //uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
-
     //*(uint32_t * )read_transaction.rx_data = 0;
     //*(uint32_t * )read_transaction2.rx_data = 0;
     //*(uint32_t * )read_transaction3.rx_data = 0;
     //*(uint32_t * )read_transaction.tx_data = 0;
     //*(uint32_t * )read_transaction2.tx_data = 0;
     //*(uint32_t * )read_transaction3.tx_data = 0;
-
     //*(uint32_t * )cmd_transaction.tx_data = 0;
 
-    cmd_transaction.tx_data[0] = 0b00000001;
+    cmd_transaction.tx_data[0] = 0b01000001;
+
 
     gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
+    
     spi_device_polling_transmit(adc_ext_spi_handler, &cmd_transaction);  //Transmit command
     spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction);  //Receive data
+    
     if (rx_data_bytes == 8) {
         spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction2);  //Receive data
         spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction3);  //Receive data
-        *(uint32_t * )(read_transaction2.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction2.rx_data)), (32));
+        ext_adc_raw_data[1] = SPI_SWAP_DATA_RX(ext_adc_raw_data[1], (32));
+        ext_adc_raw_data[2] = SPI_SWAP_DATA_RX(ext_adc_raw_data[2], (32));
+
+        /**(uint32_t * )(read_transaction2.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction2.rx_data)), (32));
         *(uint32_t * )(read_transaction3.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction3.rx_data)), (32));
-        return_value[1] = *(uint32_t * )read_transaction2.rx_data;
-        return_value[2] = *(uint32_t * )read_transaction3.rx_data;
+        ext_adc_raw_data[1] = *(uint32_t * )read_transaction2.rx_data;
+        ext_adc_raw_data[2] = *(uint32_t * )read_transaction3.rx_data;*/
     }
+
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 
 
     //if (rx_data_bytes > 1)
-    *(uint32_t * )(read_transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction.rx_data)), (32));
+    //*(uint32_t * )(read_transaction.rx_data) = SPI_SWAP_DATA_RX((*(uint32_t * )(read_transaction.rx_data)), (32));
+    ext_adc_raw_data[0] = SPI_SWAP_DATA_RX(ext_adc_raw_data[0], (32));
 
-    return_value[0] = *(uint32_t * )read_transaction.rx_data;
+    //ext_adc_raw_data[0] = *(uint32_t * )read_transaction.rx_data;
 
-    return return_value;
+    //return ext_adc_raw_data;
 }
 
 #define VALUE_CONFIG0 	(0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)

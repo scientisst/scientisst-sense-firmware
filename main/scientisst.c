@@ -89,6 +89,8 @@ esp_adc_cal_characteristics_t adc1_chars;
 esp_adc_cal_characteristics_t adc2_chars;
 uint8_t gpio_out_state[2] = {0, 0}; ///< Output of 01 & O2 (O0 & O1)
 
+uint32_t ext_adc_raw_data[3]; ///< Raw data from external adc
+
 const uint8_t sin10Hz[100] = {31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57, 58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58, 57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29};
 uint8_t sim_flag = 0;
 uint8_t sin_i = 0;
