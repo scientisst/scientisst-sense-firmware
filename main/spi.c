@@ -55,7 +55,7 @@ void adcExtInit(void) {
             .flags = 0,
     };
     //Initialize the SPI bus
-    ret = spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_DISABLED);
+    ret = spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
     //Attach the device to the SPI bus
     ret = spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handler);
@@ -219,7 +219,7 @@ void IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
     //return ext_adc_raw_data;
 }
 
-#define VALUE_CONFIG0 	(0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
+#define VALUE_CONFIG0 	(0b01 << 6) | (0b11 << 4) | (0b00 << 2) | (0b00)
 #define VALUE_CONFIG1 	0
 #define VALUE_CONFIG2 	(0b10 << 6) | (0b001 << 3) | (0b0 << 2) | (0b11)
 #define VALUE_CONFIG3 	(0b11 << 6) | (0b11 << 4) | (0b0 << 3) | (0b0 << 2) | (0b0 << 1) | (0b0)

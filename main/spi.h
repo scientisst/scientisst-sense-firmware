@@ -41,7 +41,7 @@
 #elif _ADC_EXT_ == ADC_MCP
 	#define DMA_CHAN	0
 	#define SPI_MODE	0			//0 or 3, MCP Only supports these two modes
-	#define ADC_EXT_SLCK_HZ (APB_CLK_FREQ / 800)
+	#define ADC_EXT_SLCK_HZ  (APB_CLK_FREQ / 4)
 
 	#define MCP_ADDR	0b01
 
