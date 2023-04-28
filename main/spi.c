@@ -179,12 +179,6 @@ void IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
     
     
     //uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
-    //*(uint32_t * )read_transaction.rx_data = 0;
-    //*(uint32_t * )read_transaction2.rx_data = 0;
-    //*(uint32_t * )read_transaction3.rx_data = 0;
-    //*(uint32_t * )read_transaction.tx_data = 0;
-    //*(uint32_t * )read_transaction2.tx_data = 0;
-    //*(uint32_t * )read_transaction3.tx_data = 0;
     //*(uint32_t * )cmd_transaction.tx_data = 0;
 
     cmd_transaction.tx_data[0] = 0b01000001;
