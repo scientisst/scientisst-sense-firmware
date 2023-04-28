@@ -243,24 +243,9 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
         }
 
         gpio_intr_disable(MCP_DRDY_IO);
-        /*adc_external_raw_data =*/ mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
-        //adc_external_raw_data = mcpReadRegister(REG_ADCDATA, 4<<(num_extern_active_chs-1));
-        //mcpReadRegister(REG_ADCDATA, 4<<(num_extern_active_chs-1));
+        mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
         gpio_intr_enable(MCP_DRDY_IO);
 
-        /*for (i = 0; i < num_extern_active_chs; i++) {
-            for (uint8_t j = 0; j < 3; j++) {
-                //adc_external_res[i] = *(adc_external_raw_data + j);
-                if ((*(adc_external_raw_data + j)>>28) == (active_ext_chs[i] - 6)) {
-                    if ((*(adc_external_raw_data + j) >> 24) & 0x01) {
-                        adc_external_res[i] = 0;
-                    }else {
-                        adc_external_res[i] = *(adc_external_raw_data + j) & 0x00FFFFFF;
-                    }
-                    break;
-                }
-            }
-        }*/
 
         for (i = 0; i < num_extern_active_chs; i++) {
             for (uint8_t j = 0; j < 3; j++) {
