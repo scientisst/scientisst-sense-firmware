@@ -142,10 +142,10 @@ void initScientisst(void){
     dac_output_enable(DAC_CH);
 
     //Check if CONFIG pin is 1 on startup
-    if(gpio_get_level(CONFIG_BTN_IO)){
+    /*if(gpio_get_level(CONFIG_BTN_IO)){
         wifiInit(1);
         opModeConfig();
-    }
+    }*/
 
     //If it's a wifi com mode, let's first try to setup the wifi and (if it's station) try to connect to the access point. If it doesn't work, enter immediatly to config mode in order for the user to update SSID and password
     if(isComModeWifi()){
@@ -175,13 +175,15 @@ void initScientisst(void){
 
         //Wifi is mutually exclusive with ADC2
     }else{
-        xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY, &abat_task, 0);
+        //xTaskCreatePinnedToCore(&AbatTask, "AbatTask", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY, &abat_task, 0);
     }
 
     //Create the 1st task that will acquire data from adc. This task will be responsible for acquiring the data from adc1
-    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
+    //xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
 
+    #if _ADC_EXT_ != NO_EXT_ADC
     xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL, ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
+    #endif
 
     //Create the 1st task that will acquire data from i2c. This task will be responsible for acquiring the data from i2c
     //xTaskCreatePinnedToCore(&acqI2cTask, "acqI2cTask", DEFAULT_TASK_STACK_SIZE, NULL, I2C_ACQ_PRIORITY, &acquiring_i2c_task, 1);
@@ -293,7 +295,7 @@ void IRAM_ATTR acqAdc1Task(){
     }
 }
 
-
+#if _ADC_EXT_ != NO_EXT_ADC
 void IRAM_ATTR acqAdcExtTask(){
     #if _ADC_EXT_ == ADC_MCP
         adcExtInit();
@@ -345,6 +347,7 @@ void IRAM_ATTR acqAdcExtTask(){
         }
     }
 }
+#endif
 
 void IRAM_ATTR AbatTask(){
     uint16_t raw;

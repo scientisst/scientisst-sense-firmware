@@ -1,7 +1,9 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "gpio.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "adc.h"
 #include "macros.h"
 #include "scientisst.h"
@@ -17,17 +19,17 @@
  * 3. You can also set a target duty directly without fading.
  */
 
-void configLedC(void){
+void configLedC(void) {
     /*
      * Prepare and set configuration of timers
      * that will be used by LED Controller
      */
     ledc_timer_config_t ledc_timer = {
-        .duty_resolution = LEDC_TIMER_10_BIT,   // resolution of PWM duty
-        .freq_hz = LEDC_IDLE_PWM_FREQ,          // frequency of PWM signal
-        .speed_mode = LEDC_SPEED_MODE_USED,          // timer mode
-        .timer_num = LEDC_LS_TIMER,             // timer index
-        .clk_cfg = LEDC_AUTO_CLK,               // Auto select the source clock
+        .duty_resolution = LEDC_TIMER_10_BIT,  // resolution of PWM duty
+        .freq_hz = LEDC_IDLE_PWM_FREQ,         // frequency of PWM signal
+        .speed_mode = LEDC_SPEED_MODE_USED,    // timer mode
+        .timer_num = LEDC_LS_TIMER,            // timer index
+        .clk_cfg = LEDC_AUTO_CLK,              // Auto select the source clock
     };
     // Set configuration of timer0 for low speed channels
     ledc_timer_config(&ledc_timer);
@@ -46,15 +48,18 @@ void configLedC(void){
      *         will be the same
      */
     ledc_channel_config_t ledc_channel = {
-        .channel    = LEDC_CHANNEL_R,
-        .duty       = 0,
-        .gpio_num   = STATE_LED_R_IO,
+        .channel = LEDC_CHANNEL_R,
+        .duty = 0,
+        .gpio_num = STATE_LED_R_IO,
         .speed_mode = LEDC_SPEED_MODE_USED,
-        .hpoint     = 0,
-        .timer_sel  = LEDC_LS_TIMER
-    };
+        .hpoint = 0,
+        .timer_sel = LEDC_LS_TIMER};
     // Set LED Controller with previously prepared configuration
+
+#if HW_VERSION != HW_VERSION_BINEDGE_AUDIO
+    // TODO: because this version came with the LED in the wrong orientation
     ledc_channel_config(&ledc_channel);
+#endif
 
     ledc_channel.channel = LEDC_CHANNEL_G;
     ledc_channel.gpio_num = STATE_LED_G_IO;
@@ -63,111 +68,77 @@ void configLedC(void){
     ledc_channel.channel = LEDC_CHANNEL_B;
     ledc_channel.gpio_num = STATE_LED_B_IO;
     ledc_channel_config(&ledc_channel);
-    
-    // Initialize fade service.
-    //ledc_fade_func_install(0);
 
+    // Initialize fade service.
+    // ledc_fade_func_install(0);
+#if HW_VERSION != HW_VERSION_BINEDGE_AUDIO
+    // TODO: because this version came with the LED in the wrong orientation
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+#endif
+
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
-
 }
 
-void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en){
+void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en) {
     gpio_config_t io_conf;
 
-    if(pull_down_en && pull_up_en){
+    if (pull_down_en && pull_up_en) {
         DEBUG_PRINT_E("gpioConfig", "Pin cannot have both pull up and pull down enabled");
         return;
     }
 
-    //config pin direction (output/input)
+    // config pin direction (output/input)
     io_conf.mode = mode;
-    //config interrupt (disable/what type of interrupt)
+    // config interrupt (disable/what type of interrupt)
     io_conf.intr_type = intr_type;
-    //bit mask of the pins that you want to set,e.g.GPIO18/19
+    // bit mask of the pins that you want to set,e.g.GPIO18/19
     io_conf.pin_bit_mask = pin_bit_mask;
-    //config pull-down mode (enable/disable)
+    // config pull-down mode (enable/disable)
     io_conf.pull_down_en = pull_down_en;
-    //config pull-up mode (enable/disable)
+    // config pull-up mode (enable/disable)
     io_conf.pull_up_en = pull_up_en;
 
-    //configure GPIO with the given settings
+    // configure GPIO with the given settings
     gpio_config(&io_conf);
 }
 
-void gpioInit(){
-    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< STATE_LED_R_IO) | (1ULL<< STATE_LED_G_IO) | (1ULL<< STATE_LED_B_IO) | (1ULL<< BAT_LED_STATUS_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO) | (1ULL<< SPI3_CS0_IO)), 0, 0);       
-    gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 1, 0);                                //The 2 IO inputs
+void gpioInit() {
+    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL << STATE_LED_R_IO) | (1ULL << STATE_LED_G_IO) | (1ULL << STATE_LED_B_IO)), 0, 0);
 
-    /*gpio_set_direction(STATE_LED_R_IO, GPIO_MODE_OUTPUT);
-    gpio_set_direction(STATE_LED_G_IO, GPIO_MODE_OUTPUT);
-    gpio_set_direction(STATE_LED_B_IO, GPIO_MODE_OUTPUT);
+#if HW_VERSION == HW_VERSION_BINEDGE_AUDIO
+    // TODO: because this version came with the LED in the wrong orientation
+    gpio_set_level(STATE_LED_R_IO, 1);
+#endif
 
-    while(1){
-        gpio_set_level(STATE_LED_R_IO, 0);
-        gpio_set_level(STATE_LED_G_IO, 0);
-        gpio_set_level(STATE_LED_B_IO, 0);
+    // gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< BAT_LED_STATUS_IO) | (1ULL<< O0_IO) | (1ULL<< O1_IO) | (1ULL<< SPI3_CS0_IO)), 0, 0);
 
-        printf("white\n");
-        
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-        gpio_set_level(STATE_LED_R_IO, 0);
-        gpio_set_level(STATE_LED_G_IO, 1);
-        gpio_set_level(STATE_LED_B_IO, 1);
-
-        printf("red\n");
-
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-        gpio_set_level(STATE_LED_R_IO, 1);
-        gpio_set_level(STATE_LED_G_IO, 0);
-        gpio_set_level(STATE_LED_B_IO, 1);
-
-        printf("green\n");
-
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-        gpio_set_level(STATE_LED_R_IO, 1);
-        gpio_set_level(STATE_LED_G_IO, 1);
-        gpio_set_level(STATE_LED_B_IO, 0);
-
-        printf("blue\n");
-
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-    }*/
-    
-
-    
+    // gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL<< I0_IO) | (1ULL<< I1_IO)), 1, 0);                                //The 2 IO inputs
 }
 
-bool IRAM_ATTR gpioDrdyIsrHandler(){
-    //Wake acq_adc_ext_task. This will only start when this handler is terminated.
+bool IRAM_ATTR gpioDrdyIsrHandler() {
+    // Wake acq_adc_ext_task. This will only start when this handler is terminated.
     vTaskNotifyGiveFromISR(acq_adc_ext_task, NULL);
 
     /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
     should be performed to ensure the interrupt returns directly to the highest
     priority task.  The macro used for this purpose is dependent on the port in
     use and may be called portEND_SWITCHING_ISR(). */
-    //portYIELD_FROM_ISR();
+    // portYIELD_FROM_ISR();
 
-    return 1;       //Replaces portYIELD_FROM_ISR()
+    return 1;  // Replaces portYIELD_FROM_ISR()
 }
 
-void adcExtDrdyGpio(int io_num){
-    //Config DRDY gpio
-	gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL<< io_num)), 0, 0);
+void adcExtDrdyGpio(int io_num) {
+    // Config DRDY gpio
+    gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL << io_num)), 0, 0);
 
-	//install gpio isr service
+    // install gpio isr service
     gpio_install_isr_service(0);
 
-	//hook isr handler for specific gpio pin
+    // hook isr handler for specific gpio pin
     gpio_isr_handler_add(io_num, (gpio_isr_t)gpioDrdyIsrHandler, NULL);
 }
-
-
-
