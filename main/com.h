@@ -1,8 +1,8 @@
 #ifndef _COM_H
 #define _COM_H
 
-#include <stdio.h>
 #include "sdkconfig.h"
+#include <stdio.h>
 
 #define DEFAULT_ADC_CHANNELS 6        // Default number of active adc channels
 #define EXT_ADC_CHANNELS 2            // Num of external adc channels
@@ -21,10 +21,9 @@
 #define CMD_MAX_BYTES 4
 #define NUM_BUFFERS 4
 #define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) // If changed, change in API
-//#define MAX_BUFFER_SIZE CONFIG_LWIP_TCP_SND_BUF_DEFAULT
+// #define MAX_BUFFER_SIZE CONFIG_LWIP_TCP_SND_BUF_DEFAULT
 
-typedef struct
-{
+typedef struct {
     uint8_t api_mode;
     void (*aquire_func)();
     void (*select_ch_mask_func)();
@@ -33,10 +32,11 @@ typedef struct
 #define ADC1_CFG_IDX 0
 #define ADC2_CFG_IDX 1
 
-#define GET_NEXT_POS(curr_pos, dist) ({                     \
-    curr_pos.start_byte += (curr_pos.start_bit + dist) / 8; \
-    curr_pos.start_bit = (curr_pos.start_bit + dist) % 8;   \
-})
+#define GET_NEXT_POS(curr_pos, dist)                                                                                                                                                                   \
+    ({                                                                                                                                                                                                 \
+        curr_pos.start_byte += (curr_pos.start_bit + dist) / 8;                                                                                                                                        \
+        curr_pos.start_bit = (curr_pos.start_bit + dist) % 8;                                                                                                                                          \
+    })
 
 void processRcv2(uint8_t *buff, int buff_size);
 void processRcv(uint8_t *buff, int buff_size);

@@ -1,4 +1,4 @@
-set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c" "ws.c" "ble.c")
+set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c" "ws.c" "ble.c" "frame.c")
 set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs esp_https_server)
 
 set(SRCS_PATH "scientisst-sense-firmware/main")

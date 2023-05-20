@@ -21,9 +21,9 @@ void processRcv(uint8_t *buff, int len) {
     }
 
     // Check trigger command - it's regardeless of the current mode
-    if ((buff[0] & 0b10110011) == 0b10110011) {  // trigger command - Set output GPIO levels
+    if ((buff[0] & 0b10110011) == 0b10110011) { // trigger command - Set output GPIO levels
         triggerGpio(buff);
-    } else if (buff[0] == 0b10100011) {  // trigger command - Set output DAC level
+    } else if (buff[0] == 0b10100011) { // trigger command - Set output DAC level
         triggerDAC(buff);
     }
     if (op_mode == OP_MODE_LIVE) {
@@ -102,19 +102,19 @@ uint8_t getPacketSize() {
     uint8_t _packet_size = 0;
 
     if (api_config.api_mode == API_MODE_BITALINO) {
-        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};  // Table that has the packet size in function of the number of channels
+        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE}; // Table that has the packet size in function of the number of channels
         _packet_size = packet_size_num_chs[num_intern_active_chs];
     } else if (api_config.api_mode == API_MODE_SCIENTISST) {
         // Add 24bit channel's contributuion to packet size
         _packet_size += 3 * num_extern_active_chs;
 
         // Add 12bit channel's contributuion to packet size
-        if (!(num_intern_active_chs % 2)) {  // If it's an even number
+        if (!(num_intern_active_chs % 2)) { // If it's an even number
             _packet_size += ((num_intern_active_chs * 12) / 8);
         } else {
-            _packet_size += (((num_intern_active_chs * 12) - 4) / 8);  //-4 because 4 bits can go in the I/0 byte
+            _packet_size += (((num_intern_active_chs * 12) - 4) / 8); //-4 because 4 bits can go in the I/0 byte
         }
-        _packet_size += 3;  // for the I/Os and seq+crc bytes
+        _packet_size += 3; // for the I/Os and seq+crc bytes
     } else if (api_config.api_mode == API_MODE_JSON) {
         const char *json_str = cJSON_Print(json);
         _packet_size = strlen(json_str) + 1;
@@ -282,8 +282,10 @@ void startAcquisition(uint8_t *buff, uint8_t cmd) {
     }
 #endif
 
-    // Init timer for adc task top start
+// Init timer for adc task top start
+#if HW_VERSION != HW_VERSION_BINEDGE_AUDIO
     timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+#endif
 
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
@@ -304,7 +306,9 @@ void startAcquisition(uint8_t *buff, uint8_t cmd) {
 }
 
 void stopAcquisition(void) {
+#if HW_VERSION != HW_VERSION_BINEDGE_AUDIO
     timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
+#endif
 
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
 
@@ -385,7 +389,7 @@ void sendStatusPacket() {
 
     // calculate CRC for last byte (I1|I2|O1|O2|CRC)
     crc = crc_table[crc] ^ (crc_seq & 0x0F);
-    crc = (0) | crc_table[crc];  // TODO: Onde está 0, meter os valores de I1|I2|O1|O2
+    crc = (0) | crc_table[crc]; // TODO: Onde está 0, meter os valores de I1|I2|O1|O2
 
     // store CRC and Seq in the last byte of the packet
     snd_buff[bt_curr_buff][STATUS_PACKET_SIZE - 1] = crc;
@@ -413,7 +417,7 @@ void sendFirmwareVersionPacket() {
         snd_buff_idx[bt_curr_buff] += strlen(FIRMWARE_VERSION) + 1;
 
         // Send ADC1 configurations for raw2voltage precision conversions
-        memcpy(snd_buff[bt_curr_buff] + snd_buff_idx[bt_curr_buff], &adc1_chars, 6 * sizeof(uint32_t));  // We don't want to send the 2 last pointers of adc1_chars struct
+        memcpy(snd_buff[bt_curr_buff] + snd_buff_idx[bt_curr_buff], &adc1_chars, 6 * sizeof(uint32_t)); // We don't want to send the 2 last pointers of adc1_chars struct
         snd_buff_idx[bt_curr_buff] += 6 * sizeof(uint32_t);
     } else {
         memcpy(snd_buff[bt_curr_buff], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
