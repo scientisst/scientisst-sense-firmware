@@ -1,6 +1,6 @@
 /** \file bt.h
     \brief Bluetooth header file
-    
+
     This file contains the bluetooth header file and relevant macros.
 */
 
@@ -8,6 +8,7 @@
 #define _BT_H
 
 #include <stdio.h>
+
 #include "esp_err.h"
 
 #define SPP_TAG "SPP_ACCEPTOR_DEMO"

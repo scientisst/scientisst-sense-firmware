@@ -17,8 +17,9 @@
 #if _ADC_EXT_ == ADC_ADS
 #define DMA_CHAN 2
 #define SPI_MODE 1
-#define ADC_EXT_SLCK_HZ 1 * 1000 * 1000  // Clock out at 1 MHz, divisors of
-                                         // 80MHz
+#define ADC_EXT_SLCK_HZ \
+    1 * 1000 * 1000  // Clock out at 1 MHz, divisors of
+                     // 80MHz
 
 // register address
 #define ADS1292_REG_ID 0x00
