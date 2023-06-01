@@ -5,14 +5,15 @@
 */
 
 #include "adc.h"
-#include "macros.h"
-#include "com.h"
-#include "freertos/FreeRTOS.h"
-#include "scientisst.h"
+
 #include "cJSON.h"
-#include "gpio.h"
+#include "com.h"
 #include "config.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "gpio.h"
+#include "macros.h"
+#include "scientisst.h"
 
 #define DEFAULT_VREF 1100
 
@@ -28,7 +29,8 @@ Example:        2                    2
     =   00001100
              ^
          fieldIndex
-baseado em: https://stackoverflow.com/questions/11815894/how-to-read-write-arbitrary-bits-in-c-c
+baseado em:
+https://stackoverflow.com/questions/11815894/how-to-read-write-arbitrary-bits-in-c-c
 */
 
 /**
@@ -43,7 +45,9 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel) {
     esp_err_t ret;
 
     if (adc_index == 1) {
-        adc1_config_channel_atten(adc_channel, ADC1_ATTENUATION); // Atennuation to get a input voltage of 0 to 2.6V
+        adc1_config_channel_atten(
+            adc_channel, ADC1_ATTENUATION);  // Atennuation to get a input
+                                             // voltage of 0 to 2.6V
     } else if (adc_index == 2) {
         adc2_config_channel_atten(adc_channel, ADC2_ATTENUATION);
         ret = adc2_get_raw(adc_channel, ADC_RESOLUTION, &dummy);
@@ -89,7 +93,9 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en) {
         }
 
         // Characterize ADC
-        val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+        val_type =
+            esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION,
+                                     ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
             DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
@@ -105,7 +111,9 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en) {
         // Config ADC2 resolution
         configAdc(2, adc_resolution, ABAT_ADC_CH);
 
-        val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
+        val_type =
+            esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION,
+                                     ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
             DEBUG_PRINT_W("ADC2 Calibration type: eFuse Vref");
@@ -120,11 +128,12 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en) {
 /**
  * \brief acquire adc1 channels
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used for Bitalino mode and API (Legacy).
+ * Acquires and stores into frame the channel acquisitions of adc1. This is used
+ * for Bitalino mode and API (Legacy).
  *
  * \param frame pointer of frame position in memory to store the adc1 channels
  */
-void acquireAdc1Channels(uint8_t *frame) {
+void acquireAdc1Channels(uint8_t* frame) {
     uint16_t adc_res[6] = {0, 0, 0, 0, 0, 0};
     uint8_t io_state = 0;
     uint8_t i;
@@ -135,11 +144,14 @@ void acquireAdc1Channels(uint8_t *frame) {
             adc_res[i] = sin10Hz[sin_i % 100];
         } else {
             adc_res[i] =
-                    adc1_get_raw(analog_channels[active_internal_chs[i]]) >> 2; //>> 2 because adc resolution is 12bits
+                adc1_get_raw(analog_channels[active_internal_chs[i]]) >>
+                2;  //>> 2 because adc resolution is 12bits
         }
-        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_res)A%d=%d", active_internal_chs[i], adc_res[i]);
+        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_res)A%d=%d",
+                      active_internal_chs[i], adc_res[i]);
     }
-    sin_i++; // Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
+    sin_i++;  // Increment sin iterator, doesn't matter if it's in sim or adc
+              // mode tbh, an if would cost more instructions
 
     // Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
@@ -149,25 +161,29 @@ void acquireAdc1Channels(uint8_t *frame) {
 
     frame[packet_size - 2] = io_state;
 
-    *(uint16_t * )(frame + packet_size - 3) |= adc_res[num_intern_active_chs - 1] << 2;
+    *(uint16_t*)(frame + packet_size - 3) |= adc_res[num_intern_active_chs - 1]
+                                             << 2;
     if (num_intern_active_chs > 1) {
-        *(uint16_t * )(frame + packet_size - 4) |= adc_res[num_intern_active_chs - 2];
+        *(uint16_t*)(frame + packet_size - 4) |=
+            adc_res[num_intern_active_chs - 2];
     }
     if (num_intern_active_chs > 2) {
-        *(uint16_t * )(frame + packet_size - 6) |= adc_res[num_intern_active_chs - 3] << 6;
+        *(uint16_t*)(frame + packet_size - 6) |=
+            adc_res[num_intern_active_chs - 3] << 6;
     }
     if (num_intern_active_chs > 3) {
-        *(uint16_t * )(frame + packet_size - 7) |= adc_res[num_intern_active_chs - 4] << 4;
+        *(uint16_t*)(frame + packet_size - 7) |=
+            adc_res[num_intern_active_chs - 4] << 4;
     }
     if (num_intern_active_chs > 4) {
-        *(uint16_t *) frame |=
-                (adc_res[num_intern_active_chs - 5] & 0x3F0) << 2;
-    } // Only the 6 upper bits of the 10-bit value are used
+        *(uint16_t*)frame |= (adc_res[num_intern_active_chs - 5] & 0x3F0) << 2;
+    }  // Only the 6 upper bits of the 10-bit value are used
     if (num_intern_active_chs > 5) {
         frame[0] |= adc_res[num_intern_active_chs - 6] >> 4;
-    } // Only the 6 upper bits of the 10-bit value are used
+    }  // Only the 6 upper bits of the 10-bit value are used
 
-    // Calculate CRC & SEQ Number---------------------------------------------------------
+    // Calculate CRC & SEQ
+    // Number---------------------------------------------------------
 
     // calculate CRC (except last byte (seq+CRC) )
     for (i = 0; i < packet_size - 1; i++) {
@@ -186,17 +202,18 @@ void acquireAdc1Channels(uint8_t *frame) {
 }
 
 #ifdef BINEDGE_EXAMPLE
-extern void adcCallback(uint16_t *adc_internal_res, uint8_t *gpio_out_state);
+extern void adcCallback(uint16_t* adc_internal_res, uint8_t* gpio_out_state);
 #endif
 
 /**
  * \brief acquire adc1 channels
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used for ScientISST mode and API (Current).
+ * Acquires and stores into frame the channel acquisitions of adc1. This is used
+ * for ScientISST mode and API (Current).
  *
- * \param frame pointer of frame position in memory to store the adc1 channels
+ * \param frame pointer of frame position in memory to store the adc1 channels.
  */
-void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
+void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame) {
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
 
 #if _ADC_EXT_ != NO_EXT_ADC
@@ -213,9 +230,9 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
         if (sim_flag) {
             adc_internal_res[i] = sin10Hz[sin_i % 100];
         } else {
-            adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+            adc_internal_res[i] =
+                adc1_get_raw(analog_channels[active_internal_chs[i]]);
         }
-        //DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
     }
 
 #ifdef BINEDGE_EXAMPLE
@@ -241,18 +258,15 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
                 adc_external_res[i] = adc_ext_samples[i];
         }
 
-        gpio_intr_disable(MCP_DRDY_IO);
-        mcpReadValues(REG_ADCDATA, 4 * num_extern_active_chs);
-        gpio_intr_enable(MCP_DRDY_IO);
-
+        mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
 
         for (i = 0; i < num_extern_active_chs; i++) {
             for (uint8_t j = 0; j < 3; j++) {
-                //adc_external_res[i] = *(adc_external_raw_data + j);
-                if ((ext_adc_raw_data[j]>>28) == (active_ext_chs[i] - 6)) {
+                // adc_external_res[i] = *(adc_external_raw_data + j);
+                if ((ext_adc_raw_data[j] >> 28) == (active_ext_chs[i] - 6)) {
                     if ((ext_adc_raw_data[j] >> 24) & 0x01) {
                         adc_external_res[i] = 0;
-                    }else {
+                    } else {
                         adc_external_res[i] = ext_adc_raw_data[j] & 0x00FFFFFF;
                     }
                     break;
@@ -262,38 +276,39 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
         }
 
         for (i = 0; i < num_extern_active_chs; i++) {
-            *(uint32_t * )(frame + frame_next_wr) |= adc_external_res[i];
+            *(uint32_t*)(frame + frame_next_wr) |= adc_external_res[i];
             frame_next_wr += 3;
         }
     }
 #elif _TIMESTAMP_ == 1
-    if (num_extern_active_chs == 2)
-    {
+    if (num_extern_active_chs == 2) {
         int64_t timestamp = esp_timer_get_time() & 0xFFFFFFFFFFFF;
-        *(uint64_t *)(frame + frame_next_wr) |= timestamp;
+        *(uint64_t*)(frame + frame_next_wr) |= timestamp;
         frame_next_wr += 6;
     }
 #endif
 
-    sin_i++; // Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
+    sin_i++;  // Increment sin iterator, doesn't matter if it's in sim or adc
+              // mode tbh, an if would cost more instructions
 
     // Store values of internal channels into frame
     for (i = 0; i < num_intern_active_chs; i++) {
         if (!wr_mid_byte_flag) {
-            *(uint16_t * )(frame + frame_next_wr) |= adc_internal_res[i];
+            *(uint16_t*)(frame + frame_next_wr) |= adc_internal_res[i];
             frame_next_wr++;
             wr_mid_byte_flag = 1;
         } else {
-            *(uint16_t * )(frame + frame_next_wr) |= adc_internal_res[i] << 4;
+            *(uint16_t*)(frame + frame_next_wr) |= adc_internal_res[i] << 4;
             frame_next_wr += 2;
             wr_mid_byte_flag = 0;
         }
     }
 
-    // Calculate CRC & SEQ Number---------------------------------------------------------
+    // Calculate CRC & SEQ
+    // Number---------------------------------------------------------
 
     // Store seq number
-    *(uint16_t * )(frame + packet_size - 2) = crc_seq << 4;
+    *(uint16_t*)(frame + packet_size - 2) = crc_seq << 4;
 
     // calculate CRC (except last byte (seq+CRC) )
     for (i = 0; i < packet_size - 2; i++) {
@@ -302,8 +317,10 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
     }
 
     // calculate CRC for seq
-    crc = crc_table[crc] ^ (frame[packet_size - 2] >> 4);  // Calculate CRC for first 4 bits of seq
-    CALC_BYTE_CRC(crc, frame[packet_size - 1], crc_table); // Calcultate CRC for last byte of seq
+    crc = crc_table[crc] ^ (frame[packet_size - 2] >>
+                            4);  // Calculate CRC for first 4 bits of seq
+    CALC_BYTE_CRC(crc, frame[packet_size - 1],
+                  crc_table);  // Calcultate CRC for last byte of seq
 
     crc = crc_table[crc];
 
@@ -315,27 +332,30 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
 /**
  * \brief acquire adc1 channels
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used for JSON mode.
+ * Acquires and stores into frame the channel acquisitions of adc1. This is used
+ * for JSON mode.
  *
  * \param frame pointer of frame position in memory to store the adc1 channels
  */
-void acquireChannelsJson(uint8_t *frame) {
+void acquireChannelsJson(uint8_t* frame) {
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[2] = {0, 0};
     int i;
-    spi_transaction_t *ads_rtrans;
-    uint8_t * recv_ads;
+    spi_transaction_t* ads_rtrans;
+    uint8_t* recv_ads;
     char ch_str[10];
     char value_str[10];
-    cJSON *item;
+    cJSON* item;
 
     for (i = 0; i < num_intern_active_chs; i++) {
         if (sim_flag) {
             adc_internal_res[i] = sin10Hz[sin_i % 100];
         } else {
-            adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
+            adc_internal_res[i] =
+                adc1_get_raw(analog_channels[active_internal_chs[i]]);
         }
-        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
+        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d",
+                      active_internal_chs[i], adc_internal_res[i]);
     }
 
     // Get and store the IO states into json
@@ -357,7 +377,8 @@ void acquireChannelsJson(uint8_t *frame) {
 
     if (num_extern_active_chs) {
         // Get external adc values - Can be a huge bottleneck
-        spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans, portMAX_DELAY);
+        spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans,
+                                    portMAX_DELAY);
         recv_ads = ads_rtrans->rx_buffer;
 
         // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
@@ -365,12 +386,16 @@ void acquireChannelsJson(uint8_t *frame) {
             if (sim_flag) {
                 adc_external_res[i] = sin10Hz[sin_i % 100];
             } else {
-                adc_external_res[i] = (*(uint32_t * )(recv_ads + 3 + (3 * (active_ext_chs[i] - 6)))) & 0x00FFFFFF;
+                adc_external_res[i] =
+                    (*(uint32_t*)(recv_ads + 3 +
+                                  (3 * (active_ext_chs[i] - 6)))) &
+                    0x00FFFFFF;
             }
         }
     }
 
-    sin_i++; // Increment sin iterator, doesn't matter if it's in sim or adc mode tbh, an if would cost more instructions
+    sin_i++;  // Increment sin iterator, doesn't matter if it's in sim or adc
+              // mode tbh, an if would cost more instructions
 
     // Store values of channels into JSON object
     for (i = num_intern_active_chs - 1; i >= 0; i--) {

@@ -2,7 +2,6 @@
     \brief This file contains the definitions of the functions used to
    communicate with the external ADCs.
 
-    //TODO: Add more info
 */
 
 #include "spi.h"
@@ -23,12 +22,19 @@
 
 #if _ADC_EXT_ != NO_ADC_EXT
 
-spi_transaction_t read_transaction;
+spi_transaction_t read_transaction1;
 spi_transaction_t read_transaction2;
 spi_transaction_t read_transaction3;
 spi_transaction_t cmd_transaction;
 uint8_t gpio_already_init_flag = 0;
 
+/**
+ * \brief Initializes SPI bus and SPI interface with the ext adc.
+ * Initializes SPI bus and SPI interface with the ext adc. For ext adc MCP, it
+ * also creates and initializes global data buffers for adc data value
+ * transmission.
+ *
+ */
 void adcExtInit(void) {
     esp_err_t ret;
 
@@ -83,14 +89,14 @@ void adcExtInit(void) {
 #if (_ADC_EXT_ == ADC_MCP)
     if (!gpio_already_init_flag) adcExtDrdyGpio(MCP_DRDY_IO);
 
-    memset(&read_transaction, 0,
-           sizeof(read_transaction));  // zero out the transaction
-    read_transaction.flags = SPI_TRANS_USE_TXDATA /*| SPI_TRANS_USE_RXDATA*/;
-    read_transaction.cmd = 0;
-    read_transaction.addr = 0;
-    read_transaction.length = 32;  // length is MAX(in_bits, out_bits)
-    read_transaction.rxlength = 32;
-    read_transaction.rx_buffer = ext_adc_raw_data;
+    memset(&read_transaction1, 0,
+           sizeof(read_transaction1));  // zero out the transaction
+    read_transaction1.flags = SPI_TRANS_USE_TXDATA /*| SPI_TRANS_USE_RXDATA*/;
+    read_transaction1.cmd = 0;
+    read_transaction1.addr = 0;
+    read_transaction1.length = 32;  // length is MAX(in_bits, out_bits)
+    read_transaction1.rxlength = 32;
+    read_transaction1.rx_buffer = ext_adc_raw_data;
 
     memset(&read_transaction2, 0,
            sizeof(read_transaction2));  // zero out the transaction
@@ -121,6 +127,10 @@ void adcExtInit(void) {
 #endif
 }
 
+/**
+ * \brief Starts the external ADC.
+ *
+ */
 void adcExtStart(void) {
 #if (_ADC_EXT_ == ADC_MCP)
     mcpStart();
@@ -157,6 +167,11 @@ static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd) {
     return cmd_byte;
 }
 
+/**
+ * \brief Sends a command to the MCP.
+ *
+ * \param cmd Command to be sent.
+ */
 void IRAM_ATTR mcpSendCmd(uint8_t cmd) {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
@@ -176,6 +191,13 @@ void IRAM_ATTR mcpSendCmd(uint8_t cmd) {
     gpio_set_level(SPI3_CS0_IO, 1);             // manually set CS\ idle
 }
 
+/**
+ * \brief Writes to a register of the MCP.
+ *
+ * \param address Address of the register to be written.
+ * \param tx_data Data to be written.
+ * \param tx_data_bytes Amount of bytes to be written.
+ */
 void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data,
                                 uint8_t tx_data_bytes) {
     spi_transaction_t transaction;
@@ -203,7 +225,15 @@ void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data,
     gpio_set_level(SPI3_CS0_IO, 1);             // manually set CS\ idle
 }
 
-void IRAM_ATTR mcpReadValues(uint8_t address, uint8_t rx_data_bytes) {
+/**
+ * \brief Reads the ADC values from the MCP.
+ *
+ * \param address Address of the register to be read. Always REG_ADCDATA (0x00).
+ * \param rx_data_bytes Amount of bytes to be read.
+ */
+void IRAM_ATTR mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes) {
+    gpio_intr_disable(MCP_DRDY_IO);
+
     cmd_transaction.tx_data[0] = 0b01000001;
 
     gpio_set_level(SPI3_CS0_IO,
@@ -212,7 +242,7 @@ void IRAM_ATTR mcpReadValues(uint8_t address, uint8_t rx_data_bytes) {
     spi_device_polling_transmit(adc_ext_spi_handler,
                                 &cmd_transaction);  // Transmit command
     spi_device_polling_transmit(adc_ext_spi_handler,
-                                &read_transaction);  // Receive data
+                                &read_transaction1);  // Receive data
 
     if (rx_data_bytes > 4) {
         spi_device_polling_transmit(adc_ext_spi_handler,
@@ -226,6 +256,59 @@ void IRAM_ATTR mcpReadValues(uint8_t address, uint8_t rx_data_bytes) {
     gpio_set_level(SPI3_CS0_IO, 1);  // manually set CS\ idle
 
     ext_adc_raw_data[0] = SPI_SWAP_DATA_RX(ext_adc_raw_data[0], (32));
+
+    gpio_intr_enable(MCP_DRDY_IO);
+}
+
+/**
+ * \brief Reads a register of the MCP.
+ *
+ * \param address Address of the register to be read.
+ * \param rx_data_bytes Amount of bytes to be read.
+ * \return uint32_t Register value.
+ */
+uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
+    spi_transaction_t read_transaction;
+    spi_transaction_t cmd_transaction;
+    uint8_t cmd_byte = mcpGetCmdByte(address, RREG);
+
+    gpio_intr_disable(MCP_DRDY_IO);
+
+    memset(&read_transaction, 0,
+           sizeof(read_transaction));  // zero out the transaction
+    read_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    read_transaction.cmd = 0;
+    read_transaction.addr = 0;
+    read_transaction.length =
+        rx_data_bytes * 8;  // length is MAX(in_bits, out_bits)
+    read_transaction.rxlength = rx_data_bytes * 8;
+    read_transaction.tx_data[0] = 0;
+
+    memset(&cmd_transaction, 0,
+           sizeof(cmd_transaction));  // zero out the transaction
+    cmd_transaction.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    cmd_transaction.length = 8;
+    cmd_transaction.rxlength = 8;
+    cmd_transaction.tx_data[0] = cmd_byte;
+
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+
+    gpio_set_level(SPI3_CS0_IO,
+                   0);  // manually set CS\ active low -> begin comm
+    spi_device_polling_transmit(adc_ext_spi_handler,
+                                &cmd_transaction);  // Transmit command
+    spi_device_polling_transmit(adc_ext_spi_handler,
+                                &read_transaction);  // Receive data!
+    gpio_set_level(SPI3_CS0_IO, 1);                  // manually set CS\ idle
+
+    if (rx_data_bytes > 1) {
+        *(uint32_t*)(read_transaction.rx_data) = SPI_SWAP_DATA_RX(
+            (*(uint32_t*)(read_transaction.rx_data)), (rx_data_bytes * 8));
+    }
+
+    return *(uint32_t*)(read_transaction.rx_data);
+
+    gpio_intr_enable(MCP_DRDY_IO);
 }
 
 #define VALUE_CONFIG0 (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
@@ -240,6 +323,12 @@ void IRAM_ATTR mcpReadValues(uint8_t address, uint8_t rx_data_bytes) {
 #define VALUE_OFFSETCAL 0
 #define VALUE_GAINCAL (0x800000)
 
+/**
+ * \brief Configures the MCP.
+ *
+ * \param channel_mask Mask of the channels to be used. Can be 0b0001, 0b0010,
+ * or 0b0011.
+ */
 void mcpSetupRoutine(uint8_t channel_mask) {
     adcExtInit();
     gpio_already_init_flag = 1;
@@ -277,16 +366,23 @@ void mcpSetupRoutine(uint8_t channel_mask) {
     }*/
 }
 
+/**
+ * \brief Starts the MCP.
+ *
+ */
 void mcpStart(void) { mcpSendCmd(START); }
 
+/**
+ * \brief Stops the MCP.
+ *
+ */
 void mcpStop(void) {
-#if (_ADC_EXT_ == ADC_MCP)
     mcpSendCmd(FSHUTDOWN);
-#endif
     spi_bus_remove_device(adc_ext_spi_handler);
     spi_bus_free(SPI3_HOST);
 }
 
+/**************************************************************************************************************************************************/
 #elif (_ADC_EXT_ == ADC_ADS)
 void adsSendCmd(uint8_t cmd) {
     spi_transaction_t transaction;
