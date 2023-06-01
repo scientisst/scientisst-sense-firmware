@@ -179,11 +179,11 @@ void initScientisst(void) {
     }
     ESP_ERROR_CHECK(ret);
 
-    // if (!getOpSettingsInfo(&op_settings)) {
-    is_op_settings_valid = 1;
-    //} else {
-    //    is_op_settings_valid = 0;
-    //}
+    if (!getOpSettingsInfo(&op_settings)) {
+        is_op_settings_valid = 1;
+    } else {
+        is_op_settings_valid = 0;
+    }
 
     // Determine and save device name in device_name
     getDeviceName();

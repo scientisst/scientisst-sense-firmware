@@ -244,14 +244,6 @@ int wifi_init_sta(void) {
         ret = ESP_FAIL;
     }
 
-    /* The event will not be processed after unregister */  // TODO: Remove this
-                                                            // as it stops wifi
-                                                            // reconnection
-    // ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT,
-    // IP_EVENT_STA_GOT_IP, instance_got_ip));
-    // ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT,
-    // ESP_EVENT_ANY_ID, instance_any_id));
-    // vEventGroupDelete(s_wifi_event_group);
     return ret;
 }
 
@@ -335,18 +327,6 @@ void saveOpSettingsInfo(op_settings_info_t* pOpSettingsInfo) {
  *    - -1 if unsuccessful
  */
 int wifiInit(uint8_t force_ap) {
-    // Stop and free all the resources used by the Wi-Fi
-    // This allows reconnection without causing a crash because they are already
-    // initialized
-    // esp_wifi_disconnect();
-    // esp_wifi_stop();
-    // esp_wifi_deinit();
-    // esp_event_loop_delete_default();
-    // mdns_free();
-    // netbiosns_stop();
-
-    // esp_wifi_start();
-
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
