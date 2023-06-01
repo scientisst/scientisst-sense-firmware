@@ -308,6 +308,8 @@ void startAcquisition(uint8_t *buff, uint8_t cmd) {
     //Clean send buff, because of send status and send firmware string
     send_busy = 0;
 
+    crc_seq = 0;
+
     //Clean send buffers, to be sure
     for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
         memset(snd_buff[i], 0, send_buff_len);

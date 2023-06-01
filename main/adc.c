@@ -200,7 +200,6 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
 
 #if _ADC_EXT_ != NO_EXT_ADC
-    uint32_t * adc_external_raw_data;
     uint32_t adc_external_res[2] = {-1, -1};
 #endif
 
@@ -243,7 +242,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
         }
 
         gpio_intr_disable(MCP_DRDY_IO);
-        mcpReadRegister(REG_ADCDATA, 4*num_extern_active_chs);
+        mcpReadValues(REG_ADCDATA, 4 * num_extern_active_chs);
         gpio_intr_enable(MCP_DRDY_IO);
 
 
@@ -258,12 +257,12 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame) {
                     }
                     break;
                 }
+                adc_external_res[i] = 1;
             }
         }
 
         for (i = 0; i < num_extern_active_chs; i++) {
             *(uint32_t * )(frame + frame_next_wr) |= adc_external_res[i];
-            //DEBUG_PRINT_W("acquireChannelsScientisst", "adc_external_res[%d] = %d", i, adc_external_res[i]);
             frame_next_wr += 3;
         }
     }

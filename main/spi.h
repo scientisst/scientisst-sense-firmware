@@ -41,7 +41,8 @@
 #elif _ADC_EXT_ == ADC_MCP
 	#define DMA_CHAN	0
 	#define SPI_MODE	0			//0 or 3, MCP Only supports these two modes
-	#define ADC_EXT_SLCK_HZ  (APB_CLK_FREQ / 4)
+	#define ADC_EXT_SLCK_HZ_1_EXT_CH  (APB_CLK_FREQ / 8)
+	#define ADC_EXT_SLCK_HZ_2_EXT_CH  (APB_CLK_FREQ / 64)
 
 	#define MCP_ADDR	0b01
 
@@ -86,7 +87,7 @@ void adsSendCmd(uint8_t cmd);
 
 #elif _ADC_EXT_ == ADC_MCP
 void mcpSetupRoutine(uint8_t channel_mask);
-void IRAM_ATTR mcpReadRegister(uint8_t address, uint8_t rx_data_bytes);
+void IRAM_ATTR mcpReadValues(uint8_t address, uint8_t rx_data_bytes);
 void mcpStart(void);
 void mcpStop(void);
 void decodeSample(int32_t sample);
