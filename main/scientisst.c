@@ -150,12 +150,6 @@ uint8_t is_op_settings_valid =
     0;  ///< Flag that indicates if a valid op_settings has been read
         ///< successfuly from flash
 
-/*.com_mode = COM_MODE_TCP_STA,
-    .host_ip = "192.168.1.100",
-    .port_number = "8888",
-    .ssid = "NOS-4399",
-    .password = "MV3NJW9K",*/
-
 // Firmware version
 uint8_t first_failed_send = 0;
 
