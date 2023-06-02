@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "esp_err.h"
+#include "esp_attr.h"
 
 #define SPP_TAG "SPP_ACCEPTOR_DEMO"
 #define SPP_SERVER_NAME "SPP_SERVER"
