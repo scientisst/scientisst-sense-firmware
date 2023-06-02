@@ -5,6 +5,8 @@
 #ifndef _WIFI_H
 #define _WIFI_H
 
+#include <stdint.h>
+
 #define SIZE_2 (2)
 #define SIZE_5 (5)
 #define SIZE_6 (6)

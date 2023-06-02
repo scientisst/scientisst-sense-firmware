@@ -7,6 +7,9 @@
 #ifndef _TCP_H
 #define _TCP_H
 
+#include "esp_attr.h"
+#include "esp_err.h"
+
 int initTcpServer(char* port_str);
 int initTcpConnection(int listen_fd);
 int initTcpClient(char* ip, char* port);
