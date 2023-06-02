@@ -4,3 +4,4 @@ esp-idf-tools/
 .directory
 includes_vscode.txt
 performance.txt
+**/.cache
