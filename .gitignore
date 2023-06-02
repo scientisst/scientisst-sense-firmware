@@ -2,6 +2,9 @@ build/
 esp-idf-tools/
 .vscode
 .directory
+.cache
+.idea
+cmake-build-debug
 includes_vscode.txt
 performance.txt
 **/.cache
