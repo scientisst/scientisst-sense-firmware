@@ -154,14 +154,14 @@ esp_err_t openSDCard(void) {
     const char* file_name = MOUNT_POINT "/acquisition_datapoints";
 
     strcpy(full_file_name, file_name);
-    strcat(full_file_name, ".txt");
+    strcat(full_file_name, ".csv");
 
     if (stat(full_file_name, &st) == 0) {
         for (int i = 1; i > 0; ++i) {
             strcpy(full_file_name, file_name);
             sprintf(int_str, "%d", i);
             strcat(full_file_name, int_str);
-            strcat(full_file_name, ".txt");
+            strcat(full_file_name, ".csv");
             if (stat(full_file_name, &st) != 0) {
                 save_file = fopen(full_file_name, "w");
                 i = -5;
