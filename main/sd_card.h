@@ -14,8 +14,6 @@
 #define PIN_NUM_CLK GPIO_NUM_18
 #define PIN_NUM_CS GPIO_NUM_4
 
-#define FORMAT_SDCARD_IF_MOUNT_FAILED 0
-
 esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff);
 esp_err_t initSDCard(void);
 void unmountSDCard(void);

@@ -17,6 +17,8 @@
 #include "scientisst.h"
 #include "sdmmc_cmd.h"
 
+#if _SD_CARD_ENABLED_ == 1
+
 #define MOUNT_POINT "/sdcard"
 
 FILE* save_file = NULL;
@@ -186,3 +188,5 @@ void unmountSDCard(void) {
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     spi_bus_free(host.slot);
 }
+
+#endif  // USE_SDCARD

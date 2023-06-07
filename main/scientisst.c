@@ -279,10 +279,13 @@ void IRAM_ATTR sendTask(void) {
     } else if (!strcmp(op_settings.com_mode, COM_MODE_BLE)) {
         initBle();
         send_func = &sendBle;
-    } else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
+    }
+#if _SD_CARD_ENABLED_ == 1
+    else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
         initBt();
         send_func = &esp_spp_write;
     }
+#endif
 
     while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
