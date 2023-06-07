@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "macros.h"
+#include "sd_card.h"
 #include "sdkconfig.h"
 #include "spi.h"
 #include "tcp.h"
@@ -61,11 +62,19 @@ uint8_t* snd_buff[NUM_BUFFERS];  ///< Data structure to hold the data to be sent
                                  ///< through bluetooth
 uint32_t send_buff_len = 0;      ///< Length of each send buff
 uint16_t snd_buff_idx[NUM_BUFFERS] = {
-    0, 0, 0, 0, 0};  ///< It contains, for each buffer, the index of the first
-                     ///< free element in the respective buffer
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  ///< It contains, for
+                                                      ///< each buffer, the
+                                                      ///< index of the first
+                                                      ///< free element in the
+                                                      ///< respective buffer
 uint8_t bt_buffs_to_send[NUM_BUFFERS] = {
-    0, 0, 0, 0,
-    0};  ///< If element 0 is set to 1, bt task has to send snd_buff[0]
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  ///< If element 0 is set
+                                                      ///< to 1, bt task has to
+                                                      ///< send snd_buff[0]
 uint8_t bt_curr_buff =
     0;  ///< Index of the buffer that bt task is currently sending
 uint8_t acq_curr_buff =
@@ -134,7 +143,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SD_CARD,
 };
 /*{
     .com_mode = COM_MODE_TCP_STA,
@@ -146,15 +155,9 @@ op_settings_info_t op_settings = {
 
 ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password,
 ///< sample rate...)
-uint8_t is_op_settings_valid =
-    0;  ///< Flag that indicates if a valid op_settings has been read
-        ///< successfuly from flash
-
-/*.com_mode = COM_MODE_TCP_STA,
-    .host_ip = "192.168.1.100",
-    .port_number = "8888",
-    .ssid = "NOS-4399",
-    .password = "MV3NJW9K",*/
+uint8_t is_op_settings_valid = 0;
+///< Flag that indicates if a valid op_settings has been read
+///< successfuly from flash
 
 // Firmware version
 uint8_t first_failed_send = 0;
@@ -179,11 +182,11 @@ void initScientisst(void) {
     }
     ESP_ERROR_CHECK(ret);
 
-    if (!getOpSettingsInfo(&op_settings)) {
-        is_op_settings_valid = 1;
-    } else {
-        is_op_settings_valid = 0;
-    }
+    // if (!getOpSettingsInfo(&op_settings)) {
+    is_op_settings_valid = 1;
+    //} else {
+    //    is_op_settings_valid = 0;
+    //}
 
     // Determine and save device name in device_name
     getDeviceName();
@@ -276,6 +279,9 @@ void IRAM_ATTR sendTask(void) {
     } else if (!strcmp(op_settings.com_mode, COM_MODE_BLE)) {
         initBle();
         send_func = &sendBle;
+    } else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
+        initBt();
+        send_func = &esp_spp_write;
     }
 
     while (1) {
