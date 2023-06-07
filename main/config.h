@@ -1,3 +1,12 @@
+/**
+ * \file config.h
+ * \brief Configuration file
+ *
+ * This file contains the configuration of the project.
+ * It is used to enable/disable features and to select the hardware version.
+ *
+ */
+
 #ifndef _CONFIG_H
 #define _CONFIG_H
 

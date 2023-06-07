@@ -25,6 +25,15 @@ FILE* save_file = NULL;
 sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 sdmmc_card_t* card;
 
+/**
+ * \brief Send function for SD card.
+ *
+ * \param fd Not used.
+ * \param len Length of the buffer.
+ * \param buff Buffer.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
 esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
     uint16_t num_seq = 0;
     uint32_t int_ch_raw[6] = {0, 0, 0, 0, 0, 0};
@@ -33,6 +42,8 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
     uint32_t index = 0;
     uint8_t io[4] = {0, 0, 0, 0};
 
+    // While there is data to be read, write it to the SD card
+    // Code is identical to python API implementation
     for (int i = 0; i < len; i += packet_size) {
         if (op_mode != OP_MODE_LIVE) return ESP_OK;
         mid_frame_flag = 0;
@@ -68,7 +79,6 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         index += 1;
 
         num_seq = (*(uint16_t*)(buff + index)) >> 4;
-        //(((uint16_t)buff[index]) >> 4) | (((uint16_t)buff[index + 1]) << 4);
 
         index += 2;
 
@@ -91,10 +101,16 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
     return ESP_OK;
 }
 
+/**
+ * \brief Initialize SPI host and SPI bus and then mount the SD card.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
 esp_err_t initSDCard(void) {
     const char mount_point[] = MOUNT_POINT;
     esp_err_t ret = ESP_OK;
 
+    // SD card mount config
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
 #if FORMAT_SDCARD_IF_MOUNT_FAILED == 1
         .format_if_mount_failed = true,
@@ -105,6 +121,7 @@ esp_err_t initSDCard(void) {
         .allocation_unit_size = 16 * 1024
     };
 
+    // SPI bus config
     spi_bus_config_t bus_cfg = {
         .mosi_io_num = PIN_NUM_MOSI,
         .miso_io_num = PIN_NUM_MISO,
@@ -147,6 +164,15 @@ esp_err_t initSDCard(void) {
     return openSDCard();
 }
 
+/**
+ * \brief Open a new file on the SD card for writing.
+ *
+ * This function will open a new file on the SD card for writing. First checks
+ * if a file with the same name already exists and if so, will increment the
+ * file name by 1 until a file name is found that does not exist.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
 esp_err_t openSDCard(void) {
     char int_str[15];
     char full_file_name[100];
@@ -156,20 +182,20 @@ esp_err_t openSDCard(void) {
     strcpy(full_file_name, file_name);
     strcat(full_file_name, ".csv");
 
-    if (stat(full_file_name, &st) == 0) {
-        for (int i = 1; i > 0; ++i) {
+    if (stat(full_file_name, &st) == 0) {  // If file already exists
+        for (int i = 1; i > 0; ++i) {      // Find a new file name
             strcpy(full_file_name, file_name);
             sprintf(int_str, "%d", i);
             strcat(full_file_name, int_str);
             strcat(full_file_name, ".csv");
             if (stat(full_file_name, &st) != 0) {
-                save_file = fopen(full_file_name, "w");
+                save_file = fopen(full_file_name, "w");  // Create new file
                 i = -5;
                 break;
             }
         }
     } else {
-        save_file = fopen(full_file_name, "w");
+        save_file = fopen(full_file_name, "w");  // Create new file
     }
 
     if (save_file == NULL) {
@@ -179,12 +205,21 @@ esp_err_t openSDCard(void) {
     return ESP_OK;
 }
 
+/**
+ * \brief Close the file on the SD card.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
 void closeSDCard(void) { fclose(save_file); }
 
+/**
+ * \brief Unmount the SD card and free the SPI bus.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
 void unmountSDCard(void) {
     const char mount_point[] = MOUNT_POINT;
     closeSDCard();
-    vTaskDelay(200 / portTICK_PERIOD_MS);
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     spi_bus_free(host.slot);
 }
