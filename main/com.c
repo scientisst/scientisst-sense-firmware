@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "macros.h"
 #include "scientisst.h"
+#include "sd_card.h"
 #include "spi.h"
 #include "timer.h"
 
@@ -334,6 +335,12 @@ void startAcquisition(uint8_t* buff, uint8_t cmd) {
     send_busy = 0;
 
     crc_seq = 0;
+#if _SD_CARD_ENABLED_ == 1
+    if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
+        initSDCard();
+        send_func = &saveToSDCardSend;
+    }
+#endif
 
     // Clean send buffers, to be sure
     for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
@@ -418,6 +425,15 @@ void stopAcquisition(void) {
 
 #ifdef BINEDGE_EXAMPLE
     deinitPreprocessing();
+#endif
+#if _SD_CARD_ENABLED_ == 1
+    if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
+        send_func = &esp_spp_write;
+        if (op_mode == OP_MODE_LIVE) {
+            op_mode = OP_MODE_IDLE;
+            unmountSDCard();
+        }
+    }
 #endif
 
     op_mode = OP_MODE_IDLE;

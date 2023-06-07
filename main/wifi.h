@@ -26,6 +26,7 @@
 #define COM_MODE_SERIAL "serial"
 #define COM_MODE_WS_AP "ws_ap"
 #define COM_MODE_BLE "ble"
+#define COM_MODE_SD_CARD "sd_card"
 
 typedef struct {
     char ssid[SIZE_32];
