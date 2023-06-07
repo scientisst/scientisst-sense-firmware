@@ -155,6 +155,7 @@ op_settings_info_t op_settings = {
 
 ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password,
 ///< sample rate...)
+
 uint8_t is_op_settings_valid = 0;
 ///< Flag that indicates if a valid op_settings has been read
 ///< successfuly from flash
