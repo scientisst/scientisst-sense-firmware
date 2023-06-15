@@ -13,7 +13,7 @@
 #define NO_EXT_ADC 0  // External ADC disabled
 #define ADC_ADS 1     // ADS
 #define ADC_MCP 2
-#define _ADC_EXT_ ADC_MCP
+#define _ADC_EXT_ NO_EXT_ADC
 
 #define HW_VERSION_LEGACY 0
 #define HW_VERSION_NANO 1

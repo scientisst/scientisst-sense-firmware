@@ -48,18 +48,15 @@
 #define SDA_IO GPIO_NUM_26
 #define SCL_IO GPIO_NUM_27
 
-#define SDA_IO GPIO_NUM_26
-#define SCL_IO GPIO_NUM_27
-
 #define LEDC_LS_TIMER LEDC_TIMER_1  // Low speed timer
 #define LEDC_SPEED_MODE_USED LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL_R LEDC_CHANNEL_0
 #define LEDC_CHANNEL_G LEDC_CHANNEL_1
 #define LEDC_CHANNEL_B LEDC_CHANNEL_2
-#define LEDC_LIVE_DUTY \
-    512  // Half the LEDC_TIMER_10_BIT duty_resolution resolution
-#define LEDC_IDLE_DUTY \
-    921  // 90% the LEDC_TIMER_10_BIT duty_resolution resolution
+#define LEDC_LIVE_DUTY 512
+// Half the LEDC_TIMER_10_BIT duty_resolution resolution
+#define LEDC_IDLE_DUTY 921
+// 90% the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_LIVE_PWM_FREQ 4
 #define LEDC_IDLE_PWM_FREQ 1
 
