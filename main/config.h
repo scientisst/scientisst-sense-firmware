@@ -10,26 +10,41 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-#define NO_EXT_ADC 0  // External ADC disabled
-#define ADC_ADS 1     // ADS
-#define ADC_MCP 2
+#include "macros_conf.h"
+
+// Possible values for _ADC_EXT_:
+//   - NO_EXT_ADC (No external adc) [Default]
+//   - ADC_MCP (Enable external adc)
 #define _ADC_EXT_ ADC_MCP
 
-#define HW_VERSION_LEGACY 0
-#define HW_VERSION_NANO 1
+// Possible values for HW_VERSION_:
+//   - HW_VERSION_LEGACY (Core and Cardio) [Default]
+//   - HW_VERSION_NANO (Nano)
 #define HW_VERSION HW_VERSION_LEGACY
 
-#define _SD_CARD_ENABLED_ 0  // 0: sd card disabled, 1: sd card enabled
-#define FORMAT_SDCARD_IF_MOUNT_FAILED 0
-// 0: do not format sd card if mount failed, 1: format sd card if mount
-// failed
+// Possible values for _SD_CARD_ENABLED_:
+//   - SD_CARD_DISABLED (Disable sd card) [Default]
+//   - SD_CARD_ENABLED (Enable sd card)
+#define _SD_CARD_ENABLED_ SD_CARD_DISABLED
 
-#define _TIMESTAMP_ 0  // 0: no timestamp, 1: timestamp
+// Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
+//   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
+//   - FORMAT_SDCARD (Format sd card if mount failed) (BE CAREFUL, THIS WILL
+//   ERASE ALL DATA ON THE SD CARD)
+#define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
 
+// Possible values for _TIMESTAMP_:
+//   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
+//   - TIMESTAMP_ENABLED (Enable timestamp on AX1 and AX2 channels)
+#define _TIMESTAMP_ 0
+
+// Check if the configuration is valid
+// Timestamp requires that no external adc is enabled
 #if _TIMESTAMP_ == 1 && _ADC_EXT_ != NO_EXT_ADC
 #error timestamp requires that no external adc is enabled
 #endif
 
+// SD card requires that no external adc is enabled
 #if _SD_CARD_ENABLED_ == 1 && _ADC_EXT_ != NO_EXT_ADC
 #error sd card requires that no external adc is enabled
 #endif

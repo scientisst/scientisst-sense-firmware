@@ -14,6 +14,7 @@
 #include "config.h"
 #include "esp_vfs_fat.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 #include "sdmmc_cmd.h"
 

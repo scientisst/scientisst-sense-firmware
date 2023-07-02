@@ -13,6 +13,7 @@
 #include "config.h"
 #include "driver/spi_master.h"
 #include "driver/spi_slave.h"
+#include "macros_conf.h"
 
 #if _ADC_EXT_ == ADC_ADS
 #define DMA_CHAN 2

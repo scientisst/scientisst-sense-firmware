@@ -12,6 +12,7 @@
 #include "driver/dac.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
+#include "macros_conf.h"
 
 #if HW_VERSION == HW_VERSION_LEGACY
 #define STATE_LED_R_IO GPIO_NUM_22
