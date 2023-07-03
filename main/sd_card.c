@@ -11,18 +11,22 @@
 #include <sys/unistd.h>
 
 #include "bt.h"
+#include "com.h"
 #include "config.h"
 #include "esp_vfs_fat.h"
+#include "gpio.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "scientisst.h"
 #include "sdmmc_cmd.h"
+#include "timer.h"
 
 #if _SD_CARD_ENABLED_ == 1
 
 #define MOUNT_POINT "/sdcard"
 
 FILE* save_file = NULL;
+char full_file_name[100];
 sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 sdmmc_card_t* card;
 
@@ -83,13 +87,13 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
 
         index += 2;
 
-        fprintf(save_file, "%hu,%hhu,%hhu,%hhu,%hhu", num_seq, io[0], io[1],
+        fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
                 io[2], io[3]);
         for (int j = 0; j < num_intern_active_chs; j++) {
-            fprintf(save_file, ",%u", int_ch_raw[j]);
+            fprintf(save_file, "\t%u", int_ch_raw[j]);
         }
         for (int j = 0; j < num_extern_active_chs; j++) {
-            fprintf(save_file, ",%u", ext_ch_raw[j]);
+            fprintf(save_file, "\t%u", ext_ch_raw[j]);
         }
 
         fprintf(save_file, "\n");
@@ -162,7 +166,7 @@ esp_err_t initSDCard(void) {
         return ESP_FAIL;
     }
 
-    return openSDCard();
+    return createFile();
 }
 
 /**
@@ -174,9 +178,8 @@ esp_err_t initSDCard(void) {
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t openSDCard(void) {
+esp_err_t createFile(void) {
     char int_str[15];
-    char full_file_name[100];
     struct stat st;
     const char* file_name = MOUNT_POINT "/acquisition_datapoints";
 
@@ -201,6 +204,21 @@ esp_err_t openSDCard(void) {
 
     if (save_file == NULL) {
         DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
+/**
+ * \brief Open the current file on the SD card for appending.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
+esp_err_t openFile(void) {
+    save_file = fopen(full_file_name, "a");  // Create new file
+
+    if (save_file == NULL) {
+        DEBUG_PRINT_E("openFile", "Failed to open file for writing");
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -250,8 +268,13 @@ void startAcquisitionSDCard(void) {
         // Store the activated channels
         if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) ||
             i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2)) {
+#if _ADC_EXT_ != NO_ADC_EXT
             active_ext_chs[num_extern_active_chs] = channel_number - 1;
             num_extern_active_chs++;
+#else
+            channel_number--;
+            continue;
+#endif
         } else {
             active_internal_chs[num_intern_active_chs] = channel_number - 1;
             num_intern_active_chs++;
@@ -277,15 +300,6 @@ void startAcquisitionSDCard(void) {
         bt_buffs_to_send[i] = 0;
     }
 
-    // WARNING: if changed, change same code in API
-    if (sample_rate > 100) {
-        send_threshold = !(send_buff_len % packet_size)
-                             ? send_buff_len - packet_size
-                             : send_buff_len - (send_buff_len % packet_size);
-    } else {
-        send_threshold = packet_size;
-    }
-
     // Start external
 #if _ADC_EXT_ != NO_ADC_EXT
     if (num_extern_active_chs) {
@@ -296,44 +310,51 @@ void startAcquisitionSDCard(void) {
         mcpSetupRoutine(channel_mask);
         adcExtStart();
     }
-#else
-    num_extern_active_chs = 0;
-    active_ext_chs[0] = 0;
-    active_ext_chs[1] = 0;
 #endif
 
     packet_size = getPacketSize();
 
+    send_threshold = !(send_buff_len % packet_size)
+                         ? send_buff_len - packet_size
+                         : send_buff_len - (send_buff_len % packet_size);
+
 #if _ADC_EXT_ != NO_ADC_EXT
     fprintf(save_file,
             "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
-            "'Channels indexes mV': [6, 8, 10, 12, 14, 16, 18, 20], 'Channels "
+            "'Channels indexes mV': [], 'Channels "
             "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
-            "['AI1_raw', 'AI1_mv', 'AI2_raw', 'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv', "
-            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
+            "['AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
+            "'AX7_raw', 'AX8_raw'], 'Device': '%s', "
             "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
-            "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', 'AI2_mv', 'AI3_raw', "
-            "'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', "
-            "'AI6_mv', 'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'ISO 8601': "
+            "'O2', 'AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
+            "'AX7_raw', 'AX8_raw'], 'ISO 8601': "
             "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
             "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
             device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
+            "raw\tAI4_raw\tAI5_raw\tAI6_raw\tAX7_raw\tAX8_raw\n");
 #else
     fprintf(
         save_file,
         "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
         "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
-        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', 'AI2_raw', "
-        "'AI2_mv', 'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', "
-        "'AI5_mv', 'AI6_raw', 'AI6_mv'], 'Device': '%s','Firmware version': "
-        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', 'AI1_raw', 'AI1_mv', "
-        "'AI2_raw', 'AI2_mv', 'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', "
-        "'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], 'ISO 8601':'NULL', "
+        "9, 11, 13, 15,], 'Channels labels': [AI1_raw', 'AI2_raw', 'AI3_raw', "
+        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'Device': '%s','Firmware version': "
+        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', 'AI2_raw', "
+        "'AI3_raw', "
+        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'ISO 8601':'NULL', "
         "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
         "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
         device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
+            "raw\tAI4_raw\tAI5_raw\tAI6_raw\n");
 #endif
+
+    closeSDCard();
 
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
