@@ -10,12 +10,6 @@ else ()
     list(TRANSFORM srcs PREPEND "${SRCS_PATH}/")
 endif ()
 
-idf_build_get_property(BINEDGE_EXAMPLE BINEDGE_EXAMPLE_PROPERTY)
-if (DEFINED BINEDGE_EXAMPLE)
-    list(APPEND requires ${BINEDGE_EXAMPLE})
-    list(APPEND requires common)
-endif ()
-
 idf_component_register(SRCS ${srcs}
         INCLUDE_DIRS "." "../../"
         REQUIRES ${requires}

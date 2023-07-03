@@ -292,15 +292,20 @@ void IRAM_ATTR sendTask(void) {
     }
 #if _SD_CARD_ENABLED_ == 1
     else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
-        initBt();
-        send_func = &esp_spp_write;
+        if (initSDCard() != ESP_OK) {
+            DEBUG_PRINT_E("SD_CARD",
+                          "Cannot init SD Card, changing to BT mode");
+            initBt();
+            send_func = &esp_spp_write;
+        } else {
+            send_func = &saveToSDCardSend;
+        }
     }
 #endif
 
     while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         sendData();
-        // send_busy = 0; //TODO: confirm if this is necessary
     }
 }
 
@@ -421,7 +426,7 @@ void IRAM_ATTR acqAdc1Task(void) {
                 }
 
                 acq_next_buff = (acq_curr_buff + 1) % (NUM_BUFFERS - 1);
-                // acq_next_buff = (acq_curr_buff + 1) & 0x03;
+
                 // Check if next buffer is full. If this happens, it means all 4
                 // buffers are full and bt task can't handle this sending
                 // throughput

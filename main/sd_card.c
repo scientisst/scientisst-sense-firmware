@@ -225,4 +225,97 @@ void unmountSDCard(void) {
     spi_bus_free(host.slot);
 }
 
+/**
+ * \brief Start the acquisition of data from the ADC and save it to the SD card.
+ *
+ * This function will start the acquisition of data from the ADC and save it to
+ * the SD card. It acquires from all available channels at 1000Hz and saves the
+ * data to a CSV file on the SD card.
+ *
+ */
+void startAcquisitionSDCard(void) {
+    // Get channels from mask
+    uint8_t i;
+    int channel_number = DEFAULT_ADC_CHANNELS + 2;
+
+    // Reset previous active chs
+    num_intern_active_chs = 0;
+    num_extern_active_chs = 0;
+
+    sample_rate = 1000;
+
+    // Select the channels that are activated (with corresponding bit equal to
+    // 1)
+    for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1) {
+        // Store the activated channels
+        if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) ||
+            i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2)) {
+            active_ext_chs[num_extern_active_chs] = channel_number - 1;
+            num_extern_active_chs++;
+        } else {
+            active_internal_chs[num_intern_active_chs] = channel_number - 1;
+            num_intern_active_chs++;
+        }
+
+        DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added",
+                      channel_number - 1);
+        channel_number--;
+    }
+
+    packet_size = getPacketSize();
+
+    // Clear send buffs, because of potential previous live mode
+    bt_curr_buff = 0;
+    acq_curr_buff = 0;
+    // Clean send buff, because of send status and send firmware string
+    send_busy = 0;
+
+    crc_seq = 0;
+
+    // Clean send buffers, to be sure
+    for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
+        memset(snd_buff[i], 0, send_buff_len);
+        snd_buff_idx[i] = 0;
+        bt_buffs_to_send[i] = 0;
+    }
+
+    // WARNING: if changed, change same code in API
+    if (sample_rate > 100) {
+        send_threshold = !(send_buff_len % packet_size)
+                             ? send_buff_len - packet_size
+                             : send_buff_len - (send_buff_len % packet_size);
+    } else {
+        send_threshold = packet_size;
+    }
+
+    // Start external
+#if _ADC_EXT_ != NO_ADC_EXT
+    if (num_extern_active_chs) {
+        uint8_t channel_mask = 0;
+        for (int i = 0; i < num_extern_active_chs; i++) {
+            channel_mask |= 0b1 << (active_ext_chs[i] - 6);
+        }
+        mcpSetupRoutine(channel_mask);
+        adcExtStart();
+    }
+#endif
+
+    // Init timer for adc task top start
+    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+
+    // Set led state to blink at live mode frequency
+    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+
+    // Set live mode duty cycle for state led
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
+
+    DEBUG_PRINT_W("startAcquisition", "Acquisition started");
+    op_mode = OP_MODE_LIVE;
+}
+
 #endif  // USE_SDCARD

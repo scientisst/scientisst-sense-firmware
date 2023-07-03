@@ -307,11 +307,6 @@ void selectChsFromMask(uint8_t* buff) {
     packet_size = getPacketSize();
 }
 
-#ifdef BINEDGE_EXAMPLE
-extern void initPreprocessing(void);
-extern void deinitPreprocessing(void);
-#endif
-
 /**
  * \brief Starts the acquisition
  *
@@ -335,12 +330,6 @@ void startAcquisition(uint8_t* buff, uint8_t cmd) {
     send_busy = 0;
 
     crc_seq = 0;
-#if _SD_CARD_ENABLED_ == 1
-    if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
-        initSDCard();
-        send_func = &saveToSDCardSend;
-    }
-#endif
 
     // Clean send buffers, to be sure
     for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
@@ -348,9 +337,6 @@ void startAcquisition(uint8_t* buff, uint8_t cmd) {
         snd_buff_idx[i] = 0;
         bt_buffs_to_send[i] = 0;
     }
-#ifdef BINEDGE_EXAMPLE
-    initPreprocessing();
-#endif
 
     // WARNING: if changed, change same code in API
     if (sample_rate > 100) {
@@ -420,19 +406,6 @@ void stopAcquisition(void) {
 #if _ADC_EXT_ != NO_ADC_EXT
     if (num_extern_active_chs) {
         adcExtStop();
-    }
-#endif
-
-#ifdef BINEDGE_EXAMPLE
-    deinitPreprocessing();
-#endif
-#if _SD_CARD_ENABLED_ == 1
-    if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
-        send_func = &esp_spp_write;
-        if (op_mode == OP_MODE_LIVE) {
-            op_mode = OP_MODE_IDLE;
-            unmountSDCard();
-        }
     }
 #endif
 
