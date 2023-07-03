@@ -299,6 +299,7 @@ void IRAM_ATTR sendTask(void) {
             send_func = &esp_spp_write;
         } else {
             send_func = &saveToSDCardSend;
+            startAcquisitionSDCard();
         }
     }
 #endif

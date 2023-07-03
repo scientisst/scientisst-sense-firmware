@@ -19,5 +19,6 @@ esp_err_t initSDCard(void);
 void unmountSDCard(void);
 void closeSDCard(void);
 esp_err_t openSDCard(void);
+void startAcquisitionSDCard(void);
 
 #endif  // SCIENTISST_SENSE_FIRMWARE_SD_CARD_H
