@@ -58,6 +58,7 @@ void setSampleRate(uint8_t* buff);
 void triggerGpio(uint8_t* buff);
 void triggerDAC(uint8_t* buff);
 void startAcquisition(uint8_t* buff, uint8_t cmd);
+uint8_t getPacketSize(void);
 
 /*          MASK CONFIGURATION EXAMPLE
  *                       bits

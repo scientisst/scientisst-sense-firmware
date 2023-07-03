@@ -18,6 +18,8 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff);
 esp_err_t initSDCard(void);
 void unmountSDCard(void);
 void closeSDCard(void);
-esp_err_t openSDCard(void);
+esp_err_t createFile(void);
+void startAcquisitionSDCard(void);
+esp_err_t openFile(void);
 
 #endif  // SCIENTISST_SENSE_FIRMWARE_SD_CARD_H

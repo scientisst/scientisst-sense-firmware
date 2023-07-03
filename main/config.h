@@ -21,7 +21,7 @@
 //   - HW_VERSION_CORE (Core and Cardio) [Default]
 //   - HW_VERSION_NANO (Nano)
 //   - HW_VERSION_CARDIO (Cardio)
-#define HW_VERSION HW_VERSION_CARDIO
+#define HW_VERSION HW_VERSION_CORE
 
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]

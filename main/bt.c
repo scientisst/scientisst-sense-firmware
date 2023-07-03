@@ -59,9 +59,6 @@ void IRAM_ATTR sendData(void) {
         return;
     }
 
-    // DEBUG_PRINT_I("sendData", "Data sent: %d bytes",
-    // snd_buff_idx[bt_curr_buff]);
-
     send_busy = 1;
     send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 }

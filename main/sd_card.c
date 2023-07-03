@@ -11,18 +11,22 @@
 #include <sys/unistd.h>
 
 #include "bt.h"
+#include "com.h"
 #include "config.h"
 #include "esp_vfs_fat.h"
+#include "gpio.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "scientisst.h"
 #include "sdmmc_cmd.h"
+#include "timer.h"
 
 #if _SD_CARD_ENABLED_ == 1
 
 #define MOUNT_POINT "/sdcard"
 
 FILE* save_file = NULL;
+char full_file_name[100];
 sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 sdmmc_card_t* card;
 
@@ -49,24 +53,17 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         if (op_mode != OP_MODE_LIVE) return ESP_OK;
         mid_frame_flag = 0;
         for (int j = 0; j < num_extern_active_chs; j++) {
-            ext_ch_raw[j] =
-                (((uint32_t)buff[index]) | (((uint32_t)buff[index + 1]) << 8) |
-                 ((uint32_t)buff[index + 2] << 16)) &
-                0xFFFFFF;
+            ext_ch_raw[j] = *(uint32_t*)(buff + index) & 0xFFFFFF;
             index += 3;
         }
 
         for (int j = 0; j < num_intern_active_chs; j++) {
             if (mid_frame_flag) {
-                int_ch_raw[j] = (((uint32_t)buff[index]) |
-                                 (((uint32_t)buff[index + 1]) << 8)) &
-                                0xFFF;
+                int_ch_raw[j] = *(uint16_t*)(buff + index) & 0xFFF;
                 index += 2;
                 mid_frame_flag = 0;
             } else {
-                int_ch_raw[j] = (((uint32_t)buff[index]) |
-                                 (((uint32_t)buff[index + 1]) << 8)) >>
-                                4;
+                int_ch_raw[j] = *(uint16_t*)(buff + index) >> 4;
                 index += 1;
                 mid_frame_flag = 1;
             }
@@ -80,16 +77,16 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         index += 1;
 
         num_seq = (*(uint16_t*)(buff + index)) >> 4;
-
+        
         index += 2;
 
-        fprintf(save_file, "%hu,%hhu,%hhu,%hhu,%hhu", num_seq, io[0], io[1],
+        fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
                 io[2], io[3]);
         for (int j = 0; j < num_intern_active_chs; j++) {
-            fprintf(save_file, ",%u", int_ch_raw[j]);
+            fprintf(save_file, "\t%u", int_ch_raw[j]);
         }
         for (int j = 0; j < num_extern_active_chs; j++) {
-            fprintf(save_file, ",%u", ext_ch_raw[j]);
+            fprintf(save_file, "\t%u", ext_ch_raw[j]);
         }
 
         fprintf(save_file, "\n");
@@ -162,7 +159,7 @@ esp_err_t initSDCard(void) {
         return ESP_FAIL;
     }
 
-    return openSDCard();
+    return createFile();
 }
 
 /**
@@ -174,9 +171,8 @@ esp_err_t initSDCard(void) {
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t openSDCard(void) {
+esp_err_t createFile(void) {
     char int_str[15];
-    char full_file_name[100];
     struct stat st;
     const char* file_name = MOUNT_POINT "/acquisition_datapoints";
 
@@ -207,6 +203,21 @@ esp_err_t openSDCard(void) {
 }
 
 /**
+ * \brief Open the current file on the SD card for appending.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
+esp_err_t openFile(void) {
+    save_file = fopen(full_file_name, "a");  // Create new file
+
+    if (save_file == NULL) {
+        DEBUG_PRINT_E("openFile", "Failed to open file for writing");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
+/**
  * \brief Close the file on the SD card.
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
@@ -223,6 +234,141 @@ void unmountSDCard(void) {
     closeSDCard();
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     spi_bus_free(host.slot);
+}
+
+/**
+ * \brief Start the acquisition of data from the ADC and save it to the SD card.
+ *
+ * This function will start the acquisition of data from the ADC and save it to
+ * the SD card. It acquires from all available channels at 1000Hz and saves the
+ * data to a CSV file on the SD card.
+ *
+ */
+void startAcquisitionSDCard(void) {
+    // Get channels from mask
+    uint8_t i;
+    int channel_number = DEFAULT_ADC_CHANNELS + 2;
+
+    changeAPI(API_MODE_SCIENTISST);
+
+    // Reset previous active chs
+    num_intern_active_chs = 0;
+    num_extern_active_chs = 0;
+
+    sample_rate = 1000;
+
+    // Select the channels that are activated (with corresponding bit equal to
+    // 1)
+    for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1) {
+        // Store the activated channels
+        if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) ||
+            i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2)) {
+#if _ADC_EXT_ != NO_ADC_EXT
+            active_ext_chs[num_extern_active_chs] = channel_number - 1;
+            num_extern_active_chs++;
+#else
+            channel_number--;
+            continue;
+#endif
+        } else {
+            active_internal_chs[num_intern_active_chs] = channel_number - 1;
+            num_intern_active_chs++;
+        }
+
+        DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added",
+                      channel_number - 1);
+        channel_number--;
+    }
+
+    // Clear send buffs, because of potential previous live mode
+    bt_curr_buff = 0;
+    acq_curr_buff = 0;
+    // Clean send buff, because of send status and send firmware string
+    send_busy = 0;
+
+    crc_seq = 0;
+
+    // Clean send buffers, to be sure
+    for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
+        memset(snd_buff[i], 0, send_buff_len);
+        snd_buff_idx[i] = 0;
+        bt_buffs_to_send[i] = 0;
+    }
+
+    // Start external
+#if _ADC_EXT_ != NO_ADC_EXT
+    if (num_extern_active_chs) {
+        uint8_t channel_mask = 0;
+        for (int i = 0; i < num_extern_active_chs; i++) {
+            channel_mask |= 0b1 << (active_ext_chs[i] - 6);
+        }
+        mcpSetupRoutine(channel_mask);
+        adcExtStart();
+    }
+#endif
+
+    packet_size = getPacketSize();
+
+    send_threshold = !(send_buff_len % packet_size)
+                         ? send_buff_len - packet_size
+                         : send_buff_len - (send_buff_len % packet_size);
+
+#if _ADC_EXT_ != NO_ADC_EXT
+    fprintf(save_file,
+            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
+            "'Channels indexes mV': [], 'Channels "
+            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
+            "['AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
+            "'AX7_raw', 'AX8_raw'], 'Device': '%s', "
+            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
+            "'O2', 'AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
+            "'AX7_raw', 'AX8_raw'], 'ISO 8601': "
+            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
+            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+            device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
+            "raw\tAI4_raw\tAI5_raw\tAI6_raw\tAX7_raw\tAX8_raw\n");
+#else
+    fprintf(
+        save_file,
+        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
+        "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
+        "9, 11, 13, 15,], 'Channels labels': [AI1_raw', 'AI2_raw', 'AI3_raw', "
+        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'Device': '%s','Firmware version': "
+        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', 'AI2_raw', "
+        "'AI3_raw', "
+        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'ISO 8601':'NULL', "
+        "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
+        "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+        device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
+            "raw\tAI4_raw\tAI5_raw\tAI6_raw\n");
+#endif
+
+    closeSDCard();
+
+    // Init timer for adc task top start
+    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+
+    // Set led state to blink at live mode frequency
+    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
+
+    // Set live mode duty cycle for state led
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+#if HW_VERSION != HW_VERSION_CARDIO
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
+    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
+    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
+#endif
+
+    DEBUG_PRINT_W("startAcquisition", "Acquisition started");
+    op_mode = OP_MODE_LIVE;
 }
 
 #endif  // USE_SDCARD
