@@ -262,8 +262,6 @@ void startAcquisitionSDCard(void) {
         channel_number--;
     }
 
-    packet_size = getPacketSize();
-
     // Clear send buffs, because of potential previous live mode
     bt_curr_buff = 0;
     acq_curr_buff = 0;
@@ -298,6 +296,43 @@ void startAcquisitionSDCard(void) {
         mcpSetupRoutine(channel_mask);
         adcExtStart();
     }
+#else
+    num_extern_active_chs = 0;
+    active_ext_chs[0] = 0;
+    active_ext_chs[1] = 0;
+#endif
+
+    packet_size = getPacketSize();
+
+#if _ADC_EXT_ != NO_ADC_EXT
+    fprintf(save_file,
+            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
+            "'Channels indexes mV': [6, 8, 10, 12, 14, 16, 18, 20], 'Channels "
+            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
+            "['AI1_raw', 'AI1_mv', 'AI2_raw', 'AI2_mv', 'AI3_raw', 'AI3_mv', "
+            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv', "
+            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
+            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
+            "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', 'AI2_mv', 'AI3_raw', "
+            "'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', "
+            "'AI6_mv', 'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'ISO 8601': "
+            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
+            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+            device_name, FIRMWARE_VERSION);
+#else
+    fprintf(
+        save_file,
+        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
+        "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
+        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', 'AI2_raw', "
+        "'AI2_mv', 'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', "
+        "'AI5_mv', 'AI6_raw', 'AI6_mv'], 'Device': '%s','Firmware version': "
+        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', 'AI1_raw', 'AI1_mv', "
+        "'AI2_raw', 'AI2_mv', 'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', "
+        "'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], 'ISO 8601':'NULL', "
+        "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
+        "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+        device_name, FIRMWARE_VERSION);
 #endif
 
     // Init timer for adc task top start
@@ -309,10 +344,12 @@ void startAcquisitionSDCard(void) {
     // Set live mode duty cycle for state led
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
+#if HW_VERSION != HW_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
+#endif
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition started");
     op_mode = OP_MODE_LIVE;
