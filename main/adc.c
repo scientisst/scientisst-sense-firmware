@@ -13,6 +13,7 @@
 #include "freertos/FreeRTOS.h"
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 #define DEFAULT_VREF 1100
