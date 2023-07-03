@@ -53,24 +53,17 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         if (op_mode != OP_MODE_LIVE) return ESP_OK;
         mid_frame_flag = 0;
         for (int j = 0; j < num_extern_active_chs; j++) {
-            ext_ch_raw[j] =
-                (((uint32_t)buff[index]) | (((uint32_t)buff[index + 1]) << 8) |
-                 ((uint32_t)buff[index + 2] << 16)) &
-                0xFFFFFF;
+            ext_ch_raw[j] = *(uint32_t*)(buff + index) & 0xFFFFFF;
             index += 3;
         }
 
         for (int j = 0; j < num_intern_active_chs; j++) {
             if (mid_frame_flag) {
-                int_ch_raw[j] = (((uint32_t)buff[index]) |
-                                 (((uint32_t)buff[index + 1]) << 8)) &
-                                0xFFF;
+                int_ch_raw[j] = *(uint16_t*)(buff + index) & 0xFFF;
                 index += 2;
                 mid_frame_flag = 0;
             } else {
-                int_ch_raw[j] = (((uint32_t)buff[index]) |
-                                 (((uint32_t)buff[index + 1]) << 8)) >>
-                                4;
+                int_ch_raw[j] = *(uint16_t*)(buff + index) >> 4;
                 index += 1;
                 mid_frame_flag = 1;
             }
@@ -84,7 +77,7 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         index += 1;
 
         num_seq = (*(uint16_t*)(buff + index)) >> 4;
-
+        
         index += 2;
 
         fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
@@ -255,6 +248,8 @@ void startAcquisitionSDCard(void) {
     // Get channels from mask
     uint8_t i;
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
+
+    changeAPI(API_MODE_SCIENTISST);
 
     // Reset previous active chs
     num_intern_active_chs = 0;
