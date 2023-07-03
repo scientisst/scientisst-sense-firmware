@@ -15,12 +15,13 @@
 // Possible values for _ADC_EXT_:
 //   - NO_EXT_ADC (No external adc) [Default]
 //   - ADC_MCP (Enable external adc)
-#define _ADC_EXT_ ADC_MCP
+#define _ADC_EXT_ NO_EXT_ADC
 
 // Possible values for HW_VERSION_:
-//   - HW_VERSION_LEGACY (Core and Cardio) [Default]
+//   - HW_VERSION_CORE (Core and Cardio) [Default]
 //   - HW_VERSION_NANO (Nano)
-#define HW_VERSION HW_VERSION_LEGACY
+//   - HW_VERSION_CARDIO (Cardio)
+#define HW_VERSION HW_VERSION_CARDIO
 
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
@@ -36,7 +37,7 @@
 // Possible values for _TIMESTAMP_:
 //   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
 //   - TIMESTAMP_ENABLED (Enable timestamp on AX1 and AX2 channels)
-#define _TIMESTAMP_ 0
+#define _TIMESTAMP_ TIMESTAMP_DISABLED
 
 // Check if the configuration is valid
 // Timestamp requires that no external adc is enabled

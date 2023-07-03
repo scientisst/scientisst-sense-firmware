@@ -17,8 +17,9 @@
 #define ADC_MCP 2
 
 // Hardware version possible options
-#define HW_VERSION_LEGACY 0
+#define HW_VERSION_CORE 0
 #define HW_VERSION_NANO 1
+#define HW_VERSION_CARDIO 2
 
 // SD card possible options
 #define SD_CARD_DISABLED 0
