@@ -57,6 +57,7 @@ extern esp_adc_cal_characteristics_t adc1_chars;
 extern esp_adc_cal_characteristics_t adc2_chars;
 extern char device_name[];
 extern uint8_t send_busy;
+extern SemaphoreHandle_t bt_buffs_to_send_mutex;
 extern uint16_t send_threshold;
 extern uint8_t bt_curr_buff;
 extern uint8_t acq_curr_buff;

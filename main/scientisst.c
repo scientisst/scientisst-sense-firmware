@@ -49,6 +49,9 @@ TaskHandle_t acq_adc1_task;
 TaskHandle_t acq_adc_ext_task;
 // TaskHandle_t acquiring_i2c_task;
 
+// Mutex for the buffers
+SemaphoreHandle_t bt_buffs_to_send_mutex;
+
 // BT
 char device_name[17] = BT_DEFAULT_DEVICE_NAME;
 
@@ -174,6 +177,12 @@ uint8_t first_failed_send = 0;
  * start rcv task; else, start battery task (adc2) task.
  */
 void initScientisst(void) {
+    // Create a mutex type semaphore
+    if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL) {
+        DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
+        abort();
+    }
+
     // Init nvs (Non volatile storage)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -402,7 +411,9 @@ void IRAM_ATTR acqAdc1Task(void) {
             if (snd_buff_idx[acq_curr_buff] >= send_threshold) {
                 // Tell bt task that it has acq_curr_buff to send (but it will
                 // only send after the buffer is filled above the threshold)
+                xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
                 bt_buffs_to_send[acq_curr_buff] = 1;
+                xSemaphoreGive(bt_buffs_to_send_mutex);
 
                 // If send task is idle, wake it up
                 if (send_busy == 0) {
