@@ -26,7 +26,7 @@
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ENABLED_ SD_CARD_ENABLED
+#define _SD_CARD_ENABLED_ SD_CARD_DISABLED
 
 // Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
