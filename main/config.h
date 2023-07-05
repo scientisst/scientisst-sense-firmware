@@ -18,7 +18,7 @@
 #define _ADC_EXT_ NO_EXT_ADC
 
 // Possible values for HW_VERSION_:
-//   - HW_VERSION_CORE (Core and Cardio) [Default]
+//   - HW_VERSION_CORE (Core) [Default]
 //   - HW_VERSION_NANO (Nano)
 //   - HW_VERSION_CARDIO (Cardio)
 #define HW_VERSION HW_VERSION_CORE
