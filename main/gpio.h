@@ -14,7 +14,7 @@
 #include "driver/ledc.h"
 #include "macros_conf.h"
 
-#if HW_VERSION == HW_VERSION_LEGACY
+#if HW_VERSION == HW_VERSION_CORE
 #define STATE_LED_R_IO GPIO_NUM_22
 #define STATE_LED_B_IO GPIO_NUM_13
 #define STATE_LED_G_IO GPIO_NUM_17
@@ -41,7 +41,7 @@
 #define SPI3_CS0_IO GPIO_NUM_5
 #define SPI3_CS1_IO GPIO_NUM_4
 #if _ADC_EXT_ == ADC_MCP
-#if HW_VERSION == HW_VERSION_LEGACY
+#if HW_VERSION == HW_VERSION_CORE
 #define MCP_DRDY_IO GPIO_NUM_16
 #elif HW_VERSION == HW_VERSION_NANO
 #define MCP_DRDY_IO GPIO_NUM_9
