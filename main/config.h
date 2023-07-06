@@ -31,7 +31,7 @@
 // Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
 //   - FORMAT_SDCARD (Format sd card if mount failed) (BE CAREFUL, THIS WILL
-//   ERASE ALL DATA ON THE SD CARD)
+//     ERASE ALL DATA ON THE SD CARD)
 #define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
 
 // Possible values for _TIMESTAMP_:

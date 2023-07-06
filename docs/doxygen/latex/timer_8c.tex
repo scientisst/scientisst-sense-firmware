@@ -1,0 +1,115 @@
+\hypertarget{timer_8c}{}\doxysection{timer.\+c File Reference}
+\label{timer_8c}\index{timer.c@{timer.c}}
+
+
+Timer functions for the Scientisst firmware.  
+
+
+{\ttfamily \#include \char`\"{}driver/timer.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}driver/periph\+\_\+ctrl.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+types.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/\+Free\+RTOS.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/queue.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/task.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}gpio.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}timer.\+h\char`\"{}}\newline
+Include dependency graph for timer.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{timer_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{timer_8c_a8c7ade759bcbdb5f322c75e037a35372}{timer\+Grp\+Init}} (int timer\+\_\+group, int timer\+\_\+idx, bool($\ast$timer\+\_\+isr)())
+\begin{DoxyCompactList}\small\item\em Initialize selected timer of the specified timer group. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{timer_8c_ae1bc234de7f0a67812f660fa2afae676}{timer\+Start}} (int timer\+\_\+group, int timer\+\_\+idx, uint32\+\_\+t frequency)
+\begin{DoxyCompactList}\small\item\em Starts selected timer of the specified timer group. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{timer_8c_aa24482081052ef3405105945940652fb}{timer\+Pause}} (int timer\+\_\+group, int timer\+\_\+idx)
+\begin{DoxyCompactList}\small\item\em Stops selected timer of the specified timer group. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{timer_8c_a221852e951d7b9a5bd5d92daee708b75}\label{timer_8c_a221852e951d7b9a5bd5d92daee708b75}} 
+bool IRAM\+\_\+\+ATTR {\bfseries timer\+Grp0\+Isr} (void)
+\item 
+\mbox{\Hypertarget{timer_8c_a78ef14ddd3eb571d09ffc50f30e1a841}\label{timer_8c_a78ef14ddd3eb571d09ffc50f30e1a841}} 
+bool IRAM\+\_\+\+ATTR {\bfseries timer\+Grp1\+Isr} (void)
+\item 
+void \mbox{\hyperlink{timer_8c_a1f2a8567a429b77ce674c72b73d12582}{esp\+\_\+task\+\_\+wdt\+\_\+isr\+\_\+user\+\_\+handler}} (void)
+\begin{DoxyCompactList}\small\item\em ISR handler for the Task Watchdog Timer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Timer functions for the Scientisst firmware. 
+
+This file contains the functions for the timer used in the Scientisst firmware. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{timer_8c_a1f2a8567a429b77ce674c72b73d12582}\label{timer_8c_a1f2a8567a429b77ce674c72b73d12582}} 
+\index{timer.c@{timer.c}!esp\_task\_wdt\_isr\_user\_handler@{esp\_task\_wdt\_isr\_user\_handler}}
+\index{esp\_task\_wdt\_isr\_user\_handler@{esp\_task\_wdt\_isr\_user\_handler}!timer.c@{timer.c}}
+\doxysubsubsection{\texorpdfstring{esp\_task\_wdt\_isr\_user\_handler()}{esp\_task\_wdt\_isr\_user\_handler()}}
+{\footnotesize\ttfamily void esp\+\_\+task\+\_\+wdt\+\_\+isr\+\_\+user\+\_\+handler (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+ISR handler for the Task Watchdog Timer. 
+
+This function is called when the Task Watchdog Timer (TWDT) triggers. If bluetooth throughput is too high, either acquring task (CPU1) or sending task (CP0) may starve other tasks of CPU. Hence, sampling rate or number of channels need to be decreased. When that starvation happens, the Task Watchdog Timer (TWDT) will trigger and this handler will be called and livemode will be stop on its own. The ESP32 will then restart. \mbox{\Hypertarget{timer_8c_a8c7ade759bcbdb5f322c75e037a35372}\label{timer_8c_a8c7ade759bcbdb5f322c75e037a35372}} 
+\index{timer.c@{timer.c}!timerGrpInit@{timerGrpInit}}
+\index{timerGrpInit@{timerGrpInit}!timer.c@{timer.c}}
+\doxysubsubsection{\texorpdfstring{timerGrpInit()}{timerGrpInit()}}
+{\footnotesize\ttfamily void timer\+Grp\+Init (\begin{DoxyParamCaption}\item[{int}]{timer\+\_\+group,  }\item[{int}]{timer\+\_\+idx,  }\item[{bool($\ast$)()}]{timer\+\_\+isr }\end{DoxyParamCaption})}
+
+
+
+Initialize selected timer of the specified timer group. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em timer\+\_\+group} & The timer group to be initialized \\
+\hline
+{\em timer\+\_\+idx} & The timer number to initialize \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{timer_8c_aa24482081052ef3405105945940652fb}\label{timer_8c_aa24482081052ef3405105945940652fb}} 
+\index{timer.c@{timer.c}!timerPause@{timerPause}}
+\index{timerPause@{timerPause}!timer.c@{timer.c}}
+\doxysubsubsection{\texorpdfstring{timerPause()}{timerPause()}}
+{\footnotesize\ttfamily void timer\+Pause (\begin{DoxyParamCaption}\item[{int}]{timer\+\_\+group,  }\item[{int}]{timer\+\_\+idx }\end{DoxyParamCaption})}
+
+
+
+Stops selected timer of the specified timer group. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em timer\+\_\+group} & The timer group of the timer to be stopped \\
+\hline
+{\em timer\+\_\+idx} & The timer number to stop \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{timer_8c_ae1bc234de7f0a67812f660fa2afae676}\label{timer_8c_ae1bc234de7f0a67812f660fa2afae676}} 
+\index{timer.c@{timer.c}!timerStart@{timerStart}}
+\index{timerStart@{timerStart}!timer.c@{timer.c}}
+\doxysubsubsection{\texorpdfstring{timerStart()}{timerStart()}}
+{\footnotesize\ttfamily void timer\+Start (\begin{DoxyParamCaption}\item[{int}]{timer\+\_\+group,  }\item[{int}]{timer\+\_\+idx,  }\item[{uint32\+\_\+t}]{frequency }\end{DoxyParamCaption})}
+
+
+
+Starts selected timer of the specified timer group. 
+
+Starts $<$timer\+\_\+idx$>$ from $<$timer\+\_\+group$>$ and the alarm has an frequency of $<$frequency$>$ Hz
+
+
+\begin{DoxyParams}{Parameters}
+{\em timer\+\_\+group} & The timer group of the timer to be started \\
+\hline
+{\em timer\+\_\+idx} & The timer number to start \\
+\hline
+{\em frequency} & The frequency of the alarm \\
+\hline
+\end{DoxyParams}

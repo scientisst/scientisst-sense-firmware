@@ -1,0 +1,92 @@
+\hypertarget{bt_8h}{}\doxysection{bt.\+h File Reference}
+\label{bt_8h}\index{bt.h@{bt.h}}
+
+
+Bluetooth header file.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+err.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+attr.\+h\char`\"{}}\newline
+Include dependency graph for bt.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=293pt]{bt_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{bt_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{bt_8h_aa204d8f7f792ccc8824f28d7ca6066bc}\label{bt_8h_aa204d8f7f792ccc8824f28d7ca6066bc}} 
+\#define {\bfseries SPP\+\_\+\+TAG}~\char`\"{}SPP\+\_\+\+ACCEPTOR\+\_\+\+DEMO\char`\"{}
+\item 
+\mbox{\Hypertarget{bt_8h_afbfbc83ad5c6fb8c7e24be1643771be0}\label{bt_8h_afbfbc83ad5c6fb8c7e24be1643771be0}} 
+\#define {\bfseries SPP\+\_\+\+SERVER\+\_\+\+NAME}~\char`\"{}SPP\+\_\+\+SERVER\char`\"{}
+\item 
+\mbox{\Hypertarget{bt_8h_a1b11ad695a75bb884913e0504c2a7440}\label{bt_8h_a1b11ad695a75bb884913e0504c2a7440}} 
+\#define {\bfseries BT\+\_\+\+DEFAULT\+\_\+\+DEVICE\+\_\+\+NAME}~\char`\"{}Scient\+ISST\textbackslash{}0\char`\"{}
+\item 
+\mbox{\Hypertarget{bt_8h_abb0a20f6c87f5a1cdd3293556262c22f}\label{bt_8h_abb0a20f6c87f5a1cdd3293556262c22f}} 
+\#define {\bfseries SEND\+\_\+\+AFTER\+\_\+\+C0\+NG}~2
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{bt_8h_a09adbbe03bca19d08be8cc4f256e7cc9}{send\+Data}} (void)
+\begin{DoxyCompactList}\small\item\em Function to send data using the appropriate send function. \end{DoxyCompactList}\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{bt_8h_a970bbfe7779123f1f8ec27fb3a615c55}{finalize\+Send}} (void)
+\begin{DoxyCompactList}\small\item\em Function to finalize the send process. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{bt_8h_a1d589ae3a900fe0bf71eddee1dd0cfaf}\label{bt_8h_a1d589ae3a900fe0bf71eddee1dd0cfaf}} 
+void {\bfseries init\+Bt} (void)
+\begin{DoxyCompactList}\small\item\em Initialize the bluetooth communication. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{bt_8h_a986d19de50327259af91066c4e1152d0}{get\+Device\+Name}} (void)
+\begin{DoxyCompactList}\small\item\em Get the device name. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Bluetooth header file. 
+
+This file contains the bluetooth header file and relevant macros. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{bt_8h_a970bbfe7779123f1f8ec27fb3a615c55}\label{bt_8h_a970bbfe7779123f1f8ec27fb3a615c55}} 
+\index{bt.h@{bt.h}!finalizeSend@{finalizeSend}}
+\index{finalizeSend@{finalizeSend}!bt.h@{bt.h}}
+\doxysubsubsection{\texorpdfstring{finalizeSend()}{finalizeSend()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR finalize\+Send (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Function to finalize the send process. 
+
+This function clears the sent buffer and changes the current buffer to send. \mbox{\Hypertarget{bt_8h_a986d19de50327259af91066c4e1152d0}\label{bt_8h_a986d19de50327259af91066c4e1152d0}} 
+\index{bt.h@{bt.h}!getDeviceName@{getDeviceName}}
+\index{getDeviceName@{getDeviceName}!bt.h@{bt.h}}
+\doxysubsubsection{\texorpdfstring{getDeviceName()}{getDeviceName()}}
+{\footnotesize\ttfamily void get\+Device\+Name (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Get the device name. 
+
+Use the last 2 bytes of MAC-\/\+ADDRESS found on EFUSE to make the device name \mbox{\Hypertarget{bt_8h_a09adbbe03bca19d08be8cc4f256e7cc9}\label{bt_8h_a09adbbe03bca19d08be8cc4f256e7cc9}} 
+\index{bt.h@{bt.h}!sendData@{sendData}}
+\index{sendData@{sendData}!bt.h@{bt.h}}
+\doxysubsubsection{\texorpdfstring{sendData()}{sendData()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR send\+Data (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Function to send data using the appropriate send function. 
+
+This function is called by the send task and sends the data using the appropriate send function. It first checks if there\textquotesingle{}s anything to send. The buffer changing and clearing tasks are done after in \mbox{\hyperlink{bt_8c_a970bbfe7779123f1f8ec27fb3a615c55}{finalize\+Send()}} the ESP\+\_\+\+SPP\+\_\+\+WRITE\+\_\+\+EVT event ocurred with writing completed successfully in esp\+\_\+spp\+\_\+cb(). 

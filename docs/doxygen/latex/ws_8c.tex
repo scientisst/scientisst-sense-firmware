@@ -1,0 +1,168 @@
+\hypertarget{ws_8c}{}\doxysection{ws.\+c File Reference}
+\label{ws_8c}\index{ws.c@{ws.c}}
+
+
+Websocket server.  
+
+
+{\ttfamily \#include \char`\"{}ws.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$esp\+\_\+log.\+h$>$}\newline
+{\ttfamily \#include $<$esp\+\_\+system.\+h$>$}\newline
+{\ttfamily \#include $<$nvs\+\_\+flash.\+h$>$}\newline
+{\ttfamily \#include $<$sys/param.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}bt.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}com.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+https\+\_\+server.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+netif.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+Include dependency graph for ws.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{ws_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR \mbox{\hyperlink{ws_8c_a71f4a6d3a9ff9a76d33d0ef18815eef8}{ws\+Serial\+Send}} (uint32\+\_\+t fd, int len, uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Send data to the websocket client. \end{DoxyCompactList}\item 
+esp\+\_\+err\+\_\+t \mbox{\hyperlink{ws_8c_acbb6b64675aca3d7fec61755cecee2ab}{rcv\+\_\+handler}} (httpd\+\_\+req\+\_\+t $\ast$req)
+\begin{DoxyCompactList}\small\item\em Receive data from the websocket client and process it. \end{DoxyCompactList}\item 
+esp\+\_\+err\+\_\+t \mbox{\hyperlink{ws_8c_a57a1d28e8246614b495bed50df98ceec}{get\+\_\+handler}} (httpd\+\_\+req\+\_\+t $\ast$req)
+\begin{DoxyCompactList}\small\item\em Send the Scient\+ISST Sense self-\/signed certificate to the client. \end{DoxyCompactList}\item 
+httpd\+\_\+handle\+\_\+t \mbox{\hyperlink{ws_8c_aa405dbf500a1f511f559e1e87efff9da}{start\+\_\+webserver}} (void)
+\begin{DoxyCompactList}\small\item\em Start the websocket server. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{ws_8c_ac748f295f1e8d5ef259b3566fc685887}\label{ws_8c_ac748f295f1e8d5ef259b3566fc685887}} 
+httpd\+\_\+handle\+\_\+t {\bfseries ws\+\_\+hd}
+\item 
+\mbox{\Hypertarget{ws_8c_ad1bdd4bf325a6bd8d53409eef32ed2b6}\label{ws_8c_ad1bdd4bf325a6bd8d53409eef32ed2b6}} 
+int {\bfseries ws\+\_\+fd}
+\item 
+const httpd\+\_\+uri\+\_\+t \mbox{\hyperlink{ws_8c_a091947d77f5f324e2a978b1707c3d000}{ws}}
+\item 
+const httpd\+\_\+uri\+\_\+t \mbox{\hyperlink{ws_8c_a6388c2a6dbbb0a94fdf9943afe0e1fb5}{cert\+\_\+get}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Websocket server. 
+
+This file contains the websocket server code. It is used to send data to the web interface. TODO\+: Confirm it is imcomplete and undestand what it\textquotesingle{}s supposed to do. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{ws_8c_a57a1d28e8246614b495bed50df98ceec}\label{ws_8c_a57a1d28e8246614b495bed50df98ceec}} 
+\index{ws.c@{ws.c}!get\_handler@{get\_handler}}
+\index{get\_handler@{get\_handler}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{get\_handler()}{get\_handler()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t get\+\_\+handler (\begin{DoxyParamCaption}\item[{httpd\+\_\+req\+\_\+t $\ast$}]{req }\end{DoxyParamCaption})}
+
+
+
+Send the Scient\+ISST Sense self-\/signed certificate to the client. 
+
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item ESP\+\_\+\+OK always 
+\end{DoxyItemize}
+\end{DoxyReturn}
+\mbox{\Hypertarget{ws_8c_acbb6b64675aca3d7fec61755cecee2ab}\label{ws_8c_acbb6b64675aca3d7fec61755cecee2ab}} 
+\index{ws.c@{ws.c}!rcv\_handler@{rcv\_handler}}
+\index{rcv\_handler@{rcv\_handler}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{rcv\_handler()}{rcv\_handler()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t rcv\+\_\+handler (\begin{DoxyParamCaption}\item[{httpd\+\_\+req\+\_\+t $\ast$}]{req }\end{DoxyParamCaption})}
+
+
+
+Receive data from the websocket client and process it. 
+
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item ESP\+\_\+\+OK if the server was started successfully
+\item ESP\+\_\+\+FAIL otherwise 
+\end{DoxyItemize}
+\end{DoxyReturn}
+\mbox{\Hypertarget{ws_8c_aa405dbf500a1f511f559e1e87efff9da}\label{ws_8c_aa405dbf500a1f511f559e1e87efff9da}} 
+\index{ws.c@{ws.c}!start\_webserver@{start\_webserver}}
+\index{start\_webserver@{start\_webserver}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{start\_webserver()}{start\_webserver()}}
+{\footnotesize\ttfamily httpd\+\_\+handle\+\_\+t start\+\_\+webserver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Start the websocket server. 
+
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item The handle of the server if it was started successfully
+\item NULL otherwise 
+\end{DoxyItemize}
+\end{DoxyReturn}
+\mbox{\Hypertarget{ws_8c_a71f4a6d3a9ff9a76d33d0ef18815eef8}\label{ws_8c_a71f4a6d3a9ff9a76d33d0ef18815eef8}} 
+\index{ws.c@{ws.c}!wsSerialSend@{wsSerialSend}}
+\index{wsSerialSend@{wsSerialSend}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{wsSerialSend()}{wsSerialSend()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR ws\+Serial\+Send (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{fd,  }\item[{int}]{len,  }\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Send data to the websocket client. 
+
+This function sends data to the websocket client. It is called by the send\+Data function when in websocket mode.
+
+
+\begin{DoxyParams}{Parameters}
+{\em fd} & The file descriptor of the TCP connection. \\
+\hline
+{\em len} & The length of the data to send. \\
+\hline
+{\em buff} & The data to send.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item ESP\+\_\+\+OK if the data was sent successfully
+\item ESP\+\_\+\+FAIL otherwise 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{ws_8c_a6388c2a6dbbb0a94fdf9943afe0e1fb5}\label{ws_8c_a6388c2a6dbbb0a94fdf9943afe0e1fb5}} 
+\index{ws.c@{ws.c}!cert\_get@{cert\_get}}
+\index{cert\_get@{cert\_get}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{cert\_get}{cert\_get}}
+{\footnotesize\ttfamily const httpd\+\_\+uri\+\_\+t cert\+\_\+get}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{.uri = \textcolor{stringliteral}{"{}/cert"{}},}
+\DoxyCodeLine{                              .method = HTTP\_GET,}
+\DoxyCodeLine{                              .handler = \mbox{\hyperlink{ws_8c_a57a1d28e8246614b495bed50df98ceec}{get\_handler}},}
+\DoxyCodeLine{                              .user\_ctx = NULL\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{ws_8c_a091947d77f5f324e2a978b1707c3d000}\label{ws_8c_a091947d77f5f324e2a978b1707c3d000}} 
+\index{ws.c@{ws.c}!ws@{ws}}
+\index{ws@{ws}!ws.c@{ws.c}}
+\doxysubsubsection{\texorpdfstring{ws}{ws}}
+{\footnotesize\ttfamily const httpd\+\_\+uri\+\_\+t ws}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{.uri = \textcolor{stringliteral}{"{}/"{}},}
+\DoxyCodeLine{                        .method = HTTP\_GET,}
+\DoxyCodeLine{                        .handler = \mbox{\hyperlink{ws_8c_acbb6b64675aca3d7fec61755cecee2ab}{rcv\_handler}},}
+\DoxyCodeLine{                        .user\_ctx = NULL,}
+\DoxyCodeLine{                        .is\_websocket = \textcolor{keyword}{true}\}}
+
+\end{DoxyCode}

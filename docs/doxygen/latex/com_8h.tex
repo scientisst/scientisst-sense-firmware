@@ -1,0 +1,296 @@
+\hypertarget{com_8h}{}\doxysection{com.\+h File Reference}
+\label{com_8h}\index{com.h@{com.h}}
+
+
+This file contains the definitions of the functions used to process the received data.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}sdkconfig.\+h\char`\"{}}\newline
+Include dependency graph for com.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{com_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{com_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structApi__Config}{Api\+\_\+\+Config}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{com_8h_a1f7a8b393d5666dc98938dc78eaa605f}\label{com_8h_a1f7a8b393d5666dc98938dc78eaa605f}} 
+\#define {\bfseries DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS}~6
+\item 
+\mbox{\Hypertarget{com_8h_ace928ea3d387e18e65d2ed3f21f32e62}\label{com_8h_ace928ea3d387e18e65d2ed3f21f32e62}} 
+\#define {\bfseries EXT\+\_\+\+ADC\+\_\+\+CHANNELS}~2
+\item 
+\mbox{\Hypertarget{com_8h_a63dbe97403330f9a8c6237f0c94648c4}\label{com_8h_a63dbe97403330f9a8c6237f0c94648c4}} 
+\#define {\bfseries NUM\+\_\+\+UNUSED\+\_\+\+BITS\+\_\+\+FOR\+\_\+\+CH\+\_\+\+MASK}~2
+\item 
+\mbox{\Hypertarget{com_8h_a1465a090264f6ad8d2988869e2a1d0b4}\label{com_8h_a1465a090264f6ad8d2988869e2a1d0b4}} 
+\#define {\bfseries STATUS\+\_\+\+PACKET\+\_\+\+SIZE}~16
+\item 
+\mbox{\Hypertarget{com_8h_a48bb18b9c1200d588974fd3e17d042ce}\label{com_8h_a48bb18b9c1200d588974fd3e17d042ce}} 
+\#define {\bfseries API\+\_\+\+MODE\+\_\+\+BITALINO}~1
+\item 
+\mbox{\Hypertarget{com_8h_a3f5340c6cfe736952dd837d74178e01a}\label{com_8h_a3f5340c6cfe736952dd837d74178e01a}} 
+\#define {\bfseries API\+\_\+\+MODE\+\_\+\+SCIENTISST}~2
+\item 
+\mbox{\Hypertarget{com_8h_a7c06395a6cddd4b954f89ade667bc955}\label{com_8h_a7c06395a6cddd4b954f89ade667bc955}} 
+\#define {\bfseries API\+\_\+\+MODE\+\_\+\+JSON}~3
+\item 
+\mbox{\Hypertarget{com_8h_a049be03a6f9e86017d788d27e5162b08}\label{com_8h_a049be03a6f9e86017d788d27e5162b08}} 
+\#define {\bfseries OP\+\_\+\+MODE\+\_\+\+IDLE}~0
+\item 
+\mbox{\Hypertarget{com_8h_a9ff71f11e99f5aa1323dbde4821649a8}\label{com_8h_a9ff71f11e99f5aa1323dbde4821649a8}} 
+\#define {\bfseries OP\+\_\+\+MODE\+\_\+\+LIVE}~1
+\item 
+\mbox{\Hypertarget{com_8h_a0929f671f0383d4ac5d64e7f91a3b970}\label{com_8h_a0929f671f0383d4ac5d64e7f91a3b970}} 
+\#define {\bfseries OP\+\_\+\+MODE\+\_\+\+CONFIG}~2
+\item 
+\mbox{\Hypertarget{com_8h_aeeee4cf3ad76ec038a5a52302b358b94}\label{com_8h_aeeee4cf3ad76ec038a5a52302b358b94}} 
+\#define {\bfseries CMD\+\_\+\+MAX\+\_\+\+BYTES}~4
+\item 
+\mbox{\Hypertarget{com_8h_aac028f4c15ac7f78a44be5db76cfbec7}\label{com_8h_aac028f4c15ac7f78a44be5db76cfbec7}} 
+\#define {\bfseries NUM\+\_\+\+BUFFERS}~50
+\item 
+\mbox{\Hypertarget{com_8h_ad4d796b98c583d49e83adabd74a63bf6}\label{com_8h_ad4d796b98c583d49e83adabd74a63bf6}} 
+\#define {\bfseries MAX\+\_\+\+BUFFER\+\_\+\+SIZE}~(ESP\+\_\+\+SPP\+\_\+\+MAX\+\_\+\+MTU)
+\item 
+\mbox{\Hypertarget{com_8h_ac591c40754a327e42cf7ba92a1ad3a94}\label{com_8h_ac591c40754a327e42cf7ba92a1ad3a94}} 
+\#define {\bfseries ADC1\+\_\+\+CFG\+\_\+\+IDX}~0
+\item 
+\mbox{\Hypertarget{com_8h_a5ddc3594077babffef9bd9b0df7e8248}\label{com_8h_a5ddc3594077babffef9bd9b0df7e8248}} 
+\#define {\bfseries ADC2\+\_\+\+CFG\+\_\+\+IDX}~1
+\item 
+\#define \mbox{\hyperlink{com_8h_aa676b48ec7e6ade38b8e52fda3220dbc}{GET\+\_\+\+NEXT\+\_\+\+POS}}(curr\+\_\+pos,  dist)
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{com_8h_a75d082b51bb8b243b32babf907d90cee}\label{com_8h_a75d082b51bb8b243b32babf907d90cee}} 
+void {\bfseries process\+Rcv2} (uint8\+\_\+t $\ast$buff, int buff\+\_\+size)
+\item 
+void \mbox{\hyperlink{com_8h_a785ca18add149b21c236f76aae134268}{process\+Rcv}} (uint8\+\_\+t $\ast$buff, int buff\+\_\+size)
+\begin{DoxyCompactList}\small\item\em Processes the command received from the client. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_aac2378909bc99c264f31dc8db49d6e0d}{select\+Chs\+From\+Mask}} (uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Selects the active channels. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_ae888ca03d182fe258b3e3f0f528fdb24}{stop\+Acquisition}} (void)
+\begin{DoxyCompactList}\small\item\em Stops the acquisition. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_ab5af5c77546cadc8c381dcea191a5a3a}{send\+Status\+Packet}} ()
+\begin{DoxyCompactList}\small\item\em Sends the status packet. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a2d4492b3724f0efdc58c689be11ed2ef}{send\+Firmware\+Version\+Packet}} ()
+\begin{DoxyCompactList}\small\item\em Sends the firmware version packet. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a764d78a8e7be94dbac7960944d177cd5}{change\+API}} (uint8\+\_\+t mode)
+\begin{DoxyCompactList}\small\item\em Changes the API mode. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a0a7d9887d866419d989f52e64fc39443}{select\+Chs\+From\+Mask\+Scientisst\+Json}} (uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Selects the active channels. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_adcfa347fce6d5b2c4235aca5aae2bb42}{set\+Sample\+Rate}} (uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Sets the sample rate. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a911de171ac9bb21aa35c3c35f21eeb52}{trigger\+Gpio}} (uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Set output GPIO levels. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a768fa7b96f28d9b1bd5175d701bab3cf}{trigger\+DAC}} (uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Set output DAC level. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{com_8h_a4f1baabc30148b69a50e3e4e08270a75}{start\+Acquisition}} (uint8\+\_\+t $\ast$buff, uint8\+\_\+t cmd)
+\begin{DoxyCompactList}\small\item\em Starts the acquisition. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{com_8h_afa72b55e12d976d144b6351c83d4a463}{get\+Packet\+Size}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the packet size. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file contains the definitions of the functions used to process the received data. 
+
+TODO\+: Add more info 
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{com_8h_aa676b48ec7e6ade38b8e52fda3220dbc}\label{com_8h_aa676b48ec7e6ade38b8e52fda3220dbc}} 
+\index{com.h@{com.h}!GET\_NEXT\_POS@{GET\_NEXT\_POS}}
+\index{GET\_NEXT\_POS@{GET\_NEXT\_POS}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{GET\_NEXT\_POS}{GET\_NEXT\_POS}}
+{\footnotesize\ttfamily \#define GET\+\_\+\+NEXT\+\_\+\+POS(\begin{DoxyParamCaption}\item[{}]{curr\+\_\+pos,  }\item[{}]{dist }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    (\{                                                          \(\backslash\)}
+\DoxyCodeLine{        curr\_pos.start\_byte += (curr\_pos.start\_bit + dist) / 8; \(\backslash\)}
+\DoxyCodeLine{        curr\_pos.start\_bit = (curr\_pos.start\_bit + dist) \% 8;   \(\backslash\)}
+\DoxyCodeLine{    \})}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{com_8h_a764d78a8e7be94dbac7960944d177cd5}\label{com_8h_a764d78a8e7be94dbac7960944d177cd5}} 
+\index{com.h@{com.h}!changeAPI@{changeAPI}}
+\index{changeAPI@{changeAPI}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{changeAPI()}{changeAPI()}}
+{\footnotesize\ttfamily void change\+API (\begin{DoxyParamCaption}\item[{uint8\+\_\+t}]{mode }\end{DoxyParamCaption})}
+
+
+
+Changes the API mode. 
+
+This function changes the API mode and updates the functions that are used to acquire data and select channels. Currently, the API modes are\+: Bitalino (Legacy), Scientisst and JSON. \mbox{\Hypertarget{com_8h_afa72b55e12d976d144b6351c83d4a463}\label{com_8h_afa72b55e12d976d144b6351c83d4a463}} 
+\index{com.h@{com.h}!getPacketSize@{getPacketSize}}
+\index{getPacketSize@{getPacketSize}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{getPacketSize()}{getPacketSize()}}
+{\footnotesize\ttfamily uint8\+\_\+t get\+Packet\+Size (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the packet size. 
+
+This function returns the packet size in function of the current API mode and the number of active channels.
+
+\begin{DoxyReturn}{Returns}
+The packet size 
+\end{DoxyReturn}
+\mbox{\Hypertarget{com_8h_a785ca18add149b21c236f76aae134268}\label{com_8h_a785ca18add149b21c236f76aae134268}} 
+\index{com.h@{com.h}!processRcv@{processRcv}}
+\index{processRcv@{processRcv}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{processRcv()}{processRcv()}}
+{\footnotesize\ttfamily void process\+Rcv (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff,  }\item[{int}]{len }\end{DoxyParamCaption})}
+
+
+
+Processes the command received from the client. 
+
+This function processes the command received from the client. It works in any mode and with all API\textquotesingle{}s.
+
+
+\begin{DoxyParams}{Parameters}
+{\em buff} & The buffer received \\
+\hline
+{\em len} & The length of the buffer \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{com_8h_aac2378909bc99c264f31dc8db49d6e0d}\label{com_8h_aac2378909bc99c264f31dc8db49d6e0d}} 
+\index{com.h@{com.h}!selectChsFromMask@{selectChsFromMask}}
+\index{selectChsFromMask@{selectChsFromMask}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{selectChsFromMask()}{selectChsFromMask()}}
+{\footnotesize\ttfamily void select\+Chs\+From\+Mask (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Selects the active channels. 
+
+This function selects the active channels according to the received command.
+
+
+\begin{DoxyParams}{Parameters}
+{\em buff} & The received command \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{com_8h_a0a7d9887d866419d989f52e64fc39443}\label{com_8h_a0a7d9887d866419d989f52e64fc39443}} 
+\index{com.h@{com.h}!selectChsFromMaskScientisstJson@{selectChsFromMaskScientisstJson}}
+\index{selectChsFromMaskScientisstJson@{selectChsFromMaskScientisstJson}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{selectChsFromMaskScientisstJson()}{selectChsFromMaskScientisstJson()}}
+{\footnotesize\ttfamily void select\+Chs\+From\+Mask\+Scientisst\+Json (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Selects the active channels. 
+
+This function selects the active channels according to the received command for the Scient\+ISST and JSON API modes.
+
+
+\begin{DoxyParams}{Parameters}
+{\em buff} & The received command \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{com_8h_a2d4492b3724f0efdc58c689be11ed2ef}\label{com_8h_a2d4492b3724f0efdc58c689be11ed2ef}} 
+\index{com.h@{com.h}!sendFirmwareVersionPacket@{sendFirmwareVersionPacket}}
+\index{sendFirmwareVersionPacket@{sendFirmwareVersionPacket}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{sendFirmwareVersionPacket()}{sendFirmwareVersionPacket()}}
+{\footnotesize\ttfamily void send\+Firmware\+Version\+Packet (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Sends the firmware version packet. 
+
+This function sends the firmware version packet. It is called when the client requests the firmware version packet. It fills one position of the send buffer with the information and marks it as ready to be sent. It also changes the lowers the send threshold to 0, so that the data is sent as soon as possible and then restores the send threshold to its previous value. \mbox{\Hypertarget{com_8h_ab5af5c77546cadc8c381dcea191a5a3a}\label{com_8h_ab5af5c77546cadc8c381dcea191a5a3a}} 
+\index{com.h@{com.h}!sendStatusPacket@{sendStatusPacket}}
+\index{sendStatusPacket@{sendStatusPacket}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{sendStatusPacket()}{sendStatusPacket()}}
+{\footnotesize\ttfamily void send\+Status\+Packet (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Sends the status packet. 
+
+This function sends the status packet. It is called when the client requests the status packet. (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}) = i2c\+\_\+sensor\+\_\+values.\+oxygen; (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}+2) = i2c\+\_\+sensor\+\_\+values.\+heart\+\_\+rate; (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}+4) = (uint16\+\_\+t)i2c\+\_\+sensor\+\_\+values.\+confidence; (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}+6) = (uint16\+\_\+t)i2c\+\_\+sensor\+\_\+values.\+status; (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}+8) = i2c\+\_\+sensor\+\_\+values.\+temp\+\_\+obj\+\_\+int; (uint16\+\_\+t$\ast$)(snd\+\_\+buff\mbox{[}bt\+\_\+curr\+\_\+buff\mbox{]}+10) = i2c\+\_\+sensor\+\_\+values.\+temp\+\_\+amb\+\_\+int;\mbox{\Hypertarget{com_8h_adcfa347fce6d5b2c4235aca5aae2bb42}\label{com_8h_adcfa347fce6d5b2c4235aca5aae2bb42}} 
+\index{com.h@{com.h}!setSampleRate@{setSampleRate}}
+\index{setSampleRate@{setSampleRate}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{setSampleRate()}{setSampleRate()}}
+{\footnotesize\ttfamily void set\+Sample\+Rate (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Sets the sample rate. 
+
+This function sets the sample rate according to the received command. \mbox{\Hypertarget{com_8h_a4f1baabc30148b69a50e3e4e08270a75}\label{com_8h_a4f1baabc30148b69a50e3e4e08270a75}} 
+\index{com.h@{com.h}!startAcquisition@{startAcquisition}}
+\index{startAcquisition@{startAcquisition}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{startAcquisition()}{startAcquisition()}}
+{\footnotesize\ttfamily void start\+Acquisition (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff,  }\item[{uint8\+\_\+t}]{cmd }\end{DoxyParamCaption})}
+
+
+
+Starts the acquisition. 
+
+This function starts the acquisition according to the received command. It starts the ADC and the timer. It also sets the acquisition mode (live or simulated). It also changes the LED state.
+
+
+\begin{DoxyParams}{Parameters}
+{\em buff} & The received command \\
+\hline
+{\em cmd} & The command (identifies if it is a live or a simulated acquisition) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+If changed, change same code in API (warning on identified on code) 
+\end{DoxyWarning}
+\mbox{\Hypertarget{com_8h_ae888ca03d182fe258b3e3f0f528fdb24}\label{com_8h_ae888ca03d182fe258b3e3f0f528fdb24}} 
+\index{com.h@{com.h}!stopAcquisition@{stopAcquisition}}
+\index{stopAcquisition@{stopAcquisition}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{stopAcquisition()}{stopAcquisition()}}
+{\footnotesize\ttfamily void stop\+Acquisition (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Stops the acquisition. 
+
+This function stops the acquisition. It stops the ADC and the timer. It also changes the LED state. It cleans all buffers and active channels. \mbox{\Hypertarget{com_8h_a768fa7b96f28d9b1bd5175d701bab3cf}\label{com_8h_a768fa7b96f28d9b1bd5175d701bab3cf}} 
+\index{com.h@{com.h}!triggerDAC@{triggerDAC}}
+\index{triggerDAC@{triggerDAC}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{triggerDAC()}{triggerDAC()}}
+{\footnotesize\ttfamily void trigger\+DAC (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Set output DAC level. 
+
+This function sets the output DAC level according to the received command. //\+TODO\+: Confirm this \mbox{\Hypertarget{com_8h_a911de171ac9bb21aa35c3c35f21eeb52}\label{com_8h_a911de171ac9bb21aa35c3c35f21eeb52}} 
+\index{com.h@{com.h}!triggerGpio@{triggerGpio}}
+\index{triggerGpio@{triggerGpio}!com.h@{com.h}}
+\doxysubsubsection{\texorpdfstring{triggerGpio()}{triggerGpio()}}
+{\footnotesize\ttfamily void trigger\+Gpio (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Set output GPIO levels. 
+
+This function sets the output GPIO levels according to the received command. //\+TODO\+: Confirm this 

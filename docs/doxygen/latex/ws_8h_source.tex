@@ -1,0 +1,21 @@
+\hypertarget{ws_8h_source}{}\doxysection{ws.\+h}
+\mbox{\hyperlink{ws_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#ifndef \_WS\_H}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#define \_WS\_H}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <esp\_http\_server.h>}}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}sdkconfig.h"{}}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#if !CONFIG\_HTTPD\_WS\_SUPPORT}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#error This example cannot be used unless HTTPD\_WS\_SUPPORT is enabled in esp-\/http-\/server component configuration}}
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 esp\_err\_t IRAM\_ATTR \mbox{\hyperlink{ws_8h_a71f4a6d3a9ff9a76d33d0ef18815eef8}{wsSerialSend}}(uint32\_t fd, \textcolor{keywordtype}{int} len, uint8\_t* buff);}
+\DoxyCodeLine{20 httpd\_handle\_t \mbox{\hyperlink{ws_8h_aa405dbf500a1f511f559e1e87efff9da}{start\_webserver}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{21 }
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

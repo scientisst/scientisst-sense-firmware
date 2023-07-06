@@ -1,0 +1,76 @@
+\hypertarget{gpio_8c}{}\doxysection{gpio.\+c File Reference}
+\label{gpio_8c}\index{gpio.c@{gpio.c}}
+
+
+GPIO interactions.  
+
+
+{\ttfamily \#include \char`\"{}gpio.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}adc.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+Include dependency graph for gpio.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{gpio_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{gpio_8c_a1cd6dc8ecae2014462d845b10f878419}{config\+LedC}} (void)
+\begin{DoxyCompactList}\small\item\em Configure LED Controller. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{gpio_8c_a60ec0403f6b0bcade0921a992ff80979}{gpio\+Config}} (gpio\+\_\+mode\+\_\+t mode, gpio\+\_\+int\+\_\+type\+\_\+t intr\+\_\+type, uint64\+\_\+t pin\+\_\+bit\+\_\+mask, gpio\+\_\+pulldown\+\_\+t pull\+\_\+down\+\_\+en, gpio\+\_\+pullup\+\_\+t pull\+\_\+up\+\_\+en)
+\begin{DoxyCompactList}\small\item\em Configures GPIO. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{gpio_8c_adab76f1253da89e657056817a3a9a11a}\label{gpio_8c_adab76f1253da89e657056817a3a9a11a}} 
+void {\bfseries gpio\+Init} (void)
+\begin{DoxyCompactList}\small\item\em Initializes GPIO. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{gpio_8c_a2209429209c7f3a19752f1bf8a937058}\label{gpio_8c_a2209429209c7f3a19752f1bf8a937058}} 
+bool IRAM\+\_\+\+ATTR {\bfseries gpio\+Drdy\+Isr\+Handler} (void)
+\item 
+void \mbox{\hyperlink{gpio_8c_a311b86941756c875c5de5ede85da4ad5}{adc\+Ext\+Drdy\+Gpio}} (int io\+\_\+num)
+\begin{DoxyCompactList}\small\item\em Configures DRDY GPIO. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+GPIO interactions. 
+
+This file contains the functions to initialize the GPIOs and the LEDC module. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{gpio_8c_a311b86941756c875c5de5ede85da4ad5}\label{gpio_8c_a311b86941756c875c5de5ede85da4ad5}} 
+\index{gpio.c@{gpio.c}!adcExtDrdyGpio@{adcExtDrdyGpio}}
+\index{adcExtDrdyGpio@{adcExtDrdyGpio}!gpio.c@{gpio.c}}
+\doxysubsubsection{\texorpdfstring{adcExtDrdyGpio()}{adcExtDrdyGpio()}}
+{\footnotesize\ttfamily void adc\+Ext\+Drdy\+Gpio (\begin{DoxyParamCaption}\item[{int}]{io\+\_\+num }\end{DoxyParamCaption})}
+
+
+
+Configures DRDY GPIO. 
+
+This function configures the DRDY GPIO pin. //\+TODO\+: Add details and when it is used. \mbox{\Hypertarget{gpio_8c_a1cd6dc8ecae2014462d845b10f878419}\label{gpio_8c_a1cd6dc8ecae2014462d845b10f878419}} 
+\index{gpio.c@{gpio.c}!configLedC@{configLedC}}
+\index{configLedC@{configLedC}!gpio.c@{gpio.c}}
+\doxysubsubsection{\texorpdfstring{configLedC()}{configLedC()}}
+{\footnotesize\ttfamily void config\+LedC (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Configure LED Controller. 
+
+This function configures the LED Controller. It prepares and sets the configuration of timers. \mbox{\Hypertarget{gpio_8c_a60ec0403f6b0bcade0921a992ff80979}\label{gpio_8c_a60ec0403f6b0bcade0921a992ff80979}} 
+\index{gpio.c@{gpio.c}!gpioConfig@{gpioConfig}}
+\index{gpioConfig@{gpioConfig}!gpio.c@{gpio.c}}
+\doxysubsubsection{\texorpdfstring{gpioConfig()}{gpioConfig()}}
+{\footnotesize\ttfamily void gpio\+Config (\begin{DoxyParamCaption}\item[{gpio\+\_\+mode\+\_\+t}]{mode,  }\item[{gpio\+\_\+int\+\_\+type\+\_\+t}]{intr\+\_\+type,  }\item[{uint64\+\_\+t}]{pin\+\_\+bit\+\_\+mask,  }\item[{gpio\+\_\+pulldown\+\_\+t}]{pull\+\_\+down\+\_\+en,  }\item[{gpio\+\_\+pullup\+\_\+t}]{pull\+\_\+up\+\_\+en }\end{DoxyParamCaption})}
+
+
+
+Configures GPIO. 
+
+This function configures the GPIO pins. It sets the mode, interrupt type, pull up/down and pin bit mask. 

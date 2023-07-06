@@ -1,0 +1,85 @@
+\hypertarget{ws_8h}{}\doxysection{ws.\+h File Reference}
+\label{ws_8h}\index{ws.h@{ws.h}}
+
+
+Websocket server.  
+
+
+{\ttfamily \#include $<$esp\+\_\+http\+\_\+server.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}sdkconfig.\+h\char`\"{}}\newline
+Include dependency graph for ws.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=274pt]{ws_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=208pt]{ws_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR \mbox{\hyperlink{ws_8h_a71f4a6d3a9ff9a76d33d0ef18815eef8}{ws\+Serial\+Send}} (uint32\+\_\+t fd, int len, uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Send data to the websocket client. \end{DoxyCompactList}\item 
+httpd\+\_\+handle\+\_\+t \mbox{\hyperlink{ws_8h_aa405dbf500a1f511f559e1e87efff9da}{start\+\_\+webserver}} (void)
+\begin{DoxyCompactList}\small\item\em Start the websocket server. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Websocket server. 
+
+This file contains the websocket server code. It is used to send data to the web interface. TODO\+: Confirm it is imcomplete and undestand what it\textquotesingle{}s supposed to do. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{ws_8h_aa405dbf500a1f511f559e1e87efff9da}\label{ws_8h_aa405dbf500a1f511f559e1e87efff9da}} 
+\index{ws.h@{ws.h}!start\_webserver@{start\_webserver}}
+\index{start\_webserver@{start\_webserver}!ws.h@{ws.h}}
+\doxysubsubsection{\texorpdfstring{start\_webserver()}{start\_webserver()}}
+{\footnotesize\ttfamily httpd\+\_\+handle\+\_\+t start\+\_\+webserver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Start the websocket server. 
+
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item The handle of the server if it was started successfully
+\item NULL otherwise 
+\end{DoxyItemize}
+\end{DoxyReturn}
+\mbox{\Hypertarget{ws_8h_a71f4a6d3a9ff9a76d33d0ef18815eef8}\label{ws_8h_a71f4a6d3a9ff9a76d33d0ef18815eef8}} 
+\index{ws.h@{ws.h}!wsSerialSend@{wsSerialSend}}
+\index{wsSerialSend@{wsSerialSend}!ws.h@{ws.h}}
+\doxysubsubsection{\texorpdfstring{wsSerialSend()}{wsSerialSend()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR ws\+Serial\+Send (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{fd,  }\item[{int}]{len,  }\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Send data to the websocket client. 
+
+This function sends data to the websocket client. It is called by the send\+Data function when in websocket mode.
+
+
+\begin{DoxyParams}{Parameters}
+{\em fd} & The file descriptor of the TCP connection. \\
+\hline
+{\em len} & The length of the data to send. \\
+\hline
+{\em buff} & The data to send.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item ESP\+\_\+\+OK if the data was sent successfully
+\item ESP\+\_\+\+FAIL otherwise 
+\end{DoxyItemize}
+\end{DoxyReturn}

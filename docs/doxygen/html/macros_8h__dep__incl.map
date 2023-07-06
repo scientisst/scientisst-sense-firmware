@@ -1,0 +1,19 @@
+<map id="macros.h" name="macros.h">
+<area shape="rect" id="node1" title="This file contains the definitions of the macros used in the project." alt="" coords="647,5,729,32"/>
+<area shape="rect" id="node2" href="$adc_8c.html" title="ADC interactions functions file." alt="" coords="5,80,61,107"/>
+<area shape="rect" id="node3" href="$ble_8c.html" title="Bluetooth Low Energy (BLE) mode functions." alt="" coords="85,80,139,107"/>
+<area shape="rect" id="node4" href="$bt_8c.html" title="BT communication file with some general functions also." alt="" coords="163,80,210,107"/>
+<area shape="rect" id="node5" href="$com_8c.html" title="This file contains the functions that handle the communication with the client." alt="" coords="235,80,296,107"/>
+<area shape="rect" id="node6" href="$gpio_8c.html" title="GPIO interactions." alt="" coords="320,80,381,107"/>
+<area shape="rect" id="node7" href="$i2c_8c.html" title="This file contains the definitions of the functions used to communicate with the e&#45;covid sensor." alt="" coords="406,80,458,107"/>
+<area shape="rect" id="node8" href="$scientisst_8c.html" title="Main file for the Scientisst firmware." alt="" coords="482,80,577,107"/>
+<area shape="rect" id="node9" href="$sd__card_8c.html" title="SD card driver. This file implements the SD card driver." alt="" coords="601,80,684,107"/>
+<area shape="rect" id="node10" href="$spi_8c.html" title="This file contains the definitions of the functions used to communicate with the external ADCs." alt="" coords="709,80,761,107"/>
+<area shape="rect" id="node11" href="$tcp_8c.html" title="Header file for the TCP server and client functions." alt="" coords="785,80,839,107"/>
+<area shape="rect" id="node12" href="$timer_8c.html" title="Timer functions for the Scientisst firmware." alt="" coords="863,80,929,107"/>
+<area shape="rect" id="node13" href="$uart_8c.html" title="UART functions." alt="" coords="953,80,1012,107"/>
+<area shape="rect" id="node14" href="$udp_8c.html" title="Contains functions to send data over UDP." alt="" coords="1037,80,1094,107"/>
+<area shape="rect" id="node15" href="$wifi_8c.html" title="Wifi functions." alt="" coords="1119,80,1175,107"/>
+<area shape="rect" id="node16" href="$wifi__rest__server_8c.html" title="This file contains the code for the RESTful API server." alt="" coords="1199,80,1334,107"/>
+<area shape="rect" id="node17" href="$ws_8c.html" title="Websocket server." alt="" coords="1359,80,1409,107"/>
+</map>

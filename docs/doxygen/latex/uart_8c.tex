@@ -1,0 +1,44 @@
+\hypertarget{uart_8c}{}\doxysection{uart.\+c File Reference}
+\label{uart_8c}\index{uart.c@{uart.c}}
+
+
+UART functions.  
+
+
+{\ttfamily \#include \char`\"{}driver/uart.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$sys/errno.\+h$>$}\newline
+{\ttfamily \#include $<$sys/fcntl.\+h$>$}\newline
+{\ttfamily \#include $<$sys/select.\+h$>$}\newline
+{\ttfamily \#include $<$sys/unistd.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}bt.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+vfs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+vfs\+\_\+dev.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}uart.\+h\char`\"{}}\newline
+Include dependency graph for uart.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{uart_8c_a1709d2d37c1630164c5b7a568f18b2d4}\label{uart_8c_a1709d2d37c1630164c5b7a568f18b2d4}} 
+int {\bfseries serial\+Init} (void)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{uart_8c_a0f4fafa3ec7fed68a147b1f7078b48a3}\label{uart_8c_a0f4fafa3ec7fed68a147b1f7078b48a3}} 
+const uart\+\_\+port\+\_\+t {\bfseries serial\+\_\+com\+\_\+uart\+\_\+num} = UART\+\_\+\+NUM\+\_\+0
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+UART functions. 
+
+This file contains the functions for the UART communication. Only has the init function for now. Todo\+: add details and what undesrtand what this is for 

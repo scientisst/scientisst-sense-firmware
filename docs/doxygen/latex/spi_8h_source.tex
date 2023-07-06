@@ -1,0 +1,107 @@
+\hypertarget{spi_8h_source}{}\doxysection{spi.\+h}
+\mbox{\hyperlink{spi_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#ifndef \_SPI\_H}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#define \_SPI\_H}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{config_8h}{config.h}}"{}}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include "{}driver/spi\_master.h"{}}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include "{}driver/spi\_slave.h"{}}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{macros__conf_8h}{macros\_conf.h}}"{}}}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#if \_ADC\_EXT\_ == ADC\_ADS}}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#define DMA\_CHAN 2}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#define SPI\_MODE 1}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#define ADC\_EXT\_SLCK\_HZ \(\backslash\)}}
+\DoxyCodeLine{22 \textcolor{preprocessor}{    1 * 1000 * 1000  }\textcolor{comment}{// Clock out at 1 MHz, divisors of}}
+\DoxyCodeLine{23                      \textcolor{comment}{// 80MHz}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{comment}{// register address}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#define ADS1292\_REG\_ID 0x00}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#define ADS1292\_REG\_CONFIG1 0x01}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#define ADS1292\_REG\_CONFIG2 0x02}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#define ADS1292\_REG\_LOFF 0x03}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#define ADS1292\_REG\_CH1SET 0x04}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#define ADS1292\_REG\_CH2SET 0x05}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#define ADS1292\_REG\_RLDSENS 0x06}}
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#define ADS1292\_REG\_LOFFSENS 0x07}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#define ADS1292\_REG\_LOFFSTAT 0x08}}
+\DoxyCodeLine{35 \textcolor{preprocessor}{\#define ADS1292\_REG\_RESP1 0x09}}
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#define ADS1292\_REG\_RESP2 0x0A}}
+\DoxyCodeLine{37 }
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#define START 0x08  }\textcolor{comment}{// start/restart (synchronize) conversions}}
+\DoxyCodeLine{39 \textcolor{preprocessor}{\#define STOP 0x0A   }\textcolor{comment}{// stop conversion}}
+\DoxyCodeLine{40 \textcolor{preprocessor}{\#define RDATAC \(\backslash\)}}
+\DoxyCodeLine{41 \textcolor{preprocessor}{    0x10  }\textcolor{comment}{// enable Read Data Continuous mode -\/ the default at power-\/up}}
+\DoxyCodeLine{42 \textcolor{preprocessor}{\#define SDATAC 0x11  }\textcolor{comment}{// stop Read Data Continuously mode}}
+\DoxyCodeLine{43 \textcolor{preprocessor}{\#define RESET 0x06   }\textcolor{comment}{// Reset ADS}}
+\DoxyCodeLine{44 \textcolor{preprocessor}{\#define RREG \(\backslash\)}}
+\DoxyCodeLine{45 \textcolor{preprocessor}{    0x20;  }\textcolor{comment}{// read n nnnn registers starting at address r rrrr |||| first byte}}
+\DoxyCodeLine{46            \textcolor{comment}{// 001r rrrr (2xh)(2) -\/ second byte 000n nnnn(2)}}
+\DoxyCodeLine{47 \textcolor{preprocessor}{\#define WREG \(\backslash\)}}
+\DoxyCodeLine{48 \textcolor{preprocessor}{    0x40;  }\textcolor{comment}{// write n nnnn registers starting at address r rrrr |||| first byte}}
+\DoxyCodeLine{49            \textcolor{comment}{// 010r rrrr (2xh)(2) -\/ second byte 000n nnnn(2)}}
+\DoxyCodeLine{50 }
+\DoxyCodeLine{51 \textcolor{preprocessor}{\#elif \_ADC\_EXT\_ == ADC\_MCP}}
+\DoxyCodeLine{52 \textcolor{preprocessor}{\#define DMA\_CHAN 0}}
+\DoxyCodeLine{53 \textcolor{preprocessor}{\#define SPI\_MODE 0  }\textcolor{comment}{// 0 or 3, MCP Only supports these two modes}}
+\DoxyCodeLine{54 \textcolor{preprocessor}{\#define ADC\_EXT\_SLCK\_HZ\_1\_EXT\_CH (APB\_CLK\_FREQ / 8)}}
+\DoxyCodeLine{55 \textcolor{preprocessor}{\#define ADC\_EXT\_SLCK\_HZ\_2\_EXT\_CH (APB\_CLK\_FREQ / 64)}}
+\DoxyCodeLine{56 }
+\DoxyCodeLine{57 \textcolor{preprocessor}{\#define MCP\_ADDR 0b01}}
+\DoxyCodeLine{58 }
+\DoxyCodeLine{59 \textcolor{comment}{// Commands}}
+\DoxyCodeLine{60 \textcolor{preprocessor}{\#define RREG 0b01}}
+\DoxyCodeLine{61 \textcolor{preprocessor}{\#define WREG 0b10}}
+\DoxyCodeLine{62 \textcolor{preprocessor}{\#define RESET 0b111000}}
+\DoxyCodeLine{63 \textcolor{preprocessor}{\#define START 0b101000}}
+\DoxyCodeLine{64 \textcolor{preprocessor}{\#define FSHUTDOWN \(\backslash\)}}
+\DoxyCodeLine{65 \textcolor{preprocessor}{    0b110100  }\textcolor{comment}{// Full Shutdown; the internal config registers keep the values}}
+\DoxyCodeLine{66 }
+\DoxyCodeLine{67 \textcolor{comment}{// Register Addresses}}
+\DoxyCodeLine{68 \textcolor{preprocessor}{\#define REG\_ADCDATA 0x00    }\textcolor{comment}{// R}}
+\DoxyCodeLine{69 \textcolor{preprocessor}{\#define REG\_CONFIG0 0x01    }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{70 \textcolor{preprocessor}{\#define REG\_CONFIG1 0x02    }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{71 \textcolor{preprocessor}{\#define REG\_CONFIG2 0x03    }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{72 \textcolor{preprocessor}{\#define REG\_CONFIG3 0x04    }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{73 \textcolor{preprocessor}{\#define REG\_IRQ 0x05        }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{74 \textcolor{preprocessor}{\#define REG\_MUX 0x06        }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{75 \textcolor{preprocessor}{\#define REG\_SCAN 0x07       }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{76 \textcolor{preprocessor}{\#define REG\_TIMER 0x08      }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{77 \textcolor{preprocessor}{\#define REG\_OFFSETCAL 0x09  }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{78 \textcolor{preprocessor}{\#define REG\_GAINCAL 0x0A    }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{79 \textcolor{preprocessor}{\#define REG\_LOCK 0x0D       }\textcolor{comment}{// R/W}}
+\DoxyCodeLine{80 \textcolor{preprocessor}{\#define REG\_CRCCFG 0X0F     }\textcolor{comment}{// R}}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{82 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84 \textcolor{keywordtype}{void} adcExtInit(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{85 \textcolor{keywordtype}{void} adcExtStart(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{86 \textcolor{keywordtype}{void} adcExtStop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88 \textcolor{preprocessor}{\#if \_ADC\_EXT\_ == ADC\_ADS}}
+\DoxyCodeLine{89 \textcolor{preprocessor}{\#define ADS\_CONTINUOUS\_TRANS 1}}
+\DoxyCodeLine{90 }
+\DoxyCodeLine{91 \textcolor{keywordtype}{void} adsSetSamplingRate(uint16\_t sampling\_rate);}
+\DoxyCodeLine{92 \textcolor{keywordtype}{void} adsSetupRoutine();}
+\DoxyCodeLine{93 \textcolor{keywordtype}{void} adsConfigureChannels(uint8\_t ads\_channel\_mask);}
+\DoxyCodeLine{94 \textcolor{keywordtype}{void} adsStart();}
+\DoxyCodeLine{95 \textcolor{keywordtype}{void} adsStop();}
+\DoxyCodeLine{96 \textcolor{keywordtype}{void} IRAM\_ATTR adsEndTransCb(spi\_transaction\_t* trans);}
+\DoxyCodeLine{97 \textcolor{keywordtype}{void} adsSendCmd(uint8\_t cmd);}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99 \textcolor{preprocessor}{\#elif \_ADC\_EXT\_ == ADC\_MCP}}
+\DoxyCodeLine{100 \textcolor{keywordtype}{void} mcpSetupRoutine(uint8\_t channel\_mask);}
+\DoxyCodeLine{101 \textcolor{keywordtype}{void} IRAM\_ATTR mcpReadADCValues(uint8\_t address, uint8\_t rx\_data\_bytes);}
+\DoxyCodeLine{102 uint32\_t mcpReadRegister(uint8\_t address, uint8\_t rx\_data\_bytes);}
+\DoxyCodeLine{103 \textcolor{keywordtype}{void} mcpStart(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{104 \textcolor{keywordtype}{void} mcpStop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{105 \textcolor{keywordtype}{void} decodeSample(int32\_t sample);}
+\DoxyCodeLine{106 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{108 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

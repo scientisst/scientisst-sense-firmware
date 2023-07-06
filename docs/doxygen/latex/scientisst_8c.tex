@@ -1,0 +1,480 @@
+\hypertarget{scientisst_8c}{}\doxysection{scientisst.\+c File Reference}
+\label{scientisst_8c}\index{scientisst.c@{scientisst.c}}
+
+
+Main file for the Scientisst firmware.  
+
+
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}adc.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}ble.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}bt.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}com.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}gpio.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}i2c.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sd\+\_\+card.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sdkconfig.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}spi.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}tcp.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}timer.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}uart.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}udp.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}wifi.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}wifi\+\_\+rest\+\_\+server.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}ws.\+h\char`\"{}}\newline
+Include dependency graph for scientisst.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scientisst_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a39c04b009ae40c9fc561f6d192ae24d4}\label{scientisst_8c_a39c04b009ae40c9fc561f6d192ae24d4}} 
+\#define {\bfseries BT\+\_\+\+SEND\+\_\+\+PRIORITY}~10
+\item 
+\mbox{\Hypertarget{scientisst_8c_a8bcf86be2438d93d8b2504a4b837979c}\label{scientisst_8c_a8bcf86be2438d93d8b2504a4b837979c}} 
+\#define {\bfseries ABAT\+\_\+\+PRIORITY}~1
+\item 
+\mbox{\Hypertarget{scientisst_8c_a1370089b0de340a69a3529d93630484e}\label{scientisst_8c_a1370089b0de340a69a3529d93630484e}} 
+\#define {\bfseries WIFI\+\_\+\+RCV\+\_\+\+PRIORITY}~1
+\item 
+\mbox{\Hypertarget{scientisst_8c_a2da96036df526ff366c30f1c42145c45}\label{scientisst_8c_a2da96036df526ff366c30f1c42145c45}} 
+\#define {\bfseries ACQ\+\_\+\+ADC1\+\_\+\+PRIORITY}~10
+\item 
+\mbox{\Hypertarget{scientisst_8c_a2a7d1640cbc3a7a1de67d2684ab18a47}\label{scientisst_8c_a2a7d1640cbc3a7a1de67d2684ab18a47}} 
+\#define {\bfseries ACQ\+\_\+\+ADC\+\_\+\+EXT\+\_\+\+PRIORITY}~11
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{scientisst_8c_af8d99f5f9f4ad067020fb6e4f3157c66}{send\+Task}} (void)
+\begin{DoxyCompactList}\small\item\em Task that sends data to the client. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{scientisst_8c_a65b2d1da040aa03eb6bc55ff6495ea2f}{rcv\+Task}} (void)
+\begin{DoxyCompactList}\small\item\em Task that receives data from the client. \end{DoxyCompactList}\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{scientisst_8c_a0d9b367cc11624243590cb4e706cc891}{Abat\+Task}} (void)
+\begin{DoxyCompactList}\small\item\em Task that acquires data from adc\+Ext. \end{DoxyCompactList}\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{scientisst_8c_a74b98e4514cbc17bc5f80e463872af67}{acq\+Adc1\+Task}} (void)
+\begin{DoxyCompactList}\small\item\em Task that acquires data from adc1. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8c_aca145e7c1142fb0bf52df7792421675d}\label{scientisst_8c_aca145e7c1142fb0bf52df7792421675d}} 
+void IRAM\+\_\+\+ATTR {\bfseries acq\+Adc\+Ext\+Task} (void)
+\item 
+void \mbox{\hyperlink{scientisst_8c_aaef0ef3b74ab2d2e8e833c961fdade79}{op\+Mode\+Config}} (void)
+\begin{DoxyCompactList}\small\item\em Puts the device in config mode. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{scientisst_8c_a67371293d974b9087bcb16643de878f0}{init\+Scientisst}} (void)
+\begin{DoxyCompactList}\small\item\em scientisst-\/firmware main function \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a19e62782c492aeba9e3304a4312d222a}\label{scientisst_8c_a19e62782c492aeba9e3304a4312d222a}} 
+Task\+Handle\+\_\+t {\bfseries send\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a5fe8dff9b6854a628097650435e9dfe9}\label{scientisst_8c_a5fe8dff9b6854a628097650435e9dfe9}} 
+Task\+Handle\+\_\+t {\bfseries abat\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a571f93394be93268e6c09c1fedf548f1}\label{scientisst_8c_a571f93394be93268e6c09c1fedf548f1}} 
+Task\+Handle\+\_\+t {\bfseries rcv\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a3ca7559f4e9fd35d6cd5dba106c707a2}\label{scientisst_8c_a3ca7559f4e9fd35d6cd5dba106c707a2}} 
+Task\+Handle\+\_\+t {\bfseries acq\+\_\+adc1\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8c_ac3beecfd9909f92fdd031c31132f8b68}\label{scientisst_8c_ac3beecfd9909f92fdd031c31132f8b68}} 
+Task\+Handle\+\_\+t {\bfseries acq\+\_\+adc\+\_\+ext\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a559e662c57addba866d0503d53160930}\label{scientisst_8c_a559e662c57addba866d0503d53160930}} 
+Semaphore\+Handle\+\_\+t {\bfseries bt\+\_\+buffs\+\_\+to\+\_\+send\+\_\+mutex}
+\item 
+\mbox{\Hypertarget{scientisst_8c_abaff1451b6194ff105801c35d7fbcfd4}\label{scientisst_8c_abaff1451b6194ff105801c35d7fbcfd4}} 
+char {\bfseries device\+\_\+name} \mbox{[}17\mbox{]} = BT\+\_\+\+DEFAULT\+\_\+\+DEVICE\+\_\+\+NAME
+\item 
+\mbox{\Hypertarget{scientisst_8c_a4ccd8921f38d8d73068731023f739eac}\label{scientisst_8c_a4ccd8921f38d8d73068731023f739eac}} 
+int {\bfseries send\+\_\+fd} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_afdb26d185e6ca000ec9ef9b36c5696ac}\label{scientisst_8c_afdb26d185e6ca000ec9ef9b36c5696ac}} 
+int {\bfseries listen\+\_\+fd} = 0
+\item 
+uint8\+\_\+t $\ast$ \mbox{\hyperlink{scientisst_8c_ac2b4deaf1aa96b3b76c622733874f9ef}{snd\+\_\+buff}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8c_aa3c5bd8b98f34726adca0d5d4496d5ee}\label{scientisst_8c_aa3c5bd8b98f34726adca0d5d4496d5ee}} 
+uint32\+\_\+t {\bfseries send\+\_\+buff\+\_\+len} = 0
+\begin{DoxyCompactList}\small\item\em Length of each send buff. \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{scientisst_8c_abb1e90d26548b840cbbae672eb63c0d7}{snd\+\_\+buff\+\_\+idx}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_acfaf9589d576b3fc0786f581b20bc19e}{bt\+\_\+buffs\+\_\+to\+\_\+send}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a8607928ef2ef25e6de81c163efc5f806}{bt\+\_\+curr\+\_\+buff}}
+\begin{DoxyCompactList}\small\item\em Index of the buffer that bt task is currently sending. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_adf58f1ea0e678533fafefedcba16ce39}{acq\+\_\+curr\+\_\+buff}}
+\begin{DoxyCompactList}\small\item\em Index of the buffer that adc task is currently using. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_aee3ef59ff651fe7e6a9c273affdd5d5a}{packet\+\_\+size}}
+\begin{DoxyCompactList}\small\item\em Current packet size (dependent on number of channels used) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8c_a5a5410ab9ad2ae9325099b2315faf334}\label{scientisst_8c_a5a5410ab9ad2ae9325099b2315faf334}} 
+uint8\+\_\+t {\bfseries send\+\_\+busy} = 0
+\item 
+uint16\+\_\+t \mbox{\hyperlink{scientisst_8c_aba2be5e3b1baddd09080812b975bf2fc}{send\+\_\+threshold}}
+\item 
+DRAM\+\_\+\+ATTR const uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a649e81573a3aad33548e7f8c21700ada}{crc\+\_\+table}} \mbox{[}16\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a30ce041a03a995813db2cc992f965f27}\label{scientisst_8c_a30ce041a03a995813db2cc992f965f27}} 
+uint16\+\_\+t {\bfseries crc\+\_\+seq} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_a884fc7df05c9eaf5001d47dc09cc7194}\label{scientisst_8c_a884fc7df05c9eaf5001d47dc09cc7194}} 
+uint16\+\_\+t {\bfseries battery\+\_\+threshold} = \mbox{\hyperlink{adc_8h_ace491076e4abfca2474f6a281bc85940}{DEFAULT\+\_\+\+BATTERY\+\_\+\+THRESHOLD}}
+\item 
+\mbox{\hyperlink{structApi__Config}{Api\+\_\+\+Config}} \mbox{\hyperlink{scientisst_8c_ae6369df7f65a4b328aa3de63c2f6be78}{api\+\_\+config}}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a65f742e8d4496f2431894fafe695cc53}\label{scientisst_8c_a65f742e8d4496f2431894fafe695cc53}} 
+c\+JSON $\ast$ {\bfseries json} = NULL
+\item 
+\mbox{\Hypertarget{scientisst_8c_a310c92dadfc8850f5c31ed6fd5dbf3d4}\label{scientisst_8c_a310c92dadfc8850f5c31ed6fd5dbf3d4}} 
+esp\+\_\+err\+\_\+t($\ast$ {\bfseries send\+\_\+func} )(uint32\+\_\+t, int, uint8\+\_\+t $\ast$) = NULL
+\begin{DoxyCompactList}\small\item\em Send function pointer. \end{DoxyCompactList}\item 
+DRAM\+\_\+\+ATTR const uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a4f17a0b46a4710620873bdfc4bfb8f5c}{analog\+\_\+channels}} \mbox{[}DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a3a07a97b62df36dc9cd67e6a56bb00b2}{active\+\_\+internal\+\_\+chs}} \mbox{[}DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_aa96057547878820ef99184651491fa49}{active\+\_\+ext\+\_\+chs}} \mbox{[}EXT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\begin{DoxyCompactList}\small\item\em Active external channels $\vert$ If all channels are active\+: = \{7, 6\}. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{scientisst_8c_ae18476f0aa11096ed565a85ebfc90507}{adc\+\_\+ext\+\_\+samples}} \mbox{[}EXT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a42d56683542bef172366ecb20446ef54}\label{scientisst_8c_a42d56683542bef172366ecb20446ef54}} 
+uint8\+\_\+t {\bfseries num\+\_\+intern\+\_\+active\+\_\+chs} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_a3fceb86dcc2db967ea153357ac554190}\label{scientisst_8c_a3fceb86dcc2db967ea153357ac554190}} 
+uint8\+\_\+t {\bfseries num\+\_\+extern\+\_\+active\+\_\+chs} = 0
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_aec948fb30e99b1eda7e3d9ff741d417a}{op\+\_\+mode}} = OP\+\_\+\+MODE\+\_\+\+IDLE
+\item 
+\mbox{\Hypertarget{scientisst_8c_a2fba55d9442e7dba4623825cd737e520}\label{scientisst_8c_a2fba55d9442e7dba4623825cd737e520}} 
+uint32\+\_\+t {\bfseries sample\+\_\+rate} = DEFAULT\+\_\+\+SAMPLE\+\_\+\+RATE
+\item 
+\mbox{\Hypertarget{scientisst_8c_a8fad2ab5c7e2add7ca0a5aa441872762}\label{scientisst_8c_a8fad2ab5c7e2add7ca0a5aa441872762}} 
+esp\+\_\+adc\+\_\+cal\+\_\+characteristics\+\_\+t {\bfseries adc1\+\_\+chars}
+\item 
+\mbox{\Hypertarget{scientisst_8c_abe025b99b3111cc4a2f1d9b33f963504}\label{scientisst_8c_abe025b99b3111cc4a2f1d9b33f963504}} 
+esp\+\_\+adc\+\_\+cal\+\_\+characteristics\+\_\+t {\bfseries adc2\+\_\+chars}
+\item 
+\mbox{\Hypertarget{scientisst_8c_aa0e8a9bc55469d1a4dc97d6c6e86fd81}\label{scientisst_8c_aa0e8a9bc55469d1a4dc97d6c6e86fd81}} 
+uint8\+\_\+t {\bfseries gpio\+\_\+out\+\_\+state} \mbox{[}2\mbox{]} = \{0, 0\}
+\begin{DoxyCompactList}\small\item\em Output of 01 \& O2 (O0 \& O1) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8c_a677980e26e55da72e6d7091450572300}\label{scientisst_8c_a677980e26e55da72e6d7091450572300}} 
+uint32\+\_\+t {\bfseries ext\+\_\+adc\+\_\+raw\+\_\+data} \mbox{[}3\mbox{]}
+\begin{DoxyCompactList}\small\item\em Raw data from external adc. \end{DoxyCompactList}\item 
+const uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a00b1975a55c7817b061a797e43c45aff}{sin10\+Hz}} \mbox{[}100\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8c_ae7140e27a5abc7a2b038347434f0374e}\label{scientisst_8c_ae7140e27a5abc7a2b038347434f0374e}} 
+uint8\+\_\+t {\bfseries sim\+\_\+flag} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_a1bbddce911432732664074cf4c252288}\label{scientisst_8c_a1bbddce911432732664074cf4c252288}} 
+uint8\+\_\+t {\bfseries sin\+\_\+i} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_a7026e7526fc83dfe44240b66b2b957c1}\label{scientisst_8c_a7026e7526fc83dfe44240b66b2b957c1}} 
+spi\+\_\+device\+\_\+handle\+\_\+t {\bfseries adc\+\_\+ext\+\_\+spi\+\_\+handler}
+\item 
+\mbox{\Hypertarget{scientisst_8c_a9d6caeccf40e673721eb7ce26f033531}\label{scientisst_8c_a9d6caeccf40e673721eb7ce26f033531}} 
+spi\+\_\+transaction\+\_\+t {\bfseries adc\+\_\+ext\+\_\+trans}
+\item 
+\mbox{\hyperlink{structop__settings__info__t}{op\+\_\+settings\+\_\+info\+\_\+t}} \mbox{\hyperlink{scientisst_8c_ad24c7510f51acaac27b62d21c280b747}{op\+\_\+settings}}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8c_a304133f917e93ba96a348df51387dc92}{is\+\_\+op\+\_\+settings\+\_\+valid}} = 0
+\item 
+\mbox{\Hypertarget{scientisst_8c_a38cf39cf8c11960d72d032bf96426547}\label{scientisst_8c_a38cf39cf8c11960d72d032bf96426547}} 
+uint8\+\_\+t {\bfseries first\+\_\+failed\+\_\+send} = 0
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Main file for the Scientisst firmware. 
+
+This file is the main file for the Scientisst firmware. It handles the initialization of the firmware and the creation of the tasks. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{scientisst_8c_a0d9b367cc11624243590cb4e706cc891}\label{scientisst_8c_a0d9b367cc11624243590cb4e706cc891}} 
+\index{scientisst.c@{scientisst.c}!AbatTask@{AbatTask}}
+\index{AbatTask@{AbatTask}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{AbatTask()}{AbatTask()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR Abat\+Task (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Task that acquires data from adc\+Ext. 
+
+This task is responsible for acquiring data from adc\+Ext. It is notified by the timer\+Grp1\+Isr when to acquire data. It notifies the send\+Task when there is data to send. It is also the main task of CPU0 (PRO CPU)
+
+Task that acquires data from adc2 (battery).
+
+This task is responsible for acquiring data from adc2 (battery). It is notified by the timer\+Grp1\+Isr when to acquire data. It notifies the send\+Task when there is data to send. It is also the main task of CPU0 (PRO CPU) \mbox{\Hypertarget{scientisst_8c_a74b98e4514cbc17bc5f80e463872af67}\label{scientisst_8c_a74b98e4514cbc17bc5f80e463872af67}} 
+\index{scientisst.c@{scientisst.c}!acqAdc1Task@{acqAdc1Task}}
+\index{acqAdc1Task@{acqAdc1Task}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{acqAdc1Task()}{acqAdc1Task()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR acq\+Adc1\+Task (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Task that acquires data from adc1. 
+
+This task is responsible for acquiring data from adc1. It is notified by the timer\+Grp0\+Isr when to acquire data. It notifies the send\+Task when there is data to send. It is also the main task of CPU1 (APP CPU) \mbox{\Hypertarget{scientisst_8c_a67371293d974b9087bcb16643de878f0}\label{scientisst_8c_a67371293d974b9087bcb16643de878f0}} 
+\index{scientisst.c@{scientisst.c}!initScientisst@{initScientisst}}
+\index{initScientisst@{initScientisst}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{initScientisst()}{initScientisst()}}
+{\footnotesize\ttfamily void init\+Scientisst (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+scientisst-\/firmware main function 
+
+Creates Mutex, initializes nvs, loads op\+\_\+settings from flash, initializes wifi, bluetooth, adc, i2c etc. If pin 1 is enabled, enters config mode. If wifi mode, tries to connect to wifi network. If connection is unsuccessful, enter config mode. Either start web server (config mode), TCP server (wifi mode) or bluetooth. Starts send data task, adc task and adc\+Ext task. If wifi start rcv task; else, start battery task (adc2) task. \mbox{\Hypertarget{scientisst_8c_aaef0ef3b74ab2d2e8e833c961fdade79}\label{scientisst_8c_aaef0ef3b74ab2d2e8e833c961fdade79}} 
+\index{scientisst.c@{scientisst.c}!opModeConfig@{opModeConfig}}
+\index{opModeConfig@{opModeConfig}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{opModeConfig()}{opModeConfig()}}
+{\footnotesize\ttfamily void op\+Mode\+Config (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Puts the device in config mode. 
+
+This function puts the device in config mode. It initializes the rest server and turns on the state led (white). \mbox{\Hypertarget{scientisst_8c_a65b2d1da040aa03eb6bc55ff6495ea2f}\label{scientisst_8c_a65b2d1da040aa03eb6bc55ff6495ea2f}} 
+\index{scientisst.c@{scientisst.c}!rcvTask@{rcvTask}}
+\index{rcvTask@{rcvTask}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{rcvTask()}{rcvTask()}}
+{\footnotesize\ttfamily void rcv\+Task (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Task that receives data from the client. 
+
+This task is responsible for receiving data from the client. \mbox{\Hypertarget{scientisst_8c_af8d99f5f9f4ad067020fb6e4f3157c66}\label{scientisst_8c_af8d99f5f9f4ad067020fb6e4f3157c66}} 
+\index{scientisst.c@{scientisst.c}!sendTask@{sendTask}}
+\index{sendTask@{sendTask}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{sendTask()}{sendTask()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR send\+Task (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Task that sends data to the client. 
+
+This task is responsible for sending data to the client. It is notified by the acq\+Adc1\+Task when there is data to send. If the client is BT or BLE it initializes the respective component.
+
+This task can be removed and acq\+Adc1\+Task can do the \mbox{\hyperlink{bt_8c_a09adbbe03bca19d08be8cc4f256e7cc9}{send\+Data()}} when !send\+\_\+busy. But, atm acq\+Adc1\+Task is the bottleneck 
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{scientisst_8c_adf58f1ea0e678533fafefedcba16ce39}\label{scientisst_8c_adf58f1ea0e678533fafefedcba16ce39}} 
+\index{scientisst.c@{scientisst.c}!acq\_curr\_buff@{acq\_curr\_buff}}
+\index{acq\_curr\_buff@{acq\_curr\_buff}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{acq\_curr\_buff}{acq\_curr\_buff}}
+{\footnotesize\ttfamily uint8\+\_\+t acq\+\_\+curr\+\_\+buff}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{    0}
+
+\end{DoxyCode}
+
+
+Index of the buffer that adc task is currently using. 
+
+\mbox{\Hypertarget{scientisst_8c_aa96057547878820ef99184651491fa49}\label{scientisst_8c_aa96057547878820ef99184651491fa49}} 
+\index{scientisst.c@{scientisst.c}!active\_ext\_chs@{active\_ext\_chs}}
+\index{active\_ext\_chs@{active\_ext\_chs}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{active\_ext\_chs}{active\_ext\_chs}}
+{\footnotesize\ttfamily uint8\+\_\+t active\+\_\+ext\+\_\+chs\mbox{[}EXT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    0, 0\}}
+
+\end{DoxyCode}
+
+
+Active external channels $\vert$ If all channels are active\+: = \{7, 6\}. 
+
+\mbox{\Hypertarget{scientisst_8c_a3a07a97b62df36dc9cd67e6a56bb00b2}\label{scientisst_8c_a3a07a97b62df36dc9cd67e6a56bb00b2}} 
+\index{scientisst.c@{scientisst.c}!active\_internal\_chs@{active\_internal\_chs}}
+\index{active\_internal\_chs@{active\_internal\_chs}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{active\_internal\_chs}{active\_internal\_chs}}
+{\footnotesize\ttfamily uint8\+\_\+t active\+\_\+internal\+\_\+chs\mbox{[}DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    0, 0, 0, 0,}
+\DoxyCodeLine{    0, 0\}}
+
+\end{DoxyCode}
+Active internal channels $\vert$ If all channels are active\+: = \{5, 4, 3, 2, 1, 0\} \mbox{\Hypertarget{scientisst_8c_ae18476f0aa11096ed565a85ebfc90507}\label{scientisst_8c_ae18476f0aa11096ed565a85ebfc90507}} 
+\index{scientisst.c@{scientisst.c}!adc\_ext\_samples@{adc\_ext\_samples}}
+\index{adc\_ext\_samples@{adc\_ext\_samples}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{adc\_ext\_samples}{adc\_ext\_samples}}
+{\footnotesize\ttfamily uint32\+\_\+t adc\+\_\+ext\+\_\+samples\mbox{[}EXT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    0, 0\}}
+
+\end{DoxyCode}
+Samples from external adc get stored here before being incorporated into frame \mbox{\Hypertarget{scientisst_8c_a4f17a0b46a4710620873bdfc4bfb8f5c}\label{scientisst_8c_a4f17a0b46a4710620873bdfc4bfb8f5c}} 
+\index{scientisst.c@{scientisst.c}!analog\_channels@{analog\_channels}}
+\index{analog\_channels@{analog\_channels}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{analog\_channels}{analog\_channels}}
+{\footnotesize\ttfamily DRAM\+\_\+\+ATTR const uint8\+\_\+t analog\+\_\+channels\mbox{[}DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    \mbox{\hyperlink{adc_8h_aa913153b2d4286275aa01b98edec87be}{A0\_ADC\_CH}}, \mbox{\hyperlink{adc_8h_a7682706ef4d50ac852a854ddcd377546}{A1\_ADC\_CH}}, \mbox{\hyperlink{adc_8h_adf4e4b55cace5a07c623faf082e88493}{A2\_ADC\_CH}}, \mbox{\hyperlink{adc_8h_a04ca35942754279fd083f7b95df93f4c}{A3\_ADC\_CH}}, \mbox{\hyperlink{adc_8h_ae121004b8a19755804222c03e8feef51}{A4\_ADC\_CH}}, \mbox{\hyperlink{adc_8h_a41848687121e6e16a1c8e0cbf461371d}{A5\_ADC\_CH}}\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{scientisst_8c_ae6369df7f65a4b328aa3de63c2f6be78}\label{scientisst_8c_ae6369df7f65a4b328aa3de63c2f6be78}} 
+\index{scientisst.c@{scientisst.c}!api\_config@{api\_config}}
+\index{api\_config@{api\_config}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{api\_config}{api\_config}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structApi__Config}{Api\+\_\+\+Config}} api\+\_\+config}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{.api\_mode = API\_MODE\_BITALINO,}
+\DoxyCodeLine{                         .aquire\_func = \&\mbox{\hyperlink{adc_8c_ae282beb7d585ba638646550306526752}{acquireAdc1Channels}},}
+\DoxyCodeLine{                         .select\_ch\_mask\_func = \&\mbox{\hyperlink{com_8c_aac2378909bc99c264f31dc8db49d6e0d}{selectChsFromMask}}\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{scientisst_8c_acfaf9589d576b3fc0786f581b20bc19e}\label{scientisst_8c_acfaf9589d576b3fc0786f581b20bc19e}} 
+\index{scientisst.c@{scientisst.c}!bt\_buffs\_to\_send@{bt\_buffs\_to\_send}}
+\index{bt\_buffs\_to\_send@{bt\_buffs\_to\_send}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{bt\_buffs\_to\_send}{bt\_buffs\_to\_send}}
+{\footnotesize\ttfamily uint8\+\_\+t bt\+\_\+buffs\+\_\+to\+\_\+send\mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0\}}
+
+\end{DoxyCode}
+If element 0 is set to 1, bt task has to send snd\+\_\+buff\mbox{[}0\mbox{]} \mbox{\Hypertarget{scientisst_8c_a8607928ef2ef25e6de81c163efc5f806}\label{scientisst_8c_a8607928ef2ef25e6de81c163efc5f806}} 
+\index{scientisst.c@{scientisst.c}!bt\_curr\_buff@{bt\_curr\_buff}}
+\index{bt\_curr\_buff@{bt\_curr\_buff}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{bt\_curr\_buff}{bt\_curr\_buff}}
+{\footnotesize\ttfamily uint8\+\_\+t bt\+\_\+curr\+\_\+buff}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{    0}
+
+\end{DoxyCode}
+
+
+Index of the buffer that bt task is currently sending. 
+
+\mbox{\Hypertarget{scientisst_8c_a649e81573a3aad33548e7f8c21700ada}\label{scientisst_8c_a649e81573a3aad33548e7f8c21700ada}} 
+\index{scientisst.c@{scientisst.c}!crc\_table@{crc\_table}}
+\index{crc\_table@{crc\_table}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{crc\_table}{crc\_table}}
+{\footnotesize\ttfamily DRAM\+\_\+\+ATTR const uint8\+\_\+t crc\+\_\+table\mbox{[}16\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{0,  3, 6,  5,  12, 15, 10, 9,}
+\DoxyCodeLine{                                         11, 8, 13, 14, 7,  4,  1,  2\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{scientisst_8c_a304133f917e93ba96a348df51387dc92}\label{scientisst_8c_a304133f917e93ba96a348df51387dc92}} 
+\index{scientisst.c@{scientisst.c}!is\_op\_settings\_valid@{is\_op\_settings\_valid}}
+\index{is\_op\_settings\_valid@{is\_op\_settings\_valid}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{is\_op\_settings\_valid}{is\_op\_settings\_valid}}
+{\footnotesize\ttfamily uint8\+\_\+t is\+\_\+op\+\_\+settings\+\_\+valid = 0}
+
+\texorpdfstring{$<$}{<} Struct that holds the wifi acquisition configuration (e.\+g. SSID, password, sample rate...) Flag that indicates if a valid op\+\_\+settings has been read successfuly from flash \mbox{\Hypertarget{scientisst_8c_aec948fb30e99b1eda7e3d9ff741d417a}\label{scientisst_8c_aec948fb30e99b1eda7e3d9ff741d417a}} 
+\index{scientisst.c@{scientisst.c}!op\_mode@{op\_mode}}
+\index{op\_mode@{op\_mode}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{op\_mode}{op\_mode}}
+{\footnotesize\ttfamily uint8\+\_\+t op\+\_\+mode = OP\+\_\+\+MODE\+\_\+\+IDLE}
+
+Flag that indicastes if op mode is on (idle, live or config) \mbox{\Hypertarget{scientisst_8c_ad24c7510f51acaac27b62d21c280b747}\label{scientisst_8c_ad24c7510f51acaac27b62d21c280b747}} 
+\index{scientisst.c@{scientisst.c}!op\_settings@{op\_settings}}
+\index{op\_settings@{op\_settings}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{op\_settings}{op\_settings}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structop__settings__info__t}{op\+\_\+settings\+\_\+info\+\_\+t}} op\+\_\+settings}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .com\_mode = COM\_MODE\_BT,}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{scientisst_8c_aee3ef59ff651fe7e6a9c273affdd5d5a}\label{scientisst_8c_aee3ef59ff651fe7e6a9c273affdd5d5a}} 
+\index{scientisst.c@{scientisst.c}!packet\_size@{packet\_size}}
+\index{packet\_size@{packet\_size}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{packet\_size}{packet\_size}}
+{\footnotesize\ttfamily uint8\+\_\+t packet\+\_\+size}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{    0}
+
+\end{DoxyCode}
+
+
+Current packet size (dependent on number of channels used) 
+
+\mbox{\Hypertarget{scientisst_8c_aba2be5e3b1baddd09080812b975bf2fc}\label{scientisst_8c_aba2be5e3b1baddd09080812b975bf2fc}} 
+\index{scientisst.c@{scientisst.c}!send\_threshold@{send\_threshold}}
+\index{send\_threshold@{send\_threshold}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{send\_threshold}{send\_threshold}}
+{\footnotesize\ttfamily uint16\+\_\+t send\+\_\+threshold}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{    MAX\_BUFFER\_SIZE}
+
+\end{DoxyCode}
+Amount of bytes a buffer needs to have filled with packets in order to trigger a send \mbox{\Hypertarget{scientisst_8c_a00b1975a55c7817b061a797e43c45aff}\label{scientisst_8c_a00b1975a55c7817b061a797e43c45aff}} 
+\index{scientisst.c@{scientisst.c}!sin10Hz@{sin10Hz}}
+\index{sin10Hz@{sin10Hz}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{sin10Hz}{sin10Hz}}
+{\footnotesize\ttfamily const uint8\+\_\+t sin10\+Hz\mbox{[}100\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    31, 33, 35, 37, 39, 41, 42, 44, 46, 48, 49, 51, 52, 54, 55, 56, 57,}
+\DoxyCodeLine{    58, 59, 60, 60, 61, 61, 62, 62, 62, 62, 62, 61, 61, 60, 60, 59, 58,}
+\DoxyCodeLine{    57, 56, 55, 54, 52, 51, 49, 48, 46, 44, 42, 41, 39, 37, 35, 33, 31,}
+\DoxyCodeLine{    29, 27, 25, 23, 21, 20, 18, 16, 14, 13, 11, 10, 8,  7,  6,  5,  4,}
+\DoxyCodeLine{    3,  2,  2,  1,  1,  0,  0,  0,  0,  0,  1,  1,  2,  2,  3,  4,  5,}
+\DoxyCodeLine{    6,  7,  8,  10, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 29\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{scientisst_8c_ac2b4deaf1aa96b3b76c622733874f9ef}\label{scientisst_8c_ac2b4deaf1aa96b3b76c622733874f9ef}} 
+\index{scientisst.c@{scientisst.c}!snd\_buff@{snd\_buff}}
+\index{snd\_buff@{snd\_buff}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{snd\_buff}{snd\_buff}}
+{\footnotesize\ttfamily uint8\+\_\+t$\ast$ snd\+\_\+buff\mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}}
+
+Data structure to hold the data to be sent through bluetooth \mbox{\Hypertarget{scientisst_8c_abb1e90d26548b840cbbae672eb63c0d7}\label{scientisst_8c_abb1e90d26548b840cbbae672eb63c0d7}} 
+\index{scientisst.c@{scientisst.c}!snd\_buff\_idx@{snd\_buff\_idx}}
+\index{snd\_buff\_idx@{snd\_buff\_idx}!scientisst.c@{scientisst.c}}
+\doxysubsubsection{\texorpdfstring{snd\_buff\_idx}{snd\_buff\_idx}}
+{\footnotesize\ttfamily uint16\+\_\+t snd\+\_\+buff\+\_\+idx\mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}
+\DoxyCodeLine{    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0\}}
+
+\end{DoxyCode}
+It contains, for each buffer, the index of the first free element in the respective buffer 
