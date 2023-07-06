@@ -238,7 +238,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame) {
     io_state |= (gpio_out_state[0] & 0b1) << 5;
     io_state |= (gpio_out_state[1] & 0b1) << 4;
 
-    frame[packet_size - 2] = io_state;
+    frame[packet_size - 3] = io_state;
 
 #if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs > 0) {

@@ -46,8 +46,7 @@ void processRcv(uint8_t* buff, int len) {
     } else if (buff[0] ==
                0b10100011) {  // trigger command - Set output DAC level
         triggerDAC(buff);
-    }
-    if (op_mode == OP_MODE_LIVE) {
+    } else if (op_mode == OP_MODE_LIVE) {
         if (!buff[0]) {
             stopAcquisition();
         }
