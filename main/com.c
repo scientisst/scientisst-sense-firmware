@@ -90,8 +90,8 @@ void processRcv(uint8_t* buff, int len) {
  * //TODO: Confirm this
  */
 void triggerGpio(uint8_t* buff) {
-    uint8_t o1_lvl = (buff[0] & 0b00001000) >> 3;
-    uint8_t o2_lvl = (buff[0] & 0b00000100) >> 2;
+    uint8_t o2_lvl = (buff[0] & 0b00001000) >> 3;
+    uint8_t o1_lvl = (buff[0] & 0b00000100) >> 2;
 
     gpio_set_level(O0_IO, o1_lvl);
     gpio_out_state[0] = o1_lvl;
