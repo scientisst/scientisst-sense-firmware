@@ -78,7 +78,8 @@ void processRcv(uint8_t* buff, int len) {
 
             // Set battery threshold
         } else if (!cmd) {
-            // TODO: Why is this empty??
+            battery_threshold =
+                3400 + (((uint16_t)(buff[0] & 0b11111100) >> 2) * 400) / 64;
         }
     }
 }
