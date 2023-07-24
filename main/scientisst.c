@@ -146,7 +146,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SD_CARD,
 };
 /*{
     .com_mode = COM_MODE_TCP_STA,

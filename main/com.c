@@ -39,12 +39,13 @@ void processRcv(uint8_t* buff, int len) {
         return;
     }
 
-    // Check trigger command - it's regardeless of the current mode
-    if ((buff[0] & 0b10110011) ==
-        0b10110011) {  // trigger command - Set output GPIO levels
+    // First check trigger command - it's regardeless of the current mode
+    // trigger command - Set output GPIO levels
+    if ((buff[0] & 0b10110011) == 0b10110011) {
         triggerGpio(buff);
-    } else if (buff[0] ==
-               0b10100011) {  // trigger command - Set output DAC level
+
+        // trigger command - Set output DAC level
+    } else if (buff[0] == 0b10100011) {
         triggerDAC(buff);
     } else if (op_mode == OP_MODE_LIVE) {
         if (!buff[0]) {
