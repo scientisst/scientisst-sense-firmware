@@ -1,0 +1,258 @@
+\hypertarget{scientisst_8h}{}\doxysection{scientisst.\+h File Reference}
+\label{scientisst_8h}\index{scientisst.h@{scientisst.h}}
+
+
+Main header file for the Scientisst firmware.  
+
+
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}c\+JSON.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}com.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}driver/spi\+\_\+master.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}driver/timer.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+adc\+\_\+cal.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+bt\+\_\+device.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+bt\+\_\+main.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+gap\+\_\+bt\+\_\+api.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+log.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+netif.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+spp\+\_\+api.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/\+Free\+RTOS.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/semphr.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/task.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nvs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nvs\+\_\+flash.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sys/time.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}time.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}version.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}wifi.\+h\char`\"{}}\newline
+Include dependency graph for scientisst.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scientisst_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scientisst_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{scientisst_8h_ab7b84ee9b544d80dcede5792059e8613}\label{scientisst_8h_ab7b84ee9b544d80dcede5792059e8613}} 
+\#define {\bfseries FIRMWARE\+\_\+\+BITALINO\+\_\+\+VERSION}~\char`\"{}BITalino\+\_\+v5.\+1\textbackslash{}n\char`\"{}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{scientisst_8h_a67371293d974b9087bcb16643de878f0}{init\+Scientisst}} (void)
+\begin{DoxyCompactList}\small\item\em scientisst-\/firmware main function \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a19e62782c492aeba9e3304a4312d222a}\label{scientisst_8h_a19e62782c492aeba9e3304a4312d222a}} 
+Task\+Handle\+\_\+t {\bfseries send\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a5fe8dff9b6854a628097650435e9dfe9}\label{scientisst_8h_a5fe8dff9b6854a628097650435e9dfe9}} 
+Task\+Handle\+\_\+t {\bfseries abat\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a571f93394be93268e6c09c1fedf548f1}\label{scientisst_8h_a571f93394be93268e6c09c1fedf548f1}} 
+Task\+Handle\+\_\+t {\bfseries rcv\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a3ca7559f4e9fd35d6cd5dba106c707a2}\label{scientisst_8h_a3ca7559f4e9fd35d6cd5dba106c707a2}} 
+Task\+Handle\+\_\+t {\bfseries acq\+\_\+adc1\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8h_ac3beecfd9909f92fdd031c31132f8b68}\label{scientisst_8h_ac3beecfd9909f92fdd031c31132f8b68}} 
+Task\+Handle\+\_\+t {\bfseries acq\+\_\+adc\+\_\+ext\+\_\+task}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a4ccd8921f38d8d73068731023f739eac}\label{scientisst_8h_a4ccd8921f38d8d73068731023f739eac}} 
+int {\bfseries send\+\_\+fd}
+\item 
+uint8\+\_\+t $\ast$ \mbox{\hyperlink{scientisst_8h_ac2b4deaf1aa96b3b76c622733874f9ef}{snd\+\_\+buff}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_aa3c5bd8b98f34726adca0d5d4496d5ee}\label{scientisst_8h_aa3c5bd8b98f34726adca0d5d4496d5ee}} 
+uint32\+\_\+t {\bfseries send\+\_\+buff\+\_\+len}
+\begin{DoxyCompactList}\small\item\em Length of each send buff. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8h_aee3ef59ff651fe7e6a9c273affdd5d5a}\label{scientisst_8h_aee3ef59ff651fe7e6a9c273affdd5d5a}} 
+uint8\+\_\+t {\bfseries packet\+\_\+size}
+\begin{DoxyCompactList}\small\item\em Current packet size (dependent on number of channels used) \end{DoxyCompactList}\item 
+uint16\+\_\+t \mbox{\hyperlink{scientisst_8h_ad1eff9de07f17a3448412996de8c73bf}{snd\+\_\+buff\+\_\+idx}} \mbox{[}$\,$\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8h_a52eb8d8cff704c0ff443e47dc2207c42}{bt\+\_\+buffs\+\_\+to\+\_\+send}} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a0d6370009dfaaa6352d94d10645c11b0}\label{scientisst_8h_a0d6370009dfaaa6352d94d10645c11b0}} 
+DRAM\+\_\+\+ATTR const uint8\+\_\+t {\bfseries crc\+\_\+table} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a30ce041a03a995813db2cc992f965f27}\label{scientisst_8h_a30ce041a03a995813db2cc992f965f27}} 
+uint16\+\_\+t {\bfseries crc\+\_\+seq}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a7605e205ad44cf175ae6836d09f5f3f3}\label{scientisst_8h_a7605e205ad44cf175ae6836d09f5f3f3}} 
+DRAM\+\_\+\+ATTR const uint8\+\_\+t {\bfseries analog\+\_\+channels} \mbox{[}$\,$\mbox{]}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8h_a36a14f11520695813aa1d2024f651809}{active\+\_\+internal\+\_\+chs}} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a42d56683542bef172366ecb20446ef54}\label{scientisst_8h_a42d56683542bef172366ecb20446ef54}} 
+uint8\+\_\+t {\bfseries num\+\_\+intern\+\_\+active\+\_\+chs}
+\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8h_aec948fb30e99b1eda7e3d9ff741d417a}{op\+\_\+mode}}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a2fba55d9442e7dba4623825cd737e520}\label{scientisst_8h_a2fba55d9442e7dba4623825cd737e520}} 
+uint32\+\_\+t {\bfseries sample\+\_\+rate}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a7026e7526fc83dfe44240b66b2b957c1}\label{scientisst_8h_a7026e7526fc83dfe44240b66b2b957c1}} 
+spi\+\_\+device\+\_\+handle\+\_\+t {\bfseries adc\+\_\+ext\+\_\+spi\+\_\+handler}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a8fad2ab5c7e2add7ca0a5aa441872762}\label{scientisst_8h_a8fad2ab5c7e2add7ca0a5aa441872762}} 
+esp\+\_\+adc\+\_\+cal\+\_\+characteristics\+\_\+t {\bfseries adc1\+\_\+chars}
+\item 
+\mbox{\Hypertarget{scientisst_8h_abe025b99b3111cc4a2f1d9b33f963504}\label{scientisst_8h_abe025b99b3111cc4a2f1d9b33f963504}} 
+esp\+\_\+adc\+\_\+cal\+\_\+characteristics\+\_\+t {\bfseries adc2\+\_\+chars}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a4d38ff533fa597bf3b8c9e2b4c07f8f2}\label{scientisst_8h_a4d38ff533fa597bf3b8c9e2b4c07f8f2}} 
+char {\bfseries device\+\_\+name} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a5a5410ab9ad2ae9325099b2315faf334}\label{scientisst_8h_a5a5410ab9ad2ae9325099b2315faf334}} 
+uint8\+\_\+t {\bfseries send\+\_\+busy}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a559e662c57addba866d0503d53160930}\label{scientisst_8h_a559e662c57addba866d0503d53160930}} 
+Semaphore\+Handle\+\_\+t {\bfseries bt\+\_\+buffs\+\_\+to\+\_\+send\+\_\+mutex}
+\item 
+uint16\+\_\+t \mbox{\hyperlink{scientisst_8h_aba2be5e3b1baddd09080812b975bf2fc}{send\+\_\+threshold}}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a8607928ef2ef25e6de81c163efc5f806}\label{scientisst_8h_a8607928ef2ef25e6de81c163efc5f806}} 
+uint8\+\_\+t {\bfseries bt\+\_\+curr\+\_\+buff}
+\begin{DoxyCompactList}\small\item\em Index of the buffer that bt task is currently sending. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8h_adf58f1ea0e678533fafefedcba16ce39}\label{scientisst_8h_adf58f1ea0e678533fafefedcba16ce39}} 
+uint8\+\_\+t {\bfseries acq\+\_\+curr\+\_\+buff}
+\begin{DoxyCompactList}\small\item\em Index of the buffer that adc task is currently using. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8h_ae6369df7f65a4b328aa3de63c2f6be78}\label{scientisst_8h_ae6369df7f65a4b328aa3de63c2f6be78}} 
+\mbox{\hyperlink{structApi__Config}{Api\+\_\+\+Config}} {\bfseries api\+\_\+config}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a125ae3bfd1500ab33445e8e30dbb1535}\label{scientisst_8h_a125ae3bfd1500ab33445e8e30dbb1535}} 
+uint8\+\_\+t {\bfseries active\+\_\+ext\+\_\+chs} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em Active external channels $\vert$ If all channels are active\+: = \{7, 6\}. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{scientisst_8h_af84510851ca7161ffec1186e5af655b4}{adc\+\_\+ext\+\_\+samples}} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a3fceb86dcc2db967ea153357ac554190}\label{scientisst_8h_a3fceb86dcc2db967ea153357ac554190}} 
+uint8\+\_\+t {\bfseries num\+\_\+extern\+\_\+active\+\_\+chs}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a65f742e8d4496f2431894fafe695cc53}\label{scientisst_8h_a65f742e8d4496f2431894fafe695cc53}} 
+c\+JSON $\ast$ {\bfseries json}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a7027b4521fb116c86199e5ccfce5bf73}\label{scientisst_8h_a7027b4521fb116c86199e5ccfce5bf73}} 
+DRAM\+\_\+\+ATTR const uint8\+\_\+t {\bfseries sin10\+Hz} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\Hypertarget{scientisst_8h_ae7140e27a5abc7a2b038347434f0374e}\label{scientisst_8h_ae7140e27a5abc7a2b038347434f0374e}} 
+uint8\+\_\+t {\bfseries sim\+\_\+flag}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a1bbddce911432732664074cf4c252288}\label{scientisst_8h_a1bbddce911432732664074cf4c252288}} 
+uint8\+\_\+t {\bfseries sin\+\_\+i}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a01b45c2c1d6003886ce22d614e87dd31}\label{scientisst_8h_a01b45c2c1d6003886ce22d614e87dd31}} 
+uint8\+\_\+t {\bfseries gpio\+\_\+out\+\_\+state} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em Output of 01 \& O2 (O0 \& O1) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{scientisst_8h_a9d6caeccf40e673721eb7ce26f033531}\label{scientisst_8h_a9d6caeccf40e673721eb7ce26f033531}} 
+spi\+\_\+transaction\+\_\+t {\bfseries adc\+\_\+ext\+\_\+trans}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a884fc7df05c9eaf5001d47dc09cc7194}\label{scientisst_8h_a884fc7df05c9eaf5001d47dc09cc7194}} 
+uint16\+\_\+t {\bfseries battery\+\_\+threshold}
+\item 
+\mbox{\Hypertarget{scientisst_8h_ad9cc3ca85c2647a56048a756de6147e1}\label{scientisst_8h_ad9cc3ca85c2647a56048a756de6147e1}} 
+uint8\+\_\+t {\bfseries com\+\_\+mode}
+\item 
+\mbox{\Hypertarget{scientisst_8h_ad24c7510f51acaac27b62d21c280b747}\label{scientisst_8h_ad24c7510f51acaac27b62d21c280b747}} 
+\mbox{\hyperlink{structop__settings__info__t}{op\+\_\+settings\+\_\+info\+\_\+t}} {\bfseries op\+\_\+settings}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a310c92dadfc8850f5c31ed6fd5dbf3d4}\label{scientisst_8h_a310c92dadfc8850f5c31ed6fd5dbf3d4}} 
+esp\+\_\+err\+\_\+t($\ast$ {\bfseries send\+\_\+func} )(uint32\+\_\+t, int, uint8\+\_\+t $\ast$)
+\begin{DoxyCompactList}\small\item\em Send function pointer. \end{DoxyCompactList}\item 
+uint8\+\_\+t \mbox{\hyperlink{scientisst_8h_a304133f917e93ba96a348df51387dc92}{is\+\_\+op\+\_\+settings\+\_\+valid}}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a5b8ea1c4cc9d70f37e8c0e3e97db137d}\label{scientisst_8h_a5b8ea1c4cc9d70f37e8c0e3e97db137d}} 
+esp\+\_\+netif\+\_\+t $\ast$ {\bfseries netif\+\_\+object}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a38cf39cf8c11960d72d032bf96426547}\label{scientisst_8h_a38cf39cf8c11960d72d032bf96426547}} 
+uint8\+\_\+t {\bfseries first\+\_\+failed\+\_\+send}
+\item 
+\mbox{\Hypertarget{scientisst_8h_a677980e26e55da72e6d7091450572300}\label{scientisst_8h_a677980e26e55da72e6d7091450572300}} 
+uint32\+\_\+t {\bfseries ext\+\_\+adc\+\_\+raw\+\_\+data} \mbox{[}3\mbox{]}
+\begin{DoxyCompactList}\small\item\em Raw data from external adc. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Main header file for the Scientisst firmware. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{scientisst_8h_a67371293d974b9087bcb16643de878f0}\label{scientisst_8h_a67371293d974b9087bcb16643de878f0}} 
+\index{scientisst.h@{scientisst.h}!initScientisst@{initScientisst}}
+\index{initScientisst@{initScientisst}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{initScientisst()}{initScientisst()}}
+{\footnotesize\ttfamily void init\+Scientisst (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+scientisst-\/firmware main function 
+
+Creates Mutex, initializes nvs, loads op\+\_\+settings from flash, initializes wifi, bluetooth, adc, i2c etc. If pin 1 is enabled, enters config mode. If wifi mode, tries to connect to wifi network. If connection is unsuccessful, enter config mode. Either start web server (config mode), TCP server (wifi mode) or bluetooth. Starts send data task, adc task and adc\+Ext task. If wifi start rcv task; else, start battery task (adc2) task. 
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{scientisst_8h_a36a14f11520695813aa1d2024f651809}\label{scientisst_8h_a36a14f11520695813aa1d2024f651809}} 
+\index{scientisst.h@{scientisst.h}!active\_internal\_chs@{active\_internal\_chs}}
+\index{active\_internal\_chs@{active\_internal\_chs}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{active\_internal\_chs}{active\_internal\_chs}}
+{\footnotesize\ttfamily uint8\+\_\+t active\+\_\+internal\+\_\+chs\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+Active internal channels $\vert$ If all channels are active\+: = \{5, 4, 3, 2, 1, 0\} \mbox{\Hypertarget{scientisst_8h_af84510851ca7161ffec1186e5af655b4}\label{scientisst_8h_af84510851ca7161ffec1186e5af655b4}} 
+\index{scientisst.h@{scientisst.h}!adc\_ext\_samples@{adc\_ext\_samples}}
+\index{adc\_ext\_samples@{adc\_ext\_samples}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{adc\_ext\_samples}{adc\_ext\_samples}}
+{\footnotesize\ttfamily uint32\+\_\+t adc\+\_\+ext\+\_\+samples\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+Samples from external adc get stored here before being incorporated into frame \mbox{\Hypertarget{scientisst_8h_a52eb8d8cff704c0ff443e47dc2207c42}\label{scientisst_8h_a52eb8d8cff704c0ff443e47dc2207c42}} 
+\index{scientisst.h@{scientisst.h}!bt\_buffs\_to\_send@{bt\_buffs\_to\_send}}
+\index{bt\_buffs\_to\_send@{bt\_buffs\_to\_send}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{bt\_buffs\_to\_send}{bt\_buffs\_to\_send}}
+{\footnotesize\ttfamily uint8\+\_\+t bt\+\_\+buffs\+\_\+to\+\_\+send\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+If element 0 is set to 1, bt task has to send snd\+\_\+buff\mbox{[}0\mbox{]} \mbox{\Hypertarget{scientisst_8h_a304133f917e93ba96a348df51387dc92}\label{scientisst_8h_a304133f917e93ba96a348df51387dc92}} 
+\index{scientisst.h@{scientisst.h}!is\_op\_settings\_valid@{is\_op\_settings\_valid}}
+\index{is\_op\_settings\_valid@{is\_op\_settings\_valid}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{is\_op\_settings\_valid}{is\_op\_settings\_valid}}
+{\footnotesize\ttfamily uint8\+\_\+t is\+\_\+op\+\_\+settings\+\_\+valid\hspace{0.3cm}{\ttfamily [extern]}}
+
+\texorpdfstring{$<$}{<} Struct that holds the wifi acquisition configuration (e.\+g. SSID, password, sample rate...) Flag that indicates if a valid op\+\_\+settings has been read successfuly from flash \mbox{\Hypertarget{scientisst_8h_aec948fb30e99b1eda7e3d9ff741d417a}\label{scientisst_8h_aec948fb30e99b1eda7e3d9ff741d417a}} 
+\index{scientisst.h@{scientisst.h}!op\_mode@{op\_mode}}
+\index{op\_mode@{op\_mode}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{op\_mode}{op\_mode}}
+{\footnotesize\ttfamily uint8\+\_\+t op\+\_\+mode\hspace{0.3cm}{\ttfamily [extern]}}
+
+Flag that indicastes if op mode is on (idle, live or config) \mbox{\Hypertarget{scientisst_8h_aba2be5e3b1baddd09080812b975bf2fc}\label{scientisst_8h_aba2be5e3b1baddd09080812b975bf2fc}} 
+\index{scientisst.h@{scientisst.h}!send\_threshold@{send\_threshold}}
+\index{send\_threshold@{send\_threshold}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{send\_threshold}{send\_threshold}}
+{\footnotesize\ttfamily uint16\+\_\+t send\+\_\+threshold\hspace{0.3cm}{\ttfamily [extern]}}
+
+Amount of bytes a buffer needs to have filled with packets in order to trigger a send \mbox{\Hypertarget{scientisst_8h_ac2b4deaf1aa96b3b76c622733874f9ef}\label{scientisst_8h_ac2b4deaf1aa96b3b76c622733874f9ef}} 
+\index{scientisst.h@{scientisst.h}!snd\_buff@{snd\_buff}}
+\index{snd\_buff@{snd\_buff}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{snd\_buff}{snd\_buff}}
+{\footnotesize\ttfamily uint8\+\_\+t$\ast$ snd\+\_\+buff\mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+Data structure to hold the data to be sent through bluetooth \mbox{\Hypertarget{scientisst_8h_ad1eff9de07f17a3448412996de8c73bf}\label{scientisst_8h_ad1eff9de07f17a3448412996de8c73bf}} 
+\index{scientisst.h@{scientisst.h}!snd\_buff\_idx@{snd\_buff\_idx}}
+\index{snd\_buff\_idx@{snd\_buff\_idx}!scientisst.h@{scientisst.h}}
+\doxysubsubsection{\texorpdfstring{snd\_buff\_idx}{snd\_buff\_idx}}
+{\footnotesize\ttfamily uint16\+\_\+t snd\+\_\+buff\+\_\+idx\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+It contains, for each buffer, the index of the first free element in the respective buffer 

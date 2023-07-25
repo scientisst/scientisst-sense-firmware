@@ -24,6 +24,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "nvs_flash.h"
 #include "scientisst.h"
 #include "sdkconfig.h"

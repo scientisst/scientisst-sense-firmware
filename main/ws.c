@@ -17,6 +17,7 @@
 #include "esp_https_server.h"
 #include "esp_netif.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 static const char* TAG = "ws_server";

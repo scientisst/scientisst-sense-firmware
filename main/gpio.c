@@ -13,6 +13,7 @@
 
 #include "adc.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 /**
@@ -175,8 +176,7 @@ void gpioInit(void) {
 
 bool IRAM_ATTR gpioDrdyIsrHandler(void) {
     // Wake acq_adc_ext_task. This will only start when this handler is
-    // terminated. vTaskNotifyGiveFromISR(acq_adc_ext_task, NULL); TODO: Check
-    // if we can comment this
+    // terminated. vTaskNotifyGiveFromISR(acq_adc_ext_task, NULL);
 
     /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
     should be performed to ensure the interrupt returns directly to the highest

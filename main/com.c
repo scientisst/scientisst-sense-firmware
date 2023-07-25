@@ -10,11 +10,13 @@
 
 #include "adc.h"
 #include "bt.h"
+#include "config.h"
 #include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 #include "sd_card.h"
 #include "spi.h"
@@ -39,15 +41,15 @@ void processRcv(uint8_t* buff, int len) {
         return;
     }
 
-    // Check trigger command - it's regardeless of the current mode
-    if ((buff[0] & 0b10110011) ==
-        0b10110011) {  // trigger command - Set output GPIO levels
+    // First check trigger command - it's regardeless of the current mode
+    // trigger command - Set output GPIO levels
+    if ((buff[0] & 0b10110011) == 0b10110011) {
         triggerGpio(buff);
-    } else if (buff[0] ==
-               0b10100011) {  // trigger command - Set output DAC level
+
+        // trigger command - Set output DAC level
+    } else if (buff[0] == 0b10100011) {
         triggerDAC(buff);
-    }
-    if (op_mode == OP_MODE_LIVE) {
+    } else if (op_mode == OP_MODE_LIVE) {
         if (!buff[0]) {
             stopAcquisition();
         }
@@ -79,7 +81,8 @@ void processRcv(uint8_t* buff, int len) {
 
             // Set battery threshold
         } else if (!cmd) {
-            // TODO: Why is this empty??
+            battery_threshold =
+                3400 + (((uint16_t)(buff[0] & 0b11111100) >> 2) * 400) / 64;
         }
     }
 }
@@ -91,8 +94,8 @@ void processRcv(uint8_t* buff, int len) {
  * //TODO: Confirm this
  */
 void triggerGpio(uint8_t* buff) {
-    uint8_t o1_lvl = (buff[0] & 0b00001000) >> 3;
-    uint8_t o2_lvl = (buff[0] & 0b00000100) >> 2;
+    uint8_t o2_lvl = (buff[0] & 0b00001000) >> 3;
+    uint8_t o1_lvl = (buff[0] & 0b00000100) >> 2;
 
     gpio_set_level(O0_IO, o1_lvl);
     gpio_out_state[0] = o1_lvl;
@@ -355,7 +358,7 @@ void startAcquisition(uint8_t* buff, uint8_t cmd) {
     }
 
     // Start external
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs) {
         uint8_t channel_mask = 0;
         for (int i = 0; i < num_extern_active_chs; i++) {
@@ -407,7 +410,7 @@ void stopAcquisition(void) {
 #endif
 
     // Stop external
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs) {
         adcExtStop();
     }

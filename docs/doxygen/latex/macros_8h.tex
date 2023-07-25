@@ -1,0 +1,62 @@
+\hypertarget{macros_8h}{}\doxysection{macros.\+h File Reference}
+\label{macros_8h}\index{macros.h@{macros.h}}
+
+
+This file contains the definitions of the macros used in the project.  
+
+
+{\ttfamily \#include $<$stdarg.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+log.\+h\char`\"{}}\newline
+Include dependency graph for macros.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=286pt]{macros_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{macros_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{macros_8h_af2ec589682a1bc34c189df852a3895c1}\label{macros_8h_af2ec589682a1bc34c189df852a3895c1}} 
+\#define {\bfseries GEN\+\_\+\+ERR}~-\/1
+\item 
+\mbox{\Hypertarget{macros_8h_a0554f549dbc7464a9650b3b99786e4bb}\label{macros_8h_a0554f549dbc7464a9650b3b99786e4bb}} 
+\#define {\bfseries GEN\+\_\+\+OK}~1
+\item 
+\mbox{\Hypertarget{macros_8h_a10e3d47f8d406fcc993c7456acace261}\label{macros_8h_a10e3d47f8d406fcc993c7456acace261}} 
+\#define {\bfseries DEFAULT\+\_\+\+TASK\+\_\+\+STACK\+\_\+\+SIZE}~2048
+\item 
+\mbox{\Hypertarget{macros_8h_a1cb996bb5c8d0991d1456a6e5df88bce}\label{macros_8h_a1cb996bb5c8d0991d1456a6e5df88bce}} 
+\#define {\bfseries \+\_\+\+DEBUG\+\_\+}~2
+\begin{DoxyCompactList}\small\item\em 0\+: No debug, 1\+: Debug, 2\+: Warning and Error only \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{macros_8h_a803f68cdcdc1075955c9be1b8f03b16d}\label{macros_8h_a803f68cdcdc1075955c9be1b8f03b16d}} 
+\#define {\bfseries ONE\+\_\+\+HOUR\+\_\+\+MS}~3600000
+\item 
+\mbox{\Hypertarget{macros_8h_aad79c4c207151b7f45dfd6cc497f35d5}\label{macros_8h_aad79c4c207151b7f45dfd6cc497f35d5}} 
+\#define {\bfseries DEBUG\+\_\+\+PRINT\+\_\+I}(...)
+\item 
+\mbox{\Hypertarget{macros_8h_aa97942966e3aadfe914f96eb2fe7b721}\label{macros_8h_aa97942966e3aadfe914f96eb2fe7b721}} 
+\#define {\bfseries DEBUG\+\_\+\+PRINT\+\_\+W}(func, ...)~(\{ ESP\+\_\+\+LOGW((func), \+\_\+\+\_\+\+VA\+\_\+\+ARGS\+\_\+\+\_\+); \})
+\item 
+\mbox{\Hypertarget{macros_8h_ad6dee36a19eaf238a71e1d40e0c780bc}\label{macros_8h_ad6dee36a19eaf238a71e1d40e0c780bc}} 
+\#define {\bfseries DEBUG\+\_\+\+PRINT\+\_\+E}(func, ...)~(\{ ESP\+\_\+\+LOGE((func), \+\_\+\+\_\+\+VA\+\_\+\+ARGS\+\_\+\+\_\+); \})
+\item 
+\mbox{\Hypertarget{macros_8h_ad2f3678bf5eae3684fc497130b946eae}\label{macros_8h_ad2f3678bf5eae3684fc497130b946eae}} 
+\#define {\bfseries MIN}(X,  Y)~(((X) $<$ (Y)) ? (X) \+: (Y))
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file contains the definitions of the macros used in the project. 
+
+This file contains the definitions of the macros used in the project. It contains MIN, DEBUG\+\_\+\+PRINT, and GEN\+\_\+\+ERR and GEN\+\_\+\+OK macros (among some others). The DEBUG\+\_\+\+PRINT macro is used to print debug messages. It can be used in two ways\+: {\itshape DEBUG} = 1\+: DEBUG\+\_\+\+PRINT\+\_\+I, DEBUG\+\_\+\+PRINT\+\_\+W, DEBUG\+\_\+\+PRINT\+\_\+E (all debug messages) {\itshape DEBUG} = 2\+: DEBUG\+\_\+\+PRINT\+\_\+W, DEBUG\+\_\+\+PRINT\+\_\+E (only warnings and errors) 

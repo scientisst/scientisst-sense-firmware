@@ -1,0 +1,65 @@
+\hypertarget{ble_8h}{}\doxysection{ble.\+h File Reference}
+\label{ble_8h}\index{ble.h@{ble.h}}
+
+
+BLE mode functions header file.  
+
+
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=151pt]{ble_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{ble_8h_ae50f92ffa8c23123fcd7d4269b8a1d01}\label{ble_8h_ae50f92ffa8c23123fcd7d4269b8a1d01}} 
+\#define {\bfseries GATTS\+\_\+\+NOTIFY\+\_\+\+LEN}~    517
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{ble_8h_ac3d87f0c3b62add644bae54b5a77fa08}{init\+Ble}} (void)
+\begin{DoxyCompactList}\small\item\em BLE GATT Server Initialization. \end{DoxyCompactList}\item 
+esp\+\_\+err\+\_\+t \mbox{\hyperlink{ble_8h_ad74b035ede443fd87a86533d94c9d2af}{send\+Ble}} (uint32\+\_\+t fd, int len, uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em send data function for BLE. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+BLE mode functions header file. 
+
+This file contains the functions to initialize and send data in BLE mode. It also contains the maximum length of the buffer in BLE mode. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{ble_8h_ac3d87f0c3b62add644bae54b5a77fa08}\label{ble_8h_ac3d87f0c3b62add644bae54b5a77fa08}} 
+\index{ble.h@{ble.h}!initBle@{initBle}}
+\index{initBle@{initBle}!ble.h@{ble.h}}
+\doxysubsubsection{\texorpdfstring{initBle()}{initBle()}}
+{\footnotesize\ttfamily void init\+Ble (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+BLE GATT Server Initialization. 
+
+This function initializes the BLE GATT Server. \mbox{\Hypertarget{ble_8h_ad74b035ede443fd87a86533d94c9d2af}\label{ble_8h_ad74b035ede443fd87a86533d94c9d2af}} 
+\index{ble.h@{ble.h}!sendBle@{sendBle}}
+\index{sendBle@{sendBle}!ble.h@{ble.h}}
+\doxysubsubsection{\texorpdfstring{sendBle()}{sendBle()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t send\+Ble (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{fd,  }\item[{int}]{len,  }\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+send data function for BLE. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em fd} & File descriptor (unused for this function, created for consistency with other send functions).\\
+\hline
+{\em len} & Length of data.\\
+\hline
+{\em buff} & Data to send. \\
+\hline
+\end{DoxyParams}

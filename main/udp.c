@@ -13,6 +13,7 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 struct addrinfo* udp_server_addr;

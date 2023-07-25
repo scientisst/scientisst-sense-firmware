@@ -6,13 +6,17 @@
 #include "sd_card.h"
 
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
+#include "adc.h"
 #include "bt.h"
 #include "com.h"
 #include "config.h"
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 #include "esp_vfs_fat.h"
 #include "gpio.h"
 #include "macros.h"
@@ -21,7 +25,9 @@
 #include "sdmmc_cmd.h"
 #include "timer.h"
 
-#if _SD_CARD_ENABLED_ == 1
+#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+
+#define DEFAULT_VREF 1100
 
 #define MOUNT_POINT "/sdcard"
 
@@ -47,25 +53,31 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
     uint32_t index = 0;
     uint8_t io[4] = {0, 0, 0, 0};
 
+    esp_adc_cal_characteristics_t* adc_chars =
+        calloc(1, sizeof(esp_adc_cal_characteristics_t));
+
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
+        ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, adc_chars);
+
     // While there is data to be read, write it to the SD card
     // Code is identical to python API implementation
     for (int i = 0; i < len; i += packet_size) {
         if (op_mode != OP_MODE_LIVE) return ESP_OK;
         mid_frame_flag = 0;
-        for (int j = 0; j < num_extern_active_chs; j++) {
+        for (int j = num_extern_active_chs - 1; j >= 0; j--) {
             ext_ch_raw[j] = *(uint32_t*)(buff + index) & 0xFFFFFF;
             index += 3;
         }
 
-        for (int j = 0; j < num_intern_active_chs; j++) {
-            if (mid_frame_flag) {
-                int_ch_raw[j] = *(uint16_t*)(buff + index) & 0xFFF;
+        for (int j = num_intern_active_chs - 1; j >= 0; j--) {
+            if (!mid_frame_flag) {
+                int_ch_raw[j] = (*(uint16_t*)(buff + index)) & 0x0FFF;
+                index++;
+                mid_frame_flag = 1;
+            } else {
+                int_ch_raw[j] = (*(uint16_t*)(buff + index)) >> 4;
                 index += 2;
                 mid_frame_flag = 0;
-            } else {
-                int_ch_raw[j] = *(uint16_t*)(buff + index) >> 4;
-                index += 1;
-                mid_frame_flag = 1;
             }
         }
 
@@ -77,16 +89,27 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         index += 1;
 
         num_seq = (*(uint16_t*)(buff + index)) >> 4;
-        
+
         index += 2;
 
         fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
                 io[2], io[3]);
         for (int j = 0; j < num_intern_active_chs; j++) {
             fprintf(save_file, "\t%u", int_ch_raw[j]);
+            int voltage =
+                (((adc_chars->coeff_a * int_ch_raw[j]) + 32767) / 65536) +
+                adc_chars->coeff_b;
+#if CONVERSION_MODE == RAW_AND_MV
+            fprintf(save_file, "\t%d", (int)(voltage * 3.399));
+#endif
         }
         for (int j = 0; j < num_extern_active_chs; j++) {
             fprintf(save_file, "\t%u", ext_ch_raw[j]);
+#if CONVERSION_MODE == RAW_AND_MV
+            float voltage =
+                (((float)ext_ch_raw[j] * (3.3 / 2)) / (pow(2, 24) - 1)) * 1000;
+            fprintf(save_file, "\t%f.3", voltage);
+#endif
         }
 
         fprintf(save_file, "\n");
@@ -110,7 +133,7 @@ esp_err_t initSDCard(void) {
 
     // SD card mount config
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-#if FORMAT_SDCARD_IF_MOUNT_FAILED == 1
+#if FORMAT_SDCARD_IF_MOUNT_FAILED == FORMAT_SDCARD
         .format_if_mount_failed = true,
 #else
         .format_if_mount_failed = false,
@@ -263,7 +286,7 @@ void startAcquisitionSDCard(void) {
         // Store the activated channels
         if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) ||
             i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2)) {
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
             active_ext_chs[num_extern_active_chs] = channel_number - 1;
             num_extern_active_chs++;
 #else
@@ -296,7 +319,7 @@ void startAcquisitionSDCard(void) {
     }
 
     // Start external
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs) {
         uint8_t channel_mask = 0;
         for (int i = 0; i < num_extern_active_chs; i++) {
@@ -313,16 +336,40 @@ void startAcquisitionSDCard(void) {
                          ? send_buff_len - packet_size
                          : send_buff_len - (send_buff_len % packet_size);
 
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
+#if CONVERSION_MODE == RAW_AND_MV
     fprintf(save_file,
             "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
             "'Channels indexes mV': [], 'Channels "
             "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
-            "['AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "['AI1_raw', 'AI1_mv', 'AI2_raw', "
+            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
+            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
+            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
+            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
+            "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', "
+            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
+            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
+            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'ISO 8601': "
+            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
+            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+            device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
+            "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
+            "mv\tAX7_raw\tAX7_mv\tAX8_raw\tAX8_mv\n");
+#elif CONVERSION_MODE == RAW_ONLY
+    fprintf(save_file,
+            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
+            "'Channels indexes mV': [], 'Channels "
+            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
+            "['AI1_raw', 'AI2_raw', "
+            "'AI3_raw', "
             "'AI4_raw', 'AI5_raw', 'AI6_raw', "
             "'AX7_raw', 'AX8_raw'], 'Device': '%s', "
             "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
-            "'O2', 'AI1_raw', 'AI2_raw', 'AI3_raw', "
+            "'O2', 'AI1_raw', 'AI2_raw', "
+            "'AI3_raw', "
             "'AI4_raw', 'AI5_raw', 'AI6_raw', "
             "'AX7_raw', 'AX8_raw'], 'ISO 8601': "
             "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
@@ -331,22 +378,47 @@ void startAcquisitionSDCard(void) {
     fprintf(save_file,
             "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
             "raw\tAI4_raw\tAI5_raw\tAI6_raw\tAX7_raw\tAX8_raw\n");
+#endif
 #else
+#if CONVERSION_MODE == RAW_AND_MV
     fprintf(
         save_file,
         "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
         "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
-        "9, 11, 13, 15,], 'Channels labels': [AI1_raw', 'AI2_raw', 'AI3_raw', "
-        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'Device': '%s','Firmware version': "
-        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', 'AI2_raw', "
+        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', 'AI2_raw', "
+        "'AI2_mv', 'AI3_raw', 'AI3_mv', "
+        "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], "
+        "'Device': '%s','Firmware version': "
+        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', 'AI1_mv', "
+        "'AI2_raw', "
+        "'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', "
+        "'AI6_raw', 'AI6_mv'], 'ISO 8601':'NULL', "
+        "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
+        "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+        device_name, FIRMWARE_VERSION);
+    fprintf(save_file,
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
+            "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_mv\n");
+#elif CONVERSION_MODE == RAW_ONLY
+    fprintf(
+        save_file,
+        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
+        "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
+        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI2_raw', "
         "'AI3_raw', "
-        "'AI4_raw', 'AI5_raw', 'AI6_raw'], 'ISO 8601':'NULL', "
+        "'AI4_raw', 'AI5_raw', 'AI6_raw'], "
+        "'Device': '%s','Firmware version': "
+        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', "
+        "'AI2_raw', "
+        "'AI3_raw', 'AI4_raw', 'AI5_raw', "
+        "'AI6_raw'], 'ISO 8601':'NULL', "
         "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
         "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
         device_name, FIRMWARE_VERSION);
     fprintf(save_file,
             "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
             "raw\tAI4_raw\tAI5_raw\tAI6_raw\n");
+#endif
 #endif
 
     closeSDCard();

@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "sd_card.h"
 #include "sdkconfig.h"
 #include "spi.h"
@@ -146,7 +147,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SD_CARD,
 };
 /*{
     .com_mode = COM_MODE_TCP_STA,
@@ -290,7 +291,7 @@ void IRAM_ATTR sendTask(void) {
         initBle();
         send_func = &sendBle;
     }
-#if _SD_CARD_ENABLED_ == 1
+#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
     else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
         if (initSDCard() != ESP_OK) {
             DEBUG_PRINT_E("SD_CARD",

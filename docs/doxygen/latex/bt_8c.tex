@@ -1,0 +1,88 @@
+\hypertarget{bt_8c}{}\doxysection{bt.\+c File Reference}
+\label{bt_8c}\index{bt.c@{bt.c}}
+
+
+BT communication file with some general functions also.  
+
+
+{\ttfamily \#include \char`\"{}bt.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$ctype.\+h$>$}\newline
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}com.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+bt.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+bt\+\_\+device.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+bt\+\_\+main.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+gap\+\_\+bt\+\_\+api.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+log.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+spp\+\_\+api.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}esp\+\_\+system.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/\+Free\+RTOS.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}freertos/task.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros\+\_\+conf.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nvs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nvs\+\_\+flash.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}sys/time.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}time.\+h\char`\"{}}\newline
+Include dependency graph for bt.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{bt_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{bt_8c_a09adbbe03bca19d08be8cc4f256e7cc9}{send\+Data}} (void)
+\begin{DoxyCompactList}\small\item\em Function to send data using the appropriate send function. \end{DoxyCompactList}\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{bt_8c_a970bbfe7779123f1f8ec27fb3a615c55}{finalize\+Send}} (void)
+\begin{DoxyCompactList}\small\item\em Function to finalize the send process. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{bt_8c_a1d589ae3a900fe0bf71eddee1dd0cfaf}\label{bt_8c_a1d589ae3a900fe0bf71eddee1dd0cfaf}} 
+void {\bfseries init\+Bt} (void)
+\begin{DoxyCompactList}\small\item\em Initialize the bluetooth communication. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{bt_8c_a986d19de50327259af91066c4e1152d0}{get\+Device\+Name}} (void)
+\begin{DoxyCompactList}\small\item\em Get the device name. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+BT communication file with some general functions also. 
+
+This file contains the functions used for the BT communication. It also contains some general functions used in the firmware. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{bt_8c_a970bbfe7779123f1f8ec27fb3a615c55}\label{bt_8c_a970bbfe7779123f1f8ec27fb3a615c55}} 
+\index{bt.c@{bt.c}!finalizeSend@{finalizeSend}}
+\index{finalizeSend@{finalizeSend}!bt.c@{bt.c}}
+\doxysubsubsection{\texorpdfstring{finalizeSend()}{finalizeSend()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR finalize\+Send (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Function to finalize the send process. 
+
+This function clears the sent buffer and changes the current buffer to send. \mbox{\Hypertarget{bt_8c_a986d19de50327259af91066c4e1152d0}\label{bt_8c_a986d19de50327259af91066c4e1152d0}} 
+\index{bt.c@{bt.c}!getDeviceName@{getDeviceName}}
+\index{getDeviceName@{getDeviceName}!bt.c@{bt.c}}
+\doxysubsubsection{\texorpdfstring{getDeviceName()}{getDeviceName()}}
+{\footnotesize\ttfamily void get\+Device\+Name (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Get the device name. 
+
+Use the last 2 bytes of MAC-\/\+ADDRESS found on EFUSE to make the device name \mbox{\Hypertarget{bt_8c_a09adbbe03bca19d08be8cc4f256e7cc9}\label{bt_8c_a09adbbe03bca19d08be8cc4f256e7cc9}} 
+\index{bt.c@{bt.c}!sendData@{sendData}}
+\index{sendData@{sendData}!bt.c@{bt.c}}
+\doxysubsubsection{\texorpdfstring{sendData()}{sendData()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR send\+Data (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Function to send data using the appropriate send function. 
+
+This function is called by the send task and sends the data using the appropriate send function. It first checks if there\textquotesingle{}s anything to send. The buffer changing and clearing tasks are done after in \mbox{\hyperlink{bt_8c_a970bbfe7779123f1f8ec27fb3a615c55}{finalize\+Send()}} the ESP\+\_\+\+SPP\+\_\+\+WRITE\+\_\+\+EVT event ocurred with writing completed successfully in esp\+\_\+spp\+\_\+cb(). 
