@@ -1,0 +1,32 @@
+\hypertarget{timer_8h_source}{}\doxysection{timer.\+h}
+\mbox{\hyperlink{timer_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#ifndef \_TIMER\_H}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#define \_TIMER\_H}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#define ABAT\_CHECK\_FREQUENCY 1  }\textcolor{comment}{// 1 Hz}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#define TIMER\_DIVIDER 16  }\textcolor{comment}{//  Hardware timer clock divider}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#define TIMER\_SCALE \(\backslash\)}}
+\DoxyCodeLine{17 \textcolor{preprocessor}{    (TIMER\_BASE\_CLK / TIMER\_DIVIDER)  }\textcolor{comment}{// convert counter value to seconds}}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#define TIMER\_GROUP\_USED 0}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#define TIMER\_IDX\_USED 1}}
+\DoxyCodeLine{21 \textcolor{comment}{// \#define TIMER\_GRP\_ACQ\_I2C 1}}
+\DoxyCodeLine{22 \textcolor{comment}{// \#define TIMER\_IDX\_ACQ\_I2C 1}}
+\DoxyCodeLine{23 }
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#define TIMER\_GRP\_ABAT 1}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#define TIMER\_IDX\_ABAT 1}}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{keywordtype}{bool} IRAM\_ATTR timerGrp0Isr(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{28 \textcolor{keywordtype}{bool} IRAM\_ATTR timerGrp1Isr(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{29 \textcolor{keywordtype}{void} \mbox{\hyperlink{timer_8h_a8c7ade759bcbdb5f322c75e037a35372}{timerGrpInit}}(\textcolor{keywordtype}{int} timer\_group, \textcolor{keywordtype}{int} timer\_idx, \textcolor{keywordtype}{bool} (*timer\_isr)());}
+\DoxyCodeLine{30 \textcolor{keywordtype}{void} \mbox{\hyperlink{timer_8h_ae1bc234de7f0a67812f660fa2afae676}{timerStart}}(\textcolor{keywordtype}{int} timer\_group, \textcolor{keywordtype}{int} timer\_idx, uint32\_t frequency);}
+\DoxyCodeLine{31 \textcolor{keywordtype}{void} \mbox{\hyperlink{timer_8h_aa24482081052ef3405105945940652fb}{timerPause}}(\textcolor{keywordtype}{int} timer\_group, \textcolor{keywordtype}{int} timer\_idx);}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

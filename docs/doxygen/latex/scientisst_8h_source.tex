@@ -1,0 +1,87 @@
+\hypertarget{scientisst_8h_source}{}\doxysection{scientisst.\+h}
+\mbox{\hyperlink{scientisst_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{5 \textcolor{preprocessor}{\#ifndef SCIENTISST\_H}}
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#define SCIENTISST\_H}}
+\DoxyCodeLine{7 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#include <stdbool.h>}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#include <stdint.h>}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <string.h>}}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}cJSON.h"{}}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{com_8h}{com.h}}"{}}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include "{}driver/spi\_master.h"{}}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#include "{}driver/timer.h"{}}}
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#include "{}esp\_adc\_cal.h"{}}}
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#include "{}esp\_bt\_device.h"{}}}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#include "{}esp\_bt\_main.h"{}}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#include "{}esp\_gap\_bt\_api.h"{}}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#include "{}esp\_log.h"{}}}
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#include "{}esp\_netif.h"{}}}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#include "{}esp\_spp\_api.h"{}}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#include "{}freertos/FreeRTOS.h"{}}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#include "{}freertos/semphr.h"{}}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#include "{}freertos/task.h"{}}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#include "{}nvs.h"{}}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#include "{}nvs\_flash.h"{}}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#include "{}sys/time.h"{}}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#include "{}time.h"{}}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{version_8h}{version.h}}"{}}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{wifi_8h}{wifi.h}}"{}}}
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#define FIRMWARE\_BITALINO\_VERSION "{}BITalino\_v5.1\(\backslash\)n"{}}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36 \textcolor{keyword}{extern} TaskHandle\_t send\_task;}
+\DoxyCodeLine{37 \textcolor{keyword}{extern} TaskHandle\_t abat\_task;}
+\DoxyCodeLine{38 \textcolor{keyword}{extern} TaskHandle\_t rcv\_task;}
+\DoxyCodeLine{39 \textcolor{keyword}{extern} TaskHandle\_t acq\_adc1\_task;}
+\DoxyCodeLine{40 \textcolor{keyword}{extern} TaskHandle\_t acq\_adc\_ext\_task;}
+\DoxyCodeLine{41 \textcolor{keyword}{extern} \textcolor{keywordtype}{int} send\_fd;}
+\DoxyCodeLine{42 \textcolor{keyword}{extern} uint8\_t* \mbox{\hyperlink{scientisst_8h_ac2b4deaf1aa96b3b76c622733874f9ef}{snd\_buff}}[NUM\_BUFFERS];}
+\DoxyCodeLine{43 \textcolor{keyword}{extern} uint32\_t \mbox{\hyperlink{scientisst_8h_aa3c5bd8b98f34726adca0d5d4496d5ee}{send\_buff\_len}};}
+\DoxyCodeLine{44 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_aee3ef59ff651fe7e6a9c273affdd5d5a}{packet\_size}};}
+\DoxyCodeLine{45 \textcolor{keyword}{extern} uint16\_t \mbox{\hyperlink{scientisst_8h_ad1eff9de07f17a3448412996de8c73bf}{snd\_buff\_idx}}[];}
+\DoxyCodeLine{46 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a52eb8d8cff704c0ff443e47dc2207c42}{bt\_buffs\_to\_send}}[];}
+\DoxyCodeLine{47 \textcolor{keyword}{extern} DRAM\_ATTR \textcolor{keyword}{const} uint8\_t crc\_table[];}
+\DoxyCodeLine{48 \textcolor{keyword}{extern} uint16\_t crc\_seq;}
+\DoxyCodeLine{49 \textcolor{keyword}{extern} DRAM\_ATTR \textcolor{keyword}{const} uint8\_t analog\_channels[];}
+\DoxyCodeLine{50 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a36a14f11520695813aa1d2024f651809}{active\_internal\_chs}}[];}
+\DoxyCodeLine{51 \textcolor{keyword}{extern} uint8\_t num\_intern\_active\_chs;}
+\DoxyCodeLine{52 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_aec948fb30e99b1eda7e3d9ff741d417a}{op\_mode}};}
+\DoxyCodeLine{53 \textcolor{keyword}{extern} uint32\_t sample\_rate;}
+\DoxyCodeLine{54 \textcolor{comment}{// extern I2c\_Sensor\_State i2c\_sensor\_values;}}
+\DoxyCodeLine{55 \textcolor{keyword}{extern} spi\_device\_handle\_t adc\_ext\_spi\_handler;}
+\DoxyCodeLine{56 \textcolor{keyword}{extern} esp\_adc\_cal\_characteristics\_t adc1\_chars;}
+\DoxyCodeLine{57 \textcolor{keyword}{extern} esp\_adc\_cal\_characteristics\_t adc2\_chars;}
+\DoxyCodeLine{58 \textcolor{keyword}{extern} \textcolor{keywordtype}{char} device\_name[];}
+\DoxyCodeLine{59 \textcolor{keyword}{extern} uint8\_t send\_busy;}
+\DoxyCodeLine{60 \textcolor{keyword}{extern} SemaphoreHandle\_t bt\_buffs\_to\_send\_mutex;}
+\DoxyCodeLine{61 \textcolor{keyword}{extern} uint16\_t \mbox{\hyperlink{scientisst_8h_aba2be5e3b1baddd09080812b975bf2fc}{send\_threshold}};}
+\DoxyCodeLine{62 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a8607928ef2ef25e6de81c163efc5f806}{bt\_curr\_buff}};}
+\DoxyCodeLine{63 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_adf58f1ea0e678533fafefedcba16ce39}{acq\_curr\_buff}};}
+\DoxyCodeLine{64 \textcolor{keyword}{extern} \mbox{\hyperlink{structApi__Config}{Api\_Config}} api\_config;}
+\DoxyCodeLine{65 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a125ae3bfd1500ab33445e8e30dbb1535}{active\_ext\_chs}}[];}
+\DoxyCodeLine{66 \textcolor{keyword}{extern} uint32\_t \mbox{\hyperlink{scientisst_8h_af84510851ca7161ffec1186e5af655b4}{adc\_ext\_samples}}[];}
+\DoxyCodeLine{67 \textcolor{keyword}{extern} uint8\_t num\_extern\_active\_chs;}
+\DoxyCodeLine{68 \textcolor{keyword}{extern} cJSON* json;}
+\DoxyCodeLine{69 \textcolor{keyword}{extern} DRAM\_ATTR \textcolor{keyword}{const} uint8\_t sin10Hz[];}
+\DoxyCodeLine{70 \textcolor{keyword}{extern} uint8\_t sim\_flag;}
+\DoxyCodeLine{71 \textcolor{keyword}{extern} uint8\_t sin\_i;}
+\DoxyCodeLine{72 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a01b45c2c1d6003886ce22d614e87dd31}{gpio\_out\_state}}[];}
+\DoxyCodeLine{73 \textcolor{keyword}{extern} spi\_transaction\_t adc\_ext\_trans;}
+\DoxyCodeLine{74 \textcolor{keyword}{extern} uint16\_t battery\_threshold;}
+\DoxyCodeLine{75 \textcolor{keyword}{extern} uint8\_t com\_mode;}
+\DoxyCodeLine{76 \textcolor{keyword}{extern} \mbox{\hyperlink{structop__settings__info__t}{op\_settings\_info\_t}} op\_settings;}
+\DoxyCodeLine{77 \textcolor{keyword}{extern} esp\_err\_t (*\mbox{\hyperlink{scientisst_8h_a310c92dadfc8850f5c31ed6fd5dbf3d4}{send\_func}})(uint32\_t, int, uint8\_t*);}
+\DoxyCodeLine{78 \textcolor{keyword}{extern} uint8\_t \mbox{\hyperlink{scientisst_8h_a304133f917e93ba96a348df51387dc92}{is\_op\_settings\_valid}};}
+\DoxyCodeLine{79 \textcolor{keyword}{extern} esp\_netif\_t* netif\_object;}
+\DoxyCodeLine{80 \textcolor{keyword}{extern} uint8\_t first\_failed\_send;}
+\DoxyCodeLine{81 \textcolor{keyword}{extern} uint32\_t \mbox{\hyperlink{scientisst_8h_a677980e26e55da72e6d7091450572300}{ext\_adc\_raw\_data}}[3];}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83 \textcolor{keywordtype}{void} \mbox{\hyperlink{scientisst_8h_a67371293d974b9087bcb16643de878f0}{initScientisst}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{84 }
+\DoxyCodeLine{85 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

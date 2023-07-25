@@ -1,0 +1,76 @@
+\hypertarget{adc_8h_source}{}\doxysection{adc.\+h}
+\mbox{\hyperlink{adc_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#ifndef \_ADC\_H}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#define \_ADC\_H}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{12 }
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}cJSON.h"{}}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include "{}driver/adc.h"{}}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include "{}esp\_adc\_cal.h"{}}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{spi_8h}{spi.h}}"{}}}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#define ADC\_RESOLUTION ADC\_WIDTH\_BIT\_12}}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#define ADC1\_ATTENUATION ADC\_ATTEN\_DB\_0}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#define ADC\_RES\_VALUE \(\backslash\)}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{    12  }}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#define ADC2\_ATTENUATION ADC\_ATTEN\_DB\_11}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#define A0 0}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#define A1 1}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#define A2 2}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#define A3 3}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#define A4 4}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#define A5 5}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#define A6 6}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#define A7 7}}
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#define A0\_ADC\_CH ADC1\_CHANNEL\_0  }}
+\DoxyCodeLine{35 \textcolor{preprocessor}{\#define A1\_ADC\_CH ADC1\_CHANNEL\_3  }}
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#define A2\_ADC\_CH ADC1\_CHANNEL\_4  }}
+\DoxyCodeLine{37 \textcolor{preprocessor}{\#define A3\_ADC\_CH ADC1\_CHANNEL\_5  }}
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#define A4\_ADC\_CH ADC1\_CHANNEL\_6  }}
+\DoxyCodeLine{39 \textcolor{preprocessor}{\#define A5\_ADC\_CH ADC1\_CHANNEL\_7  }}
+\DoxyCodeLine{40 }
+\DoxyCodeLine{41 \textcolor{preprocessor}{\#if HW\_VERSION == HW\_VERSION\_CORE}}
+\DoxyCodeLine{42 \textcolor{preprocessor}{\#define ABAT\_ADC\_CH ADC2\_CHANNEL\_5}}
+\DoxyCodeLine{43 \textcolor{preprocessor}{\#elif HW\_VERSION == HW\_VERSION\_CARDIO}}
+\DoxyCodeLine{44 \textcolor{preprocessor}{\#define ABAT\_ADC\_CH ADC1\_CHANNEL\_5}}
+\DoxyCodeLine{45 \textcolor{preprocessor}{\#elif HW\_VERSION == HW\_VERSION\_NANO}}
+\DoxyCodeLine{46 \textcolor{preprocessor}{\#define ABAT\_ADC\_CH ADC1\_CHANNEL\_2  }\textcolor{comment}{// GPIO38}}
+\DoxyCodeLine{47 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{49 \textcolor{preprocessor}{\#define A0\_IO GPIO\_NUM\_36  }}
+\DoxyCodeLine{50 \textcolor{preprocessor}{\#define A1\_IO GPIO\_NUM\_39  }}
+\DoxyCodeLine{51 \textcolor{preprocessor}{\#define A2\_IO GPIO\_NUM\_32  }}
+\DoxyCodeLine{52 \textcolor{preprocessor}{\#define A3\_IO GPIO\_NUM\_33  }}
+\DoxyCodeLine{53 \textcolor{preprocessor}{\#define A4\_IO GPIO\_NUM\_34  }}
+\DoxyCodeLine{54 \textcolor{preprocessor}{\#define A5\_IO GPIO\_NUM\_35  }}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56 \textcolor{preprocessor}{\#define DEFAULT\_BATTERY\_THRESHOLD 3500  }}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{58 \textcolor{preprocessor}{\#define DEFAULT\_SAMPLE\_RATE 1  }\textcolor{comment}{// In Hz}}
+\DoxyCodeLine{59 \textcolor{preprocessor}{\#define MAX\_LIVE\_MODE\_PACKET\_SIZE 8}}
+\DoxyCodeLine{60 }
+\DoxyCodeLine{61 \textcolor{keywordtype}{void} \mbox{\hyperlink{adc_8h_ae8ca762839a679d0f9b4d6c4a6f19fe2}{configAdc}}(\textcolor{keywordtype}{int} adc\_index, \textcolor{keywordtype}{int} adc\_resolution, \textcolor{keywordtype}{int} adc\_channel);}
+\DoxyCodeLine{62 \textcolor{keywordtype}{void} \mbox{\hyperlink{adc_8h_ae3487a5f0a0c6f8062a0f403ccae4952}{initAdc}}(uint8\_t adc\_resolution, uint8\_t adc1\_en, uint8\_t adc2\_en);}
+\DoxyCodeLine{63 \textcolor{keywordtype}{void} \mbox{\hyperlink{adc_8h_ae282beb7d585ba638646550306526752}{acquireAdc1Channels}}(uint8\_t* frame);}
+\DoxyCodeLine{64 \textcolor{keywordtype}{void} IRAM\_ATTR \mbox{\hyperlink{adc_8h_a27447de4408bfe0eec502717c1cfd245}{acquireChannelsScientisst}}(uint8\_t* frame);}
+\DoxyCodeLine{65 \textcolor{keywordtype}{void} \mbox{\hyperlink{adc_8h_a19bb490a3562c45c0077baab777bfd76}{acquireChannelsJson}}(uint8\_t* frame);}
+\DoxyCodeLine{66 }
+\DoxyCodeLine{67 \textcolor{preprocessor}{\#define CALC\_BYTE\_CRC(\_crc, \_byte, \_crc\_table)        \(\backslash\)}}
+\DoxyCodeLine{68 \textcolor{preprocessor}{    (\{                                                \(\backslash\)}}
+\DoxyCodeLine{69 \textcolor{preprocessor}{        (\_crc) = \_crc\_table[(\_crc)] \string^ ((\_byte) >> 4); \(\backslash\)}}
+\DoxyCodeLine{70 \textcolor{preprocessor}{        (\_crc) = \_crc\_table[(\_crc)] \string^ ((\_byte)\&0x0F); \(\backslash\)}}
+\DoxyCodeLine{71 \textcolor{preprocessor}{    \})}}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{73 \textcolor{preprocessor}{\#define READ\_ADC1(value, channel) (\{ (value) = adc1\_get\_raw((channel)); \})}}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{75 \textcolor{preprocessor}{\#define READ\_ADC2(value, channel) \(\backslash\)}}
+\DoxyCodeLine{76 \textcolor{preprocessor}{    (\{ adc2\_get\_raw((channel), ADC\_RESOLUTION, \&(value)); \})}}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

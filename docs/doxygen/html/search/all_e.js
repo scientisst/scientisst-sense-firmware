@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['saveopsettingsinfo_0',['saveOpSettingsInfo',['../wifi_8c.html#abad9a47749a04dc99ebc41da45a3b9bd',1,'saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo):&#160;wifi.c'],['../wifi_8h.html#abad9a47749a04dc99ebc41da45a3b9bd',1,'saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo):&#160;wifi.c']]],
+  ['scientisst_2ec_1',['scientisst.c',['../scientisst_8c.html',1,'']]],
+  ['scientisst_2eh_2',['scientisst.h',['../scientisst_8h.html',1,'']]],
+  ['sd_5fcard_2ec_3',['sd_card.c',['../sd__card_8c.html',1,'']]],
+  ['sd_5fcard_2eh_4',['sd_card.h',['../sd__card_8h.html',1,'']]],
+  ['selectchsfrommask_5',['selectChsFromMask',['../com_8c.html#aac2378909bc99c264f31dc8db49d6e0d',1,'selectChsFromMask(uint8_t *buff):&#160;com.c'],['../com_8h.html#aac2378909bc99c264f31dc8db49d6e0d',1,'selectChsFromMask(uint8_t *buff):&#160;com.c']]],
+  ['selectchsfrommaskscientisstjson_6',['selectChsFromMaskScientisstJson',['../com_8c.html#a0a7d9887d866419d989f52e64fc39443',1,'selectChsFromMaskScientisstJson(uint8_t *buff):&#160;com.c'],['../com_8h.html#a0a7d9887d866419d989f52e64fc39443',1,'selectChsFromMaskScientisstJson(uint8_t *buff):&#160;com.c']]],
+  ['send_5fbuff_5flen_7',['send_buff_len',['../scientisst_8c.html#aa3c5bd8b98f34726adca0d5d4496d5ee',1,'send_buff_len():&#160;scientisst.c'],['../scientisst_8h.html#aa3c5bd8b98f34726adca0d5d4496d5ee',1,'send_buff_len():&#160;scientisst.c']]],
+  ['send_5ffunc_8',['send_func',['../scientisst_8c.html#a310c92dadfc8850f5c31ed6fd5dbf3d4',1,'send_func():&#160;scientisst.c'],['../scientisst_8h.html#a310c92dadfc8850f5c31ed6fd5dbf3d4',1,'send_func():&#160;scientisst.c']]],
+  ['send_5fthreshold_9',['send_threshold',['../scientisst_8c.html#aba2be5e3b1baddd09080812b975bf2fc',1,'send_threshold():&#160;scientisst.c'],['../scientisst_8h.html#aba2be5e3b1baddd09080812b975bf2fc',1,'send_threshold():&#160;scientisst.c']]],
+  ['sendble_10',['sendBle',['../ble_8c.html#a5862509057aff9bdcc9ec7ff33e7262f',1,'sendBle(uint32_t fd, int len, uint8_t *buff):&#160;ble.c'],['../ble_8h.html#ad74b035ede443fd87a86533d94c9d2af',1,'sendBle(uint32_t fd, int len, uint8_t *buff):&#160;ble.c']]],
+  ['senddata_11',['sendData',['../bt_8c.html#a09adbbe03bca19d08be8cc4f256e7cc9',1,'sendData(void):&#160;bt.c'],['../bt_8h.html#a09adbbe03bca19d08be8cc4f256e7cc9',1,'sendData(void):&#160;bt.c']]],
+  ['sendfirmwareversionpacket_12',['sendFirmwareVersionPacket',['../com_8c.html#a38a9b2d694ad241a1f984a93f646559b',1,'sendFirmwareVersionPacket(void):&#160;com.c'],['../com_8h.html#a2d4492b3724f0efdc58c689be11ed2ef',1,'sendFirmwareVersionPacket():&#160;com.c']]],
+  ['sendstatuspacket_13',['sendStatusPacket',['../com_8c.html#aaad57103676720c12c3e1427a0a08f0f',1,'sendStatusPacket(void):&#160;com.c'],['../com_8h.html#ab5af5c77546cadc8c381dcea191a5a3a',1,'sendStatusPacket():&#160;com.c']]],
+  ['sendtask_14',['sendTask',['../scientisst_8c.html#af8d99f5f9f4ad067020fb6e4f3157c66',1,'scientisst.c']]],
+  ['setsamplerate_15',['setSampleRate',['../com_8c.html#adcfa347fce6d5b2c4235aca5aae2bb42',1,'setSampleRate(uint8_t *buff):&#160;com.c'],['../com_8h.html#adcfa347fce6d5b2c4235aca5aae2bb42',1,'setSampleRate(uint8_t *buff):&#160;com.c']]],
+  ['snd_5fbuff_16',['snd_buff',['../scientisst_8c.html#ac2b4deaf1aa96b3b76c622733874f9ef',1,'snd_buff():&#160;scientisst.c'],['../scientisst_8h.html#ac2b4deaf1aa96b3b76c622733874f9ef',1,'snd_buff():&#160;scientisst.c']]],
+  ['snd_5fbuff_5fidx_17',['snd_buff_idx',['../scientisst_8h.html#ad1eff9de07f17a3448412996de8c73bf',1,'snd_buff_idx():&#160;scientisst.c'],['../scientisst_8c.html#abb1e90d26548b840cbbae672eb63c0d7',1,'snd_buff_idx():&#160;scientisst.c']]],
+  ['spi_2ec_18',['spi.c',['../spi_8c.html',1,'']]],
+  ['spi_2eh_19',['spi.h',['../spi_8h.html',1,'']]],
+  ['start_5frest_5fserver_20',['start_rest_server',['../wifi__rest__server_8c.html#a1c53d5a1171ec926c869f01893fb39ad',1,'wifi_rest_server.c']]],
+  ['start_5fwebserver_21',['start_webserver',['../ws_8c.html#aa405dbf500a1f511f559e1e87efff9da',1,'start_webserver(void):&#160;ws.c'],['../ws_8h.html#aa405dbf500a1f511f559e1e87efff9da',1,'start_webserver(void):&#160;ws.c']]],
+  ['startacquisition_22',['startAcquisition',['../com_8c.html#a4f1baabc30148b69a50e3e4e08270a75',1,'startAcquisition(uint8_t *buff, uint8_t cmd):&#160;com.c'],['../com_8h.html#a4f1baabc30148b69a50e3e4e08270a75',1,'startAcquisition(uint8_t *buff, uint8_t cmd):&#160;com.c']]],
+  ['stopacquisition_23',['stopAcquisition',['../com_8c.html#ae888ca03d182fe258b3e3f0f528fdb24',1,'stopAcquisition(void):&#160;com.c'],['../com_8h.html#ae888ca03d182fe258b3e3f0f528fdb24',1,'stopAcquisition(void):&#160;com.c']]]
+];

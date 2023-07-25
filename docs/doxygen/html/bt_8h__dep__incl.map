@@ -1,0 +1,13 @@
+<map id="bt.h" name="bt.h">
+<area shape="rect" id="node1" title="Bluetooth header file." alt="" coords="423,5,470,32"/>
+<area shape="rect" id="node2" href="$ble_8c.html" title="Bluetooth Low Energy (BLE) mode functions." alt="" coords="5,80,59,107"/>
+<area shape="rect" id="node3" href="$bt_8c.html" title="BT communication file with some general functions also." alt="" coords="83,80,130,107"/>
+<area shape="rect" id="node4" href="$com_8c.html" title="This file contains the functions that handle the communication with the client." alt="" coords="155,80,216,107"/>
+<area shape="rect" id="node5" href="$scientisst_8c.html" title="Main file for the Scientisst firmware." alt="" coords="241,80,335,107"/>
+<area shape="rect" id="node6" href="$sd__card_8c.html" title="SD card driver. This file implements the SD card driver." alt="" coords="360,80,443,107"/>
+<area shape="rect" id="node7" href="$tcp_8c.html" title="Header file for the TCP server and client functions." alt="" coords="467,80,520,107"/>
+<area shape="rect" id="node8" href="$uart_8c.html" title="UART functions." alt="" coords="544,80,603,107"/>
+<area shape="rect" id="node9" href="$udp_8c.html" title="Contains functions to send data over UDP." alt="" coords="627,80,685,107"/>
+<area shape="rect" id="node10" href="$wifi__rest__server_8c.html" title="This file contains the code for the RESTful API server." alt="" coords="709,80,843,107"/>
+<area shape="rect" id="node11" href="$ws_8c.html" title="Websocket server." alt="" coords="868,80,919,107"/>
+</map>

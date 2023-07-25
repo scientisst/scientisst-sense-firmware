@@ -1,0 +1,60 @@
+\hypertarget{i2c_8h_source}{}\doxysection{i2c.\+h}
+\mbox{\hyperlink{i2c_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#ifndef \_I2C\_H}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#define \_I2C\_H}}
+\DoxyCodeLine{13 }
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{15 }
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#include "{}driver/i2c.h"{}}}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#define I2C\_USED I2C\_NUM\_0}}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#define I2C\_MASTER\_SDA\_IO 21     }\textcolor{comment}{// 25}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#define I2C\_MASTER\_SCL\_IO 22     }\textcolor{comment}{// 26}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#define I2C0\_FREQUENCY\_HZ 50000  }\textcolor{comment}{// 50kHz}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#define MLX90614\_DEFAULT\_ADDRESS \(\backslash\)}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{    0x5A  }\textcolor{comment}{// default chip address(slave address) of MLX90614}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#define MAX32664\_DEFAULT\_ADDRESS \(\backslash\)}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{    0x55  }\textcolor{comment}{// default chip address(slave address) of MAX32664}}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#define ACQ\_I2C\_SAMPLE\_RATE 10  }\textcolor{comment}{// In Hz}}
+\DoxyCodeLine{29 }
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#define CONFIDENCE\_THRESHOLD \(\backslash\)}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{    90  }\textcolor{comment}{// Threshold in which a sample is considered valid (confidence >=}}
+\DoxyCodeLine{32         \textcolor{comment}{// CONFIDENCE\_THRESHOLD -\/> valid sample)}}
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{35     \textcolor{keywordtype}{float} temp\_obj;  \textcolor{comment}{// temperature of object}}
+\DoxyCodeLine{36     \textcolor{keywordtype}{float} temp\_amb;  \textcolor{comment}{// temperature of ambient}}
+\DoxyCodeLine{37     uint16\_t temp\_obj\_int;}
+\DoxyCodeLine{38     uint16\_t temp\_amb\_int;}
+\DoxyCodeLine{39     uint16\_t heart\_rate;}
+\DoxyCodeLine{40     uint16\_t oxygen;}
+\DoxyCodeLine{41     uint8\_t confidence;}
+\DoxyCodeLine{42     uint8\_t status;}
+\DoxyCodeLine{43 \} \mbox{\hyperlink{structI2c__Sensor__State}{I2c\_Sensor\_State}};}
+\DoxyCodeLine{44 }
+\DoxyCodeLine{45 esp\_err\_t \mbox{\hyperlink{i2c_8h_af31f0b997d365cdd0ad925d2695ba398}{i2cMasterInit}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{46 }
+\DoxyCodeLine{47 \textcolor{keywordtype}{int} \mbox{\hyperlink{i2c_8h_ae3171470c23d5e2358b750c0b94d9cd1}{MLX90614\_SMBusRead}}(uint8\_t slaveAddr, uint8\_t reg\_addr, uint16\_t* data);}
+\DoxyCodeLine{48 uint8\_t \mbox{\hyperlink{i2c_8h_a84d9791903d3f10d0918e15469b61b99}{MLX90614\_CalcPEC}}(uint8\_t initPEC, uint8\_t newData);}
+\DoxyCodeLine{49 \textcolor{keywordtype}{int} \mbox{\hyperlink{i2c_8h_ab524e7ae80ce65702ddfb2b3d3a9979c}{MLX90614\_GetTempAmb}}(uint8\_t slaveAddr, \textcolor{keywordtype}{float}* temp\_amb,}
+\DoxyCodeLine{50                         uint16\_t* temp\_amb\_int);}
+\DoxyCodeLine{51 \textcolor{keywordtype}{int} \mbox{\hyperlink{i2c_8h_a9940a5b0514467c6b38ac69486edc4ab}{MLX90614\_GetTempObj}}(uint8\_t slaveAddr, \textcolor{keywordtype}{float}* temp\_obj,}
+\DoxyCodeLine{52                         uint16\_t* temp\_obj\_int);}
+\DoxyCodeLine{53 \textcolor{keywordtype}{int} \mbox{\hyperlink{i2c_8h_aba4c5527f6b1485d2479d67b42c375c1}{MAX32664\_SMBusRead}}(uint8\_t slave\_addr, uint8\_t family\_byte,}
+\DoxyCodeLine{54                        uint8\_t index\_byte, uint8\_t extra\_byte,}
+\DoxyCodeLine{55                        uint8\_t extra\_byte\_flag, uint8\_t* rcv\_data,}
+\DoxyCodeLine{56                        uint8\_t rcv\_data\_size, uint8\_t delay\_ms);}
+\DoxyCodeLine{57 \textcolor{keywordtype}{int} \mbox{\hyperlink{i2c_8h_ab23a0de89f7653802f6fa621e59a5d74}{MAX32664\_SMBusWrite}}(uint8\_t slave\_addr, uint8\_t family\_byte,}
+\DoxyCodeLine{58                         uint8\_t index\_byte, uint8\_t* write\_data,}
+\DoxyCodeLine{59                         uint8\_t write\_data\_size, uint8\_t delay\_ms);}
+\DoxyCodeLine{60 \textcolor{keywordtype}{void} \mbox{\hyperlink{i2c_8h_aaf711ea2c9db8dbc43aa164c93b2a6ff}{MAX32664\_Init}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{61 uint8\_t \mbox{\hyperlink{i2c_8h_a3067e350605188bfc92ad7e33564d4d5}{MAX32664\_Config}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{62 uint8\_t \mbox{\hyperlink{i2c_8h_a62e621e938b99bcd1762bb1dbaa92b57}{MAX32664\_GetBPM}}(uint16\_t* heart\_rate, uint16\_t* oxygen,}
+\DoxyCodeLine{63                         uint8\_t* confidence, uint8\_t* status);}
+\DoxyCodeLine{64 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

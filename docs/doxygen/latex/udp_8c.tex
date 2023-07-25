@@ -1,0 +1,99 @@
+\hypertarget{udp_8c}{}\doxysection{udp.\+c File Reference}
+\label{udp_8c}\index{udp.c@{udp.c}}
+
+
+Contains functions to send data over UDP.  
+
+
+{\ttfamily \#include \char`\"{}udp.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$lwip/netdb.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}bt.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}lwip/err.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}lwip/sockets.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}lwip/sys.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}macros\+\_\+conf.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}scientisst.\+h\char`\"{}}\newline
+Include dependency graph for udp.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{udp_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{udp_8c_ac549e272bb04ac94aa87cf70c648ad77}{init\+Udp\+Client}} (char $\ast$ip, char $\ast$port)
+\begin{DoxyCompactList}\small\item\em Initializes the UDP client. \end{DoxyCompactList}\item 
+esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR \mbox{\hyperlink{udp_8c_ac1dbf1e422b9ed0a317bd74e8f171343}{udp\+Send}} (uint32\+\_\+t fd, int len, uint8\+\_\+t $\ast$buff)
+\begin{DoxyCompactList}\small\item\em Sends data over UDP. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{udp_8c_ad0d48ed51213ba8e3fe89f8dbdcda221}\label{udp_8c_ad0d48ed51213ba8e3fe89f8dbdcda221}} 
+struct addrinfo $\ast$ {\bfseries udp\+\_\+server\+\_\+addr}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains functions to send data over UDP. 
+
+This file contains functions to send data over UDP. The data is sent to the server specified in the config file. 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{udp_8c_ac549e272bb04ac94aa87cf70c648ad77}\label{udp_8c_ac549e272bb04ac94aa87cf70c648ad77}} 
+\index{udp.c@{udp.c}!initUdpClient@{initUdpClient}}
+\index{initUdpClient@{initUdpClient}!udp.c@{udp.c}}
+\doxysubsubsection{\texorpdfstring{initUdpClient()}{initUdpClient()}}
+{\footnotesize\ttfamily int init\+Udp\+Client (\begin{DoxyParamCaption}\item[{char $\ast$}]{ip,  }\item[{char $\ast$}]{port }\end{DoxyParamCaption})}
+
+
+
+Initializes the UDP client. 
+
+This function initializes the UDP client. It creates a socket and performs a handshake with the server.
+
+
+\begin{DoxyParams}{Parameters}
+{\em ip} & The IP address of the server \\
+\hline
+{\em port} & The port of the server\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item The file descriptor of the socket if successful
+\item -\/1 if an error occurred 
+\end{DoxyItemize}
+\end{DoxyReturn}
+\mbox{\Hypertarget{udp_8c_ac1dbf1e422b9ed0a317bd74e8f171343}\label{udp_8c_ac1dbf1e422b9ed0a317bd74e8f171343}} 
+\index{udp.c@{udp.c}!udpSend@{udpSend}}
+\index{udpSend@{udpSend}!udp.c@{udp.c}}
+\doxysubsubsection{\texorpdfstring{udpSend()}{udpSend()}}
+{\footnotesize\ttfamily esp\+\_\+err\+\_\+t IRAM\+\_\+\+ATTR udp\+Send (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{fd,  }\item[{int}]{len,  }\item[{uint8\+\_\+t $\ast$}]{buff }\end{DoxyParamCaption})}
+
+
+
+Sends data over UDP. 
+
+This function sends data over UDP. It is called by \mbox{\hyperlink{bt_8c_a09adbbe03bca19d08be8cc4f256e7cc9}{send\+Data()}} when in UDP mpde.
+
+
+\begin{DoxyParams}{Parameters}
+{\em fd} & The file descriptor of the socket \\
+\hline
+{\em len} & The length of the data to be sent \\
+\hline
+{\em buff} & The data to be sent\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\+:
+\begin{DoxyItemize}
+\item ESP\+\_\+\+OK if successful
+\item ESP\+\_\+\+FAIL if an error occurred 
+\end{DoxyItemize}
+\end{DoxyReturn}
