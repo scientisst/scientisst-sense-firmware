@@ -35,11 +35,13 @@
 #define ACQ_ADC_EXT_PRIORITY 11
 // #define I2C_ACQ_PRIORITY 1
 
-void IRAM_ATTR sendTask(void);
-void rcvTask(void);
-void IRAM_ATTR AbatTask(void);
-void IRAM_ATTR acqAdc1Task(void);
-void IRAM_ATTR acqAdcExtTask(void);
+// Functions have to be declared with void* as argument even though it is not
+// used to avoid compiler warnings
+void IRAM_ATTR sendTask(void* not_used);
+void rcvTask(void* not_used);
+void IRAM_ATTR AbatTask(void* not_used);
+void IRAM_ATTR acqAdc1Task(void* not_used);
+void IRAM_ATTR acqAdcExtTask(void* not_used);
 void opModeConfig(void);
 // void acqI2cTask(void);
 
@@ -283,7 +285,7 @@ void initScientisst(void) {
  * This task can be removed and acqAdc1Task can do the sendData() when
  * !send_busy. But, atm acqAdc1Task is the bottleneck
  */
-void IRAM_ATTR sendTask(void) {
+void IRAM_ATTR sendTask(void* not_used) {
     if (!strcmp(op_settings.com_mode, COM_MODE_BT)) {
         initBt();
         send_func = &esp_spp_write;
@@ -323,7 +325,7 @@ void IRAM_ATTR sendTask(void) {
  * This task is responsible for receiving data from the client.
  */
 
-void rcvTask(void) {
+void rcvTask(void* not_used) {
     while (1) {
         // TCP client
         if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)) {
@@ -381,7 +383,7 @@ void rcvTask(void) {
  * timerGrp0Isr when to acquire data. It notifies the sendTask when there is
  * data to send. It is also the main task of CPU1 (APP CPU)
  */
-void IRAM_ATTR acqAdc1Task(void) {
+void IRAM_ATTR acqAdc1Task(void* not_used) {
     int acq_next_buff = 0;
 
     // Init Timer 0_1 (timer 1 from group 0) and register it's interupt handler
@@ -517,7 +519,7 @@ canal com tensão conhecida (aumentar o número de amostras "N_SAMPLES")
  * notified by the timerGrp1Isr when to acquire data. It notifies the sendTask
  * when there is data to send. It is also the main task of CPU0 (PRO CPU)
  */
-void IRAM_ATTR AbatTask(void) {
+void IRAM_ATTR AbatTask(void* not_used) {
     uint16_t raw;
     uint16_t abat;  // Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;

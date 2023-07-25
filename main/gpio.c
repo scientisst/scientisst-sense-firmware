@@ -174,7 +174,9 @@ void gpioInit(void) {
     }*/
 }
 
-bool IRAM_ATTR gpioDrdyIsrHandler(void) {
+// Function has to be declared with void* as argument even though it is not
+// used to avoid compiler warnings
+void IRAM_ATTR gpioDrdyIsrHandler(void* not_used) {
     // Wake acq_adc_ext_task. This will only start when this handler is
     // terminated. vTaskNotifyGiveFromISR(acq_adc_ext_task, NULL);
 
@@ -184,7 +186,7 @@ bool IRAM_ATTR gpioDrdyIsrHandler(void) {
     use and may be called portEND_SWITCHING_ISR(). */
     // portYIELD_FROM_ISR();
 
-    return 1;  // Replaces portYIELD_FROM_ISR()
+    return;  // Replaces portYIELD_FROM_ISR()
 }
 
 /**
