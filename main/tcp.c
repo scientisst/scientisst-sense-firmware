@@ -14,6 +14,7 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 int bind_err;

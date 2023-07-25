@@ -16,6 +16,7 @@
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 #include "uart.h"
 

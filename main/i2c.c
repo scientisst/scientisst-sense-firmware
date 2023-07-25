@@ -12,9 +12,10 @@
 
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 
-#define MAX32664_MFIO_IO    GPIO_NUM_15
-#define MAX32664_RSTN_IO    GPIO_NUM_4
+#define MAX32664_MFIO_IO GPIO_NUM_15
+#define MAX32664_RSTN_IO GPIO_NUM_4
 
 #define I2C_MASTER_TX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */

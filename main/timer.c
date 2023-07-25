@@ -14,6 +14,7 @@
 #include "freertos/task.h"
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 #include "timer.h"
 

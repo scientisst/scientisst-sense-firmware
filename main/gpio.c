@@ -13,6 +13,7 @@
 
 #include "adc.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 /**

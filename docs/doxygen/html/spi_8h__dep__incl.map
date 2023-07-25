@@ -1,9 +1,0 @@
-<map id="spi.h" name="spi.h">
-<area shape="rect" id="node1" title="This file contains the definitions of the functions used to communicate with the external ADCs." alt="" coords="219,5,272,32"/>
-<area shape="rect" id="node2" href="$adc_8h.html" title="ADC interactions header file." alt="" coords="183,80,241,107"/>
-<area shape="rect" id="node4" href="$com_8c.html" title="This file contains the functions that handle the communication with the client." alt="" coords="5,155,67,181"/>
-<area shape="rect" id="node6" href="$scientisst_8c.html" title="Main file for the Scientisst firmware." alt="" coords="257,155,351,181"/>
-<area shape="rect" id="node7" href="$spi_8c.html" title="This file contains the definitions of the functions used to communicate with the external ADCs." alt="" coords="375,155,427,181"/>
-<area shape="rect" id="node3" href="$adc_8c.html" title="ADC interactions functions file." alt="" coords="176,155,232,181"/>
-<area shape="rect" id="node5" href="$gpio_8c.html" title="GPIO interactions." alt="" coords="91,155,152,181"/>
-</map>

@@ -10,17 +10,19 @@
 
 #include "adc.h"
 #include "com.h"
+#include "config.h"
 #include "driver/gpio.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 
 #define MAX_TRANSFER_SIZE 4
 
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
 
 spi_transaction_t read_transaction1;
 spi_transaction_t read_transaction2;

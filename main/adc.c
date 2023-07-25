@@ -273,7 +273,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame) {
             frame_next_wr += 3;
         }
     }
-#elif _TIMESTAMP_ == 1
+#elif _TIMESTAMP_ == TIMESTAMP_ENABLED
     if (num_extern_active_chs == 2) {
         int64_t timestamp = esp_timer_get_time() & 0xFFFFFFFFFFFF;
         *(uint64_t*)(frame + frame_next_wr) |= timestamp;

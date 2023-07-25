@@ -28,6 +28,7 @@
 #include "esp_vfs_semihost.h"
 #include "lwip/apps/netbiosns.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "mdns.h"
 #include "nvs_flash.h"
 #include "scientisst.h"

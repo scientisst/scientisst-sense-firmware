@@ -10,11 +10,13 @@
 
 #include "adc.h"
 #include "bt.h"
+#include "config.h"
 #include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "gpio.h"
 #include "macros.h"
+#include "macros_conf.h"
 #include "scientisst.h"
 #include "sd_card.h"
 #include "spi.h"
@@ -356,7 +358,7 @@ void startAcquisition(uint8_t* buff, uint8_t cmd) {
     }
 
     // Start external
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs) {
         uint8_t channel_mask = 0;
         for (int i = 0; i < num_extern_active_chs; i++) {
@@ -408,7 +410,7 @@ void stopAcquisition(void) {
 #endif
 
     // Stop external
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs) {
         adcExtStop();
     }

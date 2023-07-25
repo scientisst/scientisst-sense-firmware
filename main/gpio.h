@@ -77,7 +77,7 @@ void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type,
 void gpioInit(void);
 void configLedC(void);
 
-#if _ADC_EXT_ != NO_ADC_EXT
+#if _ADC_EXT_ != NO_EXT_ADC
 bool IRAM_ATTR gpioDrdyIsrHandler(void);
 void adcExtDrdyGpio(int io_num);
 #endif
