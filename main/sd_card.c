@@ -6,6 +6,7 @@
 #include "sd_card.h"
 
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -98,10 +99,17 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
             int voltage =
                 (((adc_chars->coeff_a * int_ch_raw[j]) + 32767) / 65536) +
                 adc_chars->coeff_b;
+#if CONVERSION_MODE == RAW_AND_MV
             fprintf(save_file, "\t%d", (int)(voltage * 3.399));
+#endif
         }
         for (int j = 0; j < num_extern_active_chs; j++) {
             fprintf(save_file, "\t%u", ext_ch_raw[j]);
+#if CONVERSION_MODE == RAW_AND_MV
+            float voltage =
+                (((float)ext_ch_raw[j] * (3.3 / 2)) / (pow(2, 24) - 1)) * 1000;
+            fprintf(save_file, "\t%f.3", voltage);
+#endif
         }
 
         fprintf(save_file, "\n");
