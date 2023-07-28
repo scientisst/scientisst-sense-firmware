@@ -109,7 +109,6 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
             float voltage =
                 (((float)ext_ch_raw[j] * (3.3 / 2)) / (pow(2, 24) - 1)) * 1000;
             fprintf(save_file, "\t%f.3", voltage);
-            
 #endif
         }
 
