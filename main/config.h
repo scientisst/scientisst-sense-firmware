@@ -24,7 +24,7 @@
 // Possible values for _ADC_EXT_:
 //   - NO_EXT_ADC (No external adc) [Default]
 //   - ADC_MCP (Enable external adc)
-#define _ADC_EXT_ NO_EXT_ADC
+#define _ADC_EXT_ ADC_MCP
 
 // Possible values for _TIMESTAMP_:
 //   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
@@ -37,7 +37,7 @@
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ENABLED_ SD_CARD_DISABLED
+#define _SD_CARD_ENABLED_ SD_CARD_ENABLED
 
 // Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
@@ -92,7 +92,8 @@
 
 // SD card requires that no external adc is enabled
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED && _ADC_EXT_ != NO_EXT_ADC
-#error sd card requires that no external adc is enabled, check config.h
+#define MULTIPLE_SPI_DEVICES 1
+// #error sd card requires that no external adc is enabled, check config.h
 #endif
 
 #endif

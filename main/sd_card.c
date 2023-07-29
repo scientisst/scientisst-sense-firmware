@@ -33,7 +33,7 @@
 
 FILE* save_file = NULL;
 char full_file_name[100];
-sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+
 sdmmc_card_t* card;
 
 /**
@@ -48,16 +48,12 @@ sdmmc_card_t* card;
 esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
     uint16_t num_seq = 0;
     uint32_t int_ch_raw[6] = {0, 0, 0, 0, 0, 0};
-    uint32_t ext_ch_raw[2] = {0, 0};
+    int32_t ext_ch_raw[2] = {0, 0};
     uint8_t mid_frame_flag = 0;
     uint32_t index = 0;
     uint8_t io[4] = {0, 0, 0, 0};
-
-    esp_adc_cal_characteristics_t* adc_chars =
-        calloc(1, sizeof(esp_adc_cal_characteristics_t));
-
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
-        ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, adc_chars);
+    float int_ch_mv[6] = {0, 0, 0, 0, 0, 0};
+    float ext_ch_mv[2] = {0, 0};
 
     // While there is data to be read, write it to the SD card
     // Code is identical to python API implementation
@@ -65,7 +61,7 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
         if (op_mode != OP_MODE_LIVE) return ESP_OK;
         mid_frame_flag = 0;
         for (int j = num_extern_active_chs - 1; j >= 0; j--) {
-            ext_ch_raw[j] = *(uint32_t*)(buff + index) & 0xFFFFFF;
+            ext_ch_raw[j] = *(int32_t*)(buff + index) & 0x00FFFFFF;
             index += 3;
         }
 
@@ -92,27 +88,42 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
 
         index += 2;
 
+#if CONVERSION_MODE == RAW_AND_MV
+        // Convert raw data to millivolts
+        for (int j = 0; j < num_intern_active_chs; j++) {
+            int_ch_mv[j] =
+                ((((adc1_chars.coeff_a * int_ch_raw[j]) + 32767) / 65536) +
+                 adc1_chars.coeff_b) *
+                3.399;
+        }
+
+        for (int j = 0; j < num_extern_active_chs; j++) {
+            ext_ch_mv[j] =
+                ((ext_ch_raw[j] * (3.3f * 2)) / (pow(2, 24) - 1)) * 1000;
+        }
+#endif
+#ifdef MULTIPLE_SPI_DEVICES
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
+#endif
         fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
                 io[2], io[3]);
         for (int j = 0; j < num_intern_active_chs; j++) {
             fprintf(save_file, "\t%u", int_ch_raw[j]);
-            int voltage =
-                (((adc_chars->coeff_a * int_ch_raw[j]) + 32767) / 65536) +
-                adc_chars->coeff_b;
 #if CONVERSION_MODE == RAW_AND_MV
-            fprintf(save_file, "\t%d", (int)(voltage * 3.399));
+            fprintf(save_file, "\t%.0f", int_ch_mv[j]);
 #endif
         }
         for (int j = 0; j < num_extern_active_chs; j++) {
             fprintf(save_file, "\t%u", ext_ch_raw[j]);
 #if CONVERSION_MODE == RAW_AND_MV
-            float voltage =
-                (((float)ext_ch_raw[j] * (3.3 / 2)) / (pow(2, 24) - 1)) * 1000;
-            fprintf(save_file, "\t%f.3", voltage);
+            fprintf(save_file, "\t%.3f", ext_ch_mv[j]);
 #endif
         }
 
         fprintf(save_file, "\n");
+#ifdef MULTIPLE_SPI_DEVICES
+        xSemaphoreGive(spi_mutex);  // Free SPI bus
+#endif
     }
 
     finalizeSend();
@@ -138,7 +149,7 @@ esp_err_t initSDCard(void) {
 #else
         .format_if_mount_failed = false,
 #endif
-        .max_files = 5,
+        .max_files = 1,
         .allocation_unit_size = 16 * 1024
     };
 
@@ -152,17 +163,22 @@ esp_err_t initSDCard(void) {
         .max_transfer_sz = 4000,
     };
 
-    ret = spi_bus_initialize(host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+    ret = spi_bus_initialize(sd_spi_host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
     if (ret != ESP_OK) {
         DEBUG_PRINT_E("initSDCard", "Failed to initialize bus.");
         return ESP_FAIL;
     }
 
+#ifdef MULTIPLE_SPI_DEVICES
+    // Initialize external ADC to not create noise on SPI bus
+    mcpSetupRoutine(0x03);
+#endif
+
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = PIN_NUM_CS;
-    slot_config.host_id = host.slot;
+    slot_config.host_id = sd_spi_host.slot;
 
-    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config,
+    ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config,
                                   &mount_config, &card);
 
     if (ret != ESP_OK) {
@@ -256,7 +272,7 @@ void unmountSDCard(void) {
     const char mount_point[] = MOUNT_POINT;
     closeSDCard();
     esp_vfs_fat_sdcard_unmount(mount_point, card);
-    spi_bus_free(host.slot);
+    spi_bus_free(sd_spi_host.slot);
 }
 
 /**

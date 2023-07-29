@@ -13,12 +13,14 @@
 #include "ble.h"
 #include "bt.h"
 #include "com.h"
+#include "esp_vfs_fat.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "sd_card.h"
 #include "sdkconfig.h"
+#include "sdmmc_cmd.h"
 #include "spi.h"
 #include "tcp.h"
 #include "timer.h"
@@ -54,6 +56,24 @@ TaskHandle_t acq_adc_ext_task;
 
 // Mutex for the buffers
 SemaphoreHandle_t bt_buffs_to_send_mutex;
+SemaphoreHandle_t spi_mutex;
+
+sdmmc_host_t sd_spi_host = {
+    .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
+    .slot = SPI3_HOST,
+    .max_freq_khz = (80 * 1000) / 64,
+    .io_voltage = 3.3f,
+    .init = &sdspi_host_init,
+    .set_bus_width = NULL,
+    .get_bus_width = NULL,
+    .set_bus_ddr_mode = NULL,
+    .set_card_clk = &sdspi_host_set_card_clk,
+    .do_transaction = &sdspi_host_do_transaction,
+    .deinit_p = &sdspi_host_remove_device,
+    .io_int_enable = &sdspi_host_io_int_enable,
+    .io_int_wait = &sdspi_host_io_int_wait,
+    .command_timeout_ms = 0,
+};
 
 // BT
 char device_name[17] = BT_DEFAULT_DEVICE_NAME;
@@ -149,7 +169,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SD_CARD,
 };
 /*{
     .com_mode = COM_MODE_TCP_STA,
@@ -182,6 +202,11 @@ uint8_t first_failed_send = 0;
 void initScientisst(void) {
     // Create a mutex type semaphore
     if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL) {
+        DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
+        abort();
+    }
+
+    if ((spi_mutex = xSemaphoreCreateMutex()) == NULL) {
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
     }
@@ -232,8 +257,8 @@ void initScientisst(void) {
         }
     }
 
-    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY,
-                            &send_task, 0);
+    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096 * 4, NULL,
+                            BT_SEND_PRIORITY, &send_task, 0);
 
     // If op_mode is Wifi or Serial
     if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)) {
@@ -286,6 +311,7 @@ void initScientisst(void) {
  * !send_busy. But, atm acqAdc1Task is the bottleneck
  */
 void IRAM_ATTR sendTask(void* not_used) {
+    uint8_t sd_card_present = 0;
     if (!strcmp(op_settings.com_mode, COM_MODE_BT)) {
         initBt();
         send_func = &esp_spp_write;
@@ -301,6 +327,7 @@ void IRAM_ATTR sendTask(void* not_used) {
             initBt();
             send_func = &esp_spp_write;
         } else {
+            sd_card_present = 1;
             send_func = &saveToSDCardSend;
             startAcquisitionSDCard();
         }
@@ -310,11 +337,11 @@ void IRAM_ATTR sendTask(void* not_used) {
     while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
-        openFile();
+        if (sd_card_present == 1) openFile();
 #endif
         sendData();
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
-        closeSDCard();
+        if (sd_card_present == 1) closeSDCard();
 #endif
     }
 }
