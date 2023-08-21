@@ -78,7 +78,7 @@ void gpioInit(void);
 void configLedC(void);
 
 #if _ADC_EXT_ != NO_EXT_ADC
-void IRAM_ATTR gpioDrdyIsrHandler(void);
+void IRAM_ATTR gpioDrdyIsrHandler(void* not_used);
 void adcExtDrdyGpio(int io_num);
 #endif
 
