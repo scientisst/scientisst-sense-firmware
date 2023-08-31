@@ -243,13 +243,6 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t* frame) {
 #if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs > 0) {
         // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-        if (sim_flag) {
-            for (i = 0; i < num_extern_active_chs; i++)
-                adc_external_res[i] = sin10Hz[sin_i % 100];
-        } else {
-            for (i = 0; i < num_extern_active_chs; i++)
-                adc_external_res[i] = adc_ext_samples[i];
-        }
 
         mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
 

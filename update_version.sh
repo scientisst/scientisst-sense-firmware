@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#This file is the code that but it should be copied into the precommit hoook
+
 VERSION_FILE="./main/version.h"
 
 # get the latest commit hash
@@ -30,3 +32,5 @@ fi
 
 # update the firmware version with the latest commit hash and new minor version
 sed -i "s/FIRMWARE_VERSION \".*\"/FIRMWARE_VERSION \"$major_version.$minor_version.$patch_version-$commit_hash\"/" $VERSION_FILE
+
+git add main/version.h

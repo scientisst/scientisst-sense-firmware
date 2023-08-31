@@ -24,12 +24,12 @@
 // Possible values for _ADC_EXT_:
 //   - NO_EXT_ADC (No external adc) [Default]
 //   - ADC_MCP (Enable external adc)
-#define _ADC_EXT_ NO_EXT_ADC
+#define _ADC_EXT_ ADC_MCP
 
 // Possible values for _TIMESTAMP_:
 //   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
 //   - TIMESTAMP_ENABLED (Enable timestamp on AX1 and AX2 channels)
-#define _TIMESTAMP_ TIMESTAMP_DISABLED
+#define _TIMESTAMP_ TIMESTAMP_ENABLED
 
 /************************
  * SDCARD CONFIGURATION *
@@ -37,13 +37,13 @@
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ENABLED_ SD_CARD_DISABLED
+#define _SD_CARD_ENABLED_ SD_CARD_ENABLED
 
 // Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
 //   - FORMAT_SDCARD (Format sd card if mount failed) (BE CAREFUL, THIS WILL
 //     ERASE ALL DATA ON THE SD CARD)
-#define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
+#define FORMAT_SDCARD_IF_MOUNT_FAILED FORMAT_SDCARD
 
 // Possible values for CONVERSION_MODE:
 //   - RAW_ONLY (Only raw data)
@@ -86,13 +86,15 @@
 
 // Check if the configuration is valid
 // Timestamp requires that no external adc is enabled
-#if _TIMESTAMP_ == TIMESTAMP_ENABLED && _ADC_EXT_ != NO_EXT_ADC
+#if _TIMESTAMP_ == TIMESTAMP_ENABLED && \
+    (_ADC_EXT_ != NO_EXT_ADC && _SD_CARD_ENABLED_ == SD_CARD_DISABLED)
 #error timestamp requires that no external adc is enabled, check config.h
 #endif
 
 // SD card requires that no external adc is enabled
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED && _ADC_EXT_ != NO_EXT_ADC
-#error sd card requires that no external adc is enabled, check config.h
+#define MULTIPLE_SPI_DEVICES 1
+// #error sd card requires that no external adc is enabled, check config.h
 #endif
 
 #endif

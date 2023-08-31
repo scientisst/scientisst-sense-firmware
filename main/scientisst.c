@@ -13,12 +13,15 @@
 #include "ble.h"
 #include "bt.h"
 #include "com.h"
+#include "config.h"
+#include "esp_vfs_fat.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "sd_card.h"
 #include "sdkconfig.h"
+#include "sdmmc_cmd.h"
 #include "spi.h"
 #include "tcp.h"
 #include "timer.h"
@@ -54,6 +57,28 @@ TaskHandle_t acq_adc_ext_task;
 
 // Mutex for the buffers
 SemaphoreHandle_t bt_buffs_to_send_mutex;
+SemaphoreHandle_t spi_mutex;
+
+sdmmc_host_t sd_spi_host = {
+    .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
+    .slot = SDSPI_DEFAULT_HOST,  // TODO: SPI3_HOST
+#if _ADC_EXT_ != NO_EXT_ADC
+    .max_freq_khz = (80 * 1000) / 64,
+#else
+    .max_freq_khz = SDMMC_FREQ_DEFAULT * 2,
+#endif
+    .io_voltage = 3.3f,
+    .init = &sdspi_host_init,
+    .set_bus_width = NULL,
+    .get_bus_width = NULL,
+    .set_bus_ddr_mode = NULL,
+    .set_card_clk = &sdspi_host_set_card_clk,
+    .do_transaction = &sdspi_host_do_transaction,
+    .deinit_p = &sdspi_host_remove_device,
+    .io_int_enable = &sdspi_host_io_int_enable,
+    .io_int_wait = &sdspi_host_io_int_wait,
+    .command_timeout_ms = 0,
+};
 
 // BT
 char device_name[17] = BT_DEFAULT_DEVICE_NAME;
@@ -116,9 +141,6 @@ uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {
             ///< 3, 2, 1, 0}
 uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {
     0, 0};  ///< Active external channels | If all channels are active: = {7, 6}
-uint32_t adc_ext_samples[EXT_ADC_CHANNELS] = {
-    0, 0};  ///< Samples from external adc get stored here before being
-            ///< incorporated into frame
 uint8_t num_intern_active_chs = 0;
 uint8_t num_extern_active_chs = 0;
 uint8_t op_mode = OP_MODE_IDLE;  ///< Flag that indicastes if op mode is on
@@ -149,7 +171,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SD_CARD,
 };
 /*{
     .com_mode = COM_MODE_TCP_STA,
@@ -168,6 +190,7 @@ uint8_t is_op_settings_valid = 0;
 
 // Firmware version
 uint8_t first_failed_send = 0;
+uint8_t sd_card_present = 0;  ///< Flag that indicates if SD card is present
 
 /**
  * \brief scientisst-firmware main function
@@ -182,6 +205,11 @@ uint8_t first_failed_send = 0;
 void initScientisst(void) {
     // Create a mutex type semaphore
     if ((bt_buffs_to_send_mutex = xSemaphoreCreateMutex()) == NULL) {
+        DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
+        abort();
+    }
+
+    if ((spi_mutex = xSemaphoreCreateMutex()) == NULL) {
         DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
         abort();
     }
@@ -232,8 +260,8 @@ void initScientisst(void) {
         }
     }
 
-    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096, NULL, BT_SEND_PRIORITY,
-                            &send_task, 0);
+    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096 * 4, NULL,
+                            BT_SEND_PRIORITY, &send_task, 0);
 
     // If op_mode is Wifi or Serial
     if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL)) {
@@ -263,9 +291,14 @@ void initScientisst(void) {
 
     // Create the 1st task that will acquire data from adc. This task will be
     // responsible for acquiring the data from adc1
+
+#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+    xTaskCreatePinnedToCore(&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24,
+                            &acq_adc1_task, 1);
+#else
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL,
                             ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
-
+#endif
     // xTaskCreatePinnedToCore(&acqAdcExtTask, "acqAdcExtTask", 2048, NULL,
     // ACQ_ADC_EXT_PRIORITY, &acq_adc_ext_task, 1);
 
@@ -296,26 +329,26 @@ void IRAM_ATTR sendTask(void* not_used) {
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
     else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD)) {
         if (initSDCard() != ESP_OK) {
+            vTaskDelete(acq_adc1_task);
             DEBUG_PRINT_E("SD_CARD",
                           "Cannot init SD Card, changing to BT mode");
+            xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL,
+                                    ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
             initBt();
             send_func = &esp_spp_write;
         } else {
-            send_func = &saveToSDCardSend;
+            sd_card_present = 1;
             startAcquisitionSDCard();
         }
     }
 #endif
+#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+    if (sd_card_present) vTaskDelete(NULL);
+#endif
 
     while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
-        openFile();
-#endif
         sendData();
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
-        closeSDCard();
-#endif
     }
 }
 
@@ -324,9 +357,9 @@ void IRAM_ATTR sendTask(void* not_used) {
  *
  * This task is responsible for receiving data from the client.
  */
-
 void rcvTask(void* not_used) {
     while (1) {
+        if (sd_card_present) vTaskDelete(NULL);
         // TCP client
         if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)) {
             while ((send_fd = initTcpClient(op_settings.host_ip,

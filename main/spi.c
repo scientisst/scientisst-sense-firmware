@@ -40,6 +40,7 @@ uint8_t gpio_already_init_flag = 0;
 void adcExtInit(void) {
     esp_err_t ret;
 
+#if _SD_CARD_ENABLED_ != SD_CARD_ENABLED
     spi_bus_config_t buscfg = {
         .miso_io_num = SPI3_MISO_IO,
         .mosi_io_num = SPI3_MOSI_IO,
@@ -49,22 +50,21 @@ void adcExtInit(void) {
         .max_transfer_sz = MAX_TRANSFER_SIZE,
         //.intr_flags = ESP_INTR_FLAG_IRAM
     };
+#endif
 
-    long int adc_ext_slck_hz = 0;
+    int adc_ext_slck_hz = ADC_EXT_SLCK_HZ_2_EXT_CH;
 
     if (num_extern_active_chs == 1) {
         adc_ext_slck_hz = ADC_EXT_SLCK_HZ_1_EXT_CH;
-    } else {
-        adc_ext_slck_hz = ADC_EXT_SLCK_HZ_2_EXT_CH;
     }
 
     spi_device_interface_config_t devcfg = {
         .clock_speed_hz = adc_ext_slck_hz,
         .mode =
             SPI_MODE,  // SPI mode 1: (CPOL) = 0 and the clock phase (CPHA) = 1.
-        .spics_io_num =
-            -1,  // CS pin not used here, since ESP driver makes CS pin does not
-                 // behave in the correct way for MCP to understand
+        .spics_io_num = -1,  // CS pin not used here, since ESP driver
+                             // makes CS pin does not behave in the
+                             // correct way for MCP to understand
         .queue_size =
             1,  // We want to be able to queue 1 transactions at a time
         //.pre_cb = lcd_spi_pre_transfer_callback  //Specify pre-transfer
@@ -80,12 +80,19 @@ void adcExtInit(void) {
             0,  // this can be important for higher frequencies (over 8 MHz)
         .flags = 0,
     };
+
+#if _SD_CARD_ENABLED_ != SD_CARD_ENABLED
     // Initialize the SPI bus
     ret = spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_DISABLED);
     ESP_ERROR_CHECK(ret);
     // Attach the device to the SPI bus
     ret = spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handler);
     ESP_ERROR_CHECK(ret);
+#else
+    // Attach to SD card SPI bus
+    ret = spi_bus_add_device(sd_spi_host.slot, &devcfg, &adc_ext_spi_handler);
+    ESP_ERROR_CHECK(ret);
+#endif
 
     // Config Drdy GPIO and interrupt
 #if (_ADC_EXT_ == ADC_MCP)
@@ -184,13 +191,13 @@ void IRAM_ATTR mcpSendCmd(uint8_t cmd) {
     transaction.rxlength = 8;
     transaction.tx_data[0] = cmd_byte;
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-
+    // xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
     gpio_set_level(SPI3_CS0_IO,
                    0);  // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler,
                                 &transaction);  // Transmit!
     gpio_set_level(SPI3_CS0_IO, 1);             // manually set CS\ idle
+    // xSemaphoreGive(spi_mutex);                  // Unlock SPI bus
 }
 
 /**
@@ -217,14 +224,14 @@ void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data,
     transaction.tx_data[0] = cmd_byte;
     *(uint32_t*)(transaction.tx_data) |= tx_data << 8;
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-
-    // Transmit
+    // xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
+    //  Transmit
     gpio_set_level(SPI3_CS0_IO,
                    0);  // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler,
                                 &transaction);  // Transmit!
     gpio_set_level(SPI3_CS0_IO, 1);             // manually set CS\ idle
+    // xSemaphoreGive(spi_mutex);                  // Unlock SPI bus
 }
 
 /**
@@ -238,6 +245,7 @@ void IRAM_ATTR mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes) {
 
     cmd_transaction.tx_data[0] = 0b01000001;
 
+    // xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
     gpio_set_level(SPI3_CS0_IO,
                    0);  // manually set CS\ active low -> begin comm
 
@@ -256,6 +264,7 @@ void IRAM_ATTR mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes) {
     }
 
     gpio_set_level(SPI3_CS0_IO, 1);  // manually set CS\ idle
+    // xSemaphoreGive(spi_mutex);       // Unlock SPI bus
 
     ext_adc_raw_data[0] = SPI_SWAP_DATA_RX(ext_adc_raw_data[0], (32));
 
@@ -293,8 +302,7 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
     cmd_transaction.rxlength = 8;
     cmd_transaction.tx_data[0] = cmd_byte;
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-
+    // xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
     gpio_set_level(SPI3_CS0_IO,
                    0);  // manually set CS\ active low -> begin comm
     spi_device_polling_transmit(adc_ext_spi_handler,
@@ -302,15 +310,15 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes) {
     spi_device_polling_transmit(adc_ext_spi_handler,
                                 &read_transaction);  // Receive data!
     gpio_set_level(SPI3_CS0_IO, 1);                  // manually set CS\ idle
+    // xSemaphoreGive(spi_mutex);                       // Unlock SPI bus
 
     if (rx_data_bytes > 1) {
         *(uint32_t*)(read_transaction.rx_data) = SPI_SWAP_DATA_RX(
             (*(uint32_t*)(read_transaction.rx_data)), (rx_data_bytes * 8));
     }
 
-    return *(uint32_t*)(read_transaction.rx_data);
-
     gpio_intr_enable(MCP_DRDY_IO);
+    return *(uint32_t*)(read_transaction.rx_data);
 }
 
 #define VALUE_CONFIG0 (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)

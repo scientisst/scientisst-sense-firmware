@@ -26,6 +26,7 @@
 #include "freertos/task.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "sdmmc_cmd.h"
 #include "sys/time.h"
 #include "time.h"
 #include "version.h"
@@ -58,12 +59,13 @@ extern esp_adc_cal_characteristics_t adc2_chars;
 extern char device_name[];
 extern uint8_t send_busy;
 extern SemaphoreHandle_t bt_buffs_to_send_mutex;
+extern SemaphoreHandle_t spi_mutex;
+extern sdmmc_host_t sd_spi_host;
 extern uint16_t send_threshold;
 extern uint8_t bt_curr_buff;
 extern uint8_t acq_curr_buff;
 extern Api_Config api_config;
 extern uint8_t active_ext_chs[];
-extern uint32_t adc_ext_samples[];
 extern uint8_t num_extern_active_chs;
 extern cJSON* json;
 extern DRAM_ATTR const uint8_t sin10Hz[];

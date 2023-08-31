@@ -14,12 +14,29 @@
 #define PIN_NUM_CLK GPIO_NUM_18
 #define PIN_NUM_CS GPIO_NUM_4
 
-esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff);
+extern FILE* save_file;
+extern DRAM_ATTR char full_file_name[100];
+
 esp_err_t initSDCard(void);
 void unmountSDCard(void);
-void closeSDCard(void);
 esp_err_t createFile(void);
 void startAcquisitionSDCard(void);
-esp_err_t openFile(void);
+void IRAM_ATTR acquisitionSDCard(void* not_used);
+
+/**
+ * \brief Close the file on the SD card.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
+FORCE_INLINE_ATTR void closeSDCard(void) { fclose(save_file); }
+
+/**
+ * \brief Open the current file on the SD card for appending.
+ *
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
+ */
+FORCE_INLINE_ATTR void openFile(void) {
+    save_file = fopen(full_file_name, "a");  // Open file
+}
 
 #endif  // SCIENTISST_SENSE_FIRMWARE_SD_CARD_H
