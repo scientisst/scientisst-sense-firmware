@@ -40,6 +40,7 @@ uint8_t gpio_already_init_flag = 0;
 void adcExtInit(void) {
     esp_err_t ret;
 
+#if _SD_CARD_ENABLED_ != SD_CARD_ENABLED
     spi_bus_config_t buscfg = {
         .miso_io_num = SPI3_MISO_IO,
         .mosi_io_num = SPI3_MOSI_IO,
@@ -49,6 +50,7 @@ void adcExtInit(void) {
         .max_transfer_sz = MAX_TRANSFER_SIZE,
         //.intr_flags = ESP_INTR_FLAG_IRAM
     };
+#endif
 
     int adc_ext_slck_hz = ADC_EXT_SLCK_HZ_2_EXT_CH;
 
