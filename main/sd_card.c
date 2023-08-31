@@ -28,109 +28,184 @@
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
 
 #define DEFAULT_VREF 1100
-
+#define BUFFER_SIZE (512 * 7 * 2)  // 512 * 28 * 2
+#define NUM_ACK_BUF (8 * 2)
 #define MOUNT_POINT "/sdcard"
 
-FILE* save_file = NULL;
+TaskHandle_t file_sync_task;
 char full_file_name[100];
-
+FILE* save_file = NULL;
 sdmmc_card_t* card;
+DMA_ATTR char* buffer[NUM_ACK_BUF];
+char* buffer_ptr = NULL;
+uint16_t buf_ready[NUM_ACK_BUF] = {0};
+SemaphoreHandle_t buf_ready_mutex[NUM_ACK_BUF];
+uint8_t buf_num_ack = 0;
+uint8_t buf_num_write = 0;
+uint32_t crc_seq_num = 0;
+#define CONVERSION_FACTOR 0.000393f  // 391 would be exact
+//((3.3f * 2 * 1000) / (pow(2, 24) - 1))  // External ADC conversion factor
+
+void initializeDevice(void);
 
 /**
- * \brief Send function for SD card.
+ * \brief Acquire the channels and store them in the SD card.
  *
- * \param fd Not used.
- * \param len Length of the buffer.
- * \param buff Buffer.
+ * This function acquires the channels and stores them in the SD card.
  *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
-    uint16_t num_seq = 0;
-    uint32_t int_ch_raw[6] = {0, 0, 0, 0, 0, 0};
-    int32_t ext_ch_raw[2] = {0, 0};
-    uint8_t mid_frame_flag = 0;
-    uint32_t index = 0;
-    uint8_t io[4] = {0, 0, 0, 0};
-    float int_ch_mv[6] = {0, 0, 0, 0, 0, 0};
+void IRAM_ATTR acquireChannelsSDCard(void) {
+    uint16_t adc_internal_res[6];
+    float int_ch_mv[6];
+
+#if _ADC_EXT_ != NO_EXT_ADC
+    uint32_t adc_external_res[2] = {1, 1};
     float ext_ch_mv[2] = {0, 0};
+    uint32_t* adc_external_res_ptr = adc_external_res;
+#endif
 
-    // While there is data to be read, write it to the SD card
-    // Code is identical to python API implementation
-    for (int i = 0; i < len; i += packet_size) {
-        if (op_mode != OP_MODE_LIVE) return ESP_OK;
-        mid_frame_flag = 0;
-        for (int j = num_extern_active_chs - 1; j >= 0; j--) {
-            ext_ch_raw[j] = *(int32_t*)(buff + index) & 0x00FFFFFF;
-            index += 3;
-        }
+    adc_internal_res[0] = adc1_get_raw(analog_channels[active_internal_chs[0]]);
+    adc_internal_res[1] = adc1_get_raw(analog_channels[active_internal_chs[1]]);
+    adc_internal_res[2] = adc1_get_raw(analog_channels[active_internal_chs[2]]);
+    adc_internal_res[3] = adc1_get_raw(analog_channels[active_internal_chs[3]]);
+    adc_internal_res[4] = adc1_get_raw(analog_channels[active_internal_chs[4]]);
+    adc_internal_res[5] = adc1_get_raw(analog_channels[active_internal_chs[5]]);
 
-        for (int j = num_intern_active_chs - 1; j >= 0; j--) {
-            if (!mid_frame_flag) {
-                int_ch_raw[j] = (*(uint16_t*)(buff + index)) & 0x0FFF;
-                index++;
-                mid_frame_flag = 1;
-            } else {
-                int_ch_raw[j] = (*(uint16_t*)(buff + index)) >> 4;
-                index += 2;
-                mid_frame_flag = 0;
+#if _ADC_EXT_ != NO_EXT_ADC
+    // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
+    mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
+    for (uint8_t i = 0; i < num_extern_active_chs;
+         i++, adc_external_res_ptr++) {
+        uint32_t ch_value = active_ext_chs[i] - 6;
+        for (uint8_t j = 0; j < 3; j++) {
+            if ((ext_adc_raw_data[j] >> 28) == ch_value) {
+                *adc_external_res_ptr =
+                    ((ext_adc_raw_data[j] >> 24) & 0x01)
+                        ? 0
+                        : (ext_adc_raw_data[j] & 0x00FFFFFF);
+                break;
             }
         }
-
-        io[0] = (buff[index] & 0b10000000) >> 7;
-        io[1] = (buff[index] & 0b01000000) >> 6;
-        io[2] = (buff[index] & 0b00100000) >> 5;
-        io[3] = (buff[index] & 0b00010000) >> 4;
-
-        index += 1;
-
-        num_seq = (*(uint16_t*)(buff + index)) >> 4;
-
-        index += 2;
+    }
+#endif
 
 #if CONVERSION_MODE == RAW_AND_MV
-        // Convert raw data to millivolts
-        for (int j = 0; j < num_intern_active_chs; j++) {
-            int_ch_mv[j] =
-                ((((adc1_chars.coeff_a * int_ch_raw[j]) + 32767) / 65536) +
-                 adc1_chars.coeff_b) *
-                3.399;
-        }
+    // Convert raw data to millivolts
+    for (uint8_t j = 0; j < 6; j++) {
+        uint32_t temp =
+            (((adc1_chars.coeff_a * adc_internal_res[j]) + 32767) >> 16) +
+            adc1_chars.coeff_b;
+        int_ch_mv[j] = temp * 3.399;
+    }
+#if _ADC_EXT_ != NO_EXT_ADC
+    for (uint8_t j = 0; j < 2; j++) {
+        ext_ch_mv[j] = adc_external_res[j] * CONVERSION_FACTOR;
+    }
+#endif
+#endif
+    // Write the initial values
+    // Write the internal channel values
+    // Loop unrolled for speed. All intern channels are always active
+    buffer_ptr += sprintf(
+        buffer_ptr,
+        "%hu\t%hhu\t%hhu\t%hhu\t%hhu\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%."
+        "0f\t%hu\t%.0f\t%hu\t%.0f",
+        (crc_seq_num & 0xFFF), gpio_get_level(I0_IO), gpio_get_level(I1_IO),
+        (gpio_out_state[0] & 0b1), (gpio_out_state[1] & 0b1),
+        adc_internal_res[5], int_ch_mv[5], adc_internal_res[4], int_ch_mv[4],
+        adc_internal_res[3], int_ch_mv[3], adc_internal_res[2], int_ch_mv[2],
+        adc_internal_res[1], int_ch_mv[1], adc_internal_res[0], int_ch_mv[0]);
 
-        for (int j = 0; j < num_extern_active_chs; j++) {
-            ext_ch_mv[j] =
-                ((ext_ch_raw[j] * (3.3f * 2)) / (pow(2, 24) - 1)) * 1000;
-        }
-#endif
-#ifdef MULTIPLE_SPI_DEVICES
-        xSemaphoreTake(spi_mutex, portMAX_DELAY);  // Lock SPI bus
-#endif
-        fprintf(save_file, "%hu\t%hhu\t%hhu\t%hhu\t%hhu", num_seq, io[0], io[1],
-                io[2], io[3]);
-        for (int j = 0; j < num_intern_active_chs; j++) {
-            fprintf(save_file, "\t%u", int_ch_raw[j]);
-#if CONVERSION_MODE == RAW_AND_MV
-            fprintf(save_file, "\t%.0f", int_ch_mv[j]);
-#endif
-        }
-        for (int j = 0; j < num_extern_active_chs; j++) {
-            fprintf(save_file, "\t%u", ext_ch_raw[j]);
-#if CONVERSION_MODE == RAW_AND_MV
-            fprintf(save_file, "\t%.3f", ext_ch_mv[j]);
-#endif
-        }
+    crc_seq_num++;
 
-        fprintf(save_file, "\n");
-#ifdef MULTIPLE_SPI_DEVICES
-        xSemaphoreGive(spi_mutex);  // Free SPI bus
+#if _ADC_EXT_ != NO_EXT_ADC
+    // Write the external channel values
+    buffer_ptr +=
+        sprintf(buffer_ptr, "\t%u\t%.3f\t%u\t%.3f", adc_external_res[1],
+                ext_ch_mv[1], adc_external_res[0], ext_ch_mv[0]);
 #endif
+
+    buffer_ptr += sprintf(buffer_ptr, "\t%lld\n", esp_timer_get_time());
+
+#if _ADC_EXT_ != NO_EXT_ADC
+
+    write(fileno(save_file), buffer[0], (buffer_ptr - (buffer[0])));
+    buffer_ptr = (buffer[0]);
+
+    if ((crc_seq_num % 3000) == 0) {
+        fsync(fileno(save_file));
     }
 
-    finalizeSend();
+#else
+    // If the buffer is full, save it to the SD card
+    if (buffer_ptr - (buffer[buf_num_ack % NUM_ACK_BUF]) >= BUFFER_SIZE - 97) {
+        xSemaphoreTake(buf_ready_mutex[buf_num_ack % NUM_ACK_BUF],
+                       portMAX_DELAY);
+        buf_ready[buf_num_ack % NUM_ACK_BUF] =
+            buffer_ptr - (buffer[buf_num_ack % NUM_ACK_BUF]);
+        xSemaphoreGive(buf_ready_mutex[buf_num_ack % NUM_ACK_BUF]);
+        xTaskNotifyGive(file_sync_task);
+        while (buf_ready[(buf_num_ack + 1) % NUM_ACK_BUF]) {
+            DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
+            vTaskDelay(1 / portTICK_PERIOD_MS);
+        }
+        buffer_ptr = (buffer[(++buf_num_ack) % NUM_ACK_BUF]);
+    }
+#endif
+}
 
-    // Try to send next buff
-    sendData();
-    return ESP_OK;
+void IRAM_ATTR fileSyncTask(void* not_used) {
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+            while (1) {
+                xSemaphoreTake(buf_ready_mutex[buf_num_write % NUM_ACK_BUF],
+                               portMAX_DELAY);
+                if (buf_ready[buf_num_write % NUM_ACK_BUF]) {
+                    write(fileno(save_file),
+                          (buffer[buf_num_write % NUM_ACK_BUF]),
+                          buf_ready[buf_num_write % NUM_ACK_BUF]);
+                    buf_ready[buf_num_write % NUM_ACK_BUF] = 0;
+                    xSemaphoreGive(
+                        buf_ready_mutex[buf_num_write % NUM_ACK_BUF]);
+                    fflush(save_file);
+                    fsync(fileno(save_file));
+                    buf_num_write++;
+                } else {
+                    xSemaphoreGive(
+                        buf_ready_mutex[buf_num_write % NUM_ACK_BUF]);
+                    break;
+                }
+            }
+        } else {
+            DEBUG_PRINT_W("fileSyncTask", "ulTaskNotifyTake timed out!");
+        }
+    }
+}
+
+/**
+ * \brief Acquisition task of the data from the ADC and save it to the SD
+ * card.
+ *
+ * This function is identic to aquire adc1 but instead of saving the data to
+ * the buffers it saves it directly to the SD card. This also means that the
+ * send task is not active.
+ *
+ */
+void IRAM_ATTR acquisitionSDCard(void* not_used) {
+    // Init Timer 0_1 (timer 1 from group 0) and register it's interupt
+    // handler
+    timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, timerGrp0Isr);
+
+    // Config all possible adc channels
+    initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
+
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+            acquireChannelsSDCard();
+        } else {
+            DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
+        }
+    }
 }
 
 /**
@@ -141,6 +216,12 @@ esp_err_t IRAM_ATTR saveToSDCardSend(uint32_t fd, int len, uint8_t* buff) {
 esp_err_t initSDCard(void) {
     const char mount_point[] = MOUNT_POINT;
     esp_err_t ret = ESP_OK;
+    for (uint8_t i = 0; i < NUM_ACK_BUF; i++) {
+        if ((buf_ready_mutex[i] = xSemaphoreCreateMutex()) == NULL) {
+            DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
+            abort();
+        }
+    }
 
     // SD card mount config
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
@@ -150,7 +231,7 @@ esp_err_t initSDCard(void) {
         .format_if_mount_failed = false,
 #endif
         .max_files = 1,
-        .allocation_unit_size = 16 * 1024
+        .allocation_unit_size = 16 * 1024,
     };
 
     // SPI bus config
@@ -160,23 +241,26 @@ esp_err_t initSDCard(void) {
         .sclk_io_num = PIN_NUM_CLK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = 4000,
+        .max_transfer_sz = 4000,  // 512 * 8
+        .flags = 0,
+        .intr_flags = 0,
     };
 
-    ret = spi_bus_initialize(sd_spi_host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+    ret = spi_bus_initialize(sd_spi_host.slot, &bus_cfg, SPI_DMA_CH_AUTO);
     if (ret != ESP_OK) {
         DEBUG_PRINT_E("initSDCard", "Failed to initialize bus.");
         return ESP_FAIL;
     }
+    gpio_pullup_en(PIN_NUM_MOSI);  // Enable pull-up on MISO
 
-#ifdef MULTIPLE_SPI_DEVICES
-    // Initialize external ADC to not create noise on SPI bus
-    mcpSetupRoutine(0x03);
-#endif
+    DEBUG_PRINT_W("sdcard", "Initializing device...");
+    initializeDevice();
 
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = PIN_NUM_CS;
     slot_config.host_id = sd_spi_host.slot;
+
+    // TODO: try using spiffs
 
     ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config,
                                   &mount_config, &card);
@@ -204,9 +288,10 @@ esp_err_t initSDCard(void) {
 /**
  * \brief Open a new file on the SD card for writing.
  *
- * This function will open a new file on the SD card for writing. First checks
- * if a file with the same name already exists and if so, will increment the
- * file name by 1 until a file name is found that does not exist.
+ * This function will open a new file on the SD card for writing. First
+ * checks if a file with the same name already exists and if so, will
+ * increment the file name by 1 until a file name is found that does not
+ * exist.
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
@@ -238,30 +323,15 @@ esp_err_t createFile(void) {
         DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
         return ESP_FAIL;
     }
-    return ESP_OK;
-}
 
-/**
- * \brief Open the current file on the SD card for appending.
- *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
- */
-esp_err_t openFile(void) {
-    save_file = fopen(full_file_name, "a");  // Create new file
-
-    if (save_file == NULL) {
-        DEBUG_PRINT_E("openFile", "Failed to open file for writing");
-        return ESP_FAIL;
+#if _ADC_EXT_ != NO_EXT_ADC
+    if (setvbuf(save_file, NULL, _IONBF, 0) != 0) {
+        DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
     }
+#endif
+
     return ESP_OK;
 }
-
-/**
- * \brief Close the file on the SD card.
- *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
- */
-void closeSDCard(void) { fclose(save_file); }
 
 /**
  * \brief Unmount the SD card and free the SPI bus.
@@ -275,47 +345,45 @@ void unmountSDCard(void) {
     spi_bus_free(sd_spi_host.slot);
 }
 
-/**
- * \brief Start the acquisition of data from the ADC and save it to the SD card.
- *
- * This function will start the acquisition of data from the ADC and save it to
- * the SD card. It acquires from all available channels at 1000Hz and saves the
- * data to a CSV file on the SD card.
- *
- */
-void startAcquisitionSDCard(void) {
-    // Get channels from mask
+void initializeDevice(void) {
     uint8_t i;
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
-
+#if _ADC_EXT_ != NO_EXT_ADC
+    int active_channels_sd = 0b11111111;
+#else
+    int active_channels_sd = 0b00111111;
+#endif
     changeAPI(API_MODE_SCIENTISST);
 
     // Reset previous active chs
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
 
+#if _ADC_EXT_ != NO_EXT_ADC
+    sample_rate = 100;
+#else
     sample_rate = 1000;
+#endif
 
-    // Select the channels that are activated (with corresponding bit equal to
-    // 1)
+    // Select the channels that are activated (with corresponding bit equal
+    // to 1)
     for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1) {
+        if (!(active_channels_sd & i)) {
+            channel_number--;
+            continue;
+        }
+
         // Store the activated channels
         if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) ||
             i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2)) {
-#if _ADC_EXT_ != NO_EXT_ADC
             active_ext_chs[num_extern_active_chs] = channel_number - 1;
             num_extern_active_chs++;
-#else
-            channel_number--;
-            continue;
-#endif
         } else {
             active_internal_chs[num_intern_active_chs] = channel_number - 1;
             num_intern_active_chs++;
         }
 
-        DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added",
-                      channel_number - 1);
+        DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number);
         channel_number--;
     }
 
@@ -325,7 +393,7 @@ void startAcquisitionSDCard(void) {
     // Clean send buff, because of send status and send firmware string
     send_busy = 0;
 
-    crc_seq = 0;
+    crc_seq_num = 0;
 
     // Clean send buffers, to be sure
     for (uint8_t i = 0; i < NUM_BUFFERS; i++) {
@@ -336,108 +404,94 @@ void startAcquisitionSDCard(void) {
 
     // Start external
 #if _ADC_EXT_ != NO_EXT_ADC
-    if (num_extern_active_chs) {
-        uint8_t channel_mask = 0;
-        for (int i = 0; i < num_extern_active_chs; i++) {
-            channel_mask |= 0b1 << (active_ext_chs[i] - 6);
-        }
-        mcpSetupRoutine(channel_mask);
-        adcExtStart();
+    uint8_t channel_mask = 0;
+    for (int i = 0; i < num_extern_active_chs; i++) {
+        channel_mask |= 0b1 << (active_ext_chs[i] - 6);
     }
+    mcpSetupRoutine(channel_mask);
 #endif
 
     packet_size = getPacketSize();
+}
 
-    send_threshold = !(send_buff_len % packet_size)
-                         ? send_buff_len - packet_size
-                         : send_buff_len - (send_buff_len % packet_size);
-
+/**
+ * \brief Start the acquisition of data from the ADC and save it to the SD
+ * card.
+ *
+ * This function will start the acquisition of data from the ADC and save it
+ * to the SD card. It acquires from all available channels at 1000Hz and
+ * saves the data to a CSV file on the SD card.
+ *
+ */
+void startAcquisitionSDCard(void) {
 #if _ADC_EXT_ != NO_EXT_ADC
-#if CONVERSION_MODE == RAW_AND_MV
+    fprintf(
+        save_file,
+        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
+        "'Channels indexes mV': [], 'Channels "
+        "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
+        "['AI1_raw', 'AI1_mv', 'AI2_raw', "
+        "'AI2_mv', 'AI3_raw', 'AI3_mv', "
+        "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
+        "'AX7_raw', 'AX7_mv'], 'Device': '%s', "
+        "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
+        "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', "
+        "'AI2_mv', 'AI3_raw', 'AI3_mv', "
+        "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
+        "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv', 'Timestamp'], 'ISO 8601': "
+        "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
+        "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+        device_name, FIRMWARE_VERSION);
     fprintf(save_file,
-            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
-            "'Channels indexes mV': [], 'Channels "
-            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
-            "['AI1_raw', 'AI1_mv', 'AI2_raw', "
+            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
+            "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
+            "mv\tAX7_raw\tAX7_mv\tAX8_raw\tAX8_mv\tTimestamp\n");
+
+#else
+    fprintf(save_file,
+            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], "
+            "'Channels "
+            "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, "
+            "7, "
+            "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', "
+            "'AI2_raw', "
             "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
-            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
-            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
-            "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', "
-            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
-            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'ISO 8601': "
-            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
-            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], "
+            "'Device': '%s','Firmware version': "
+            "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', "
+            "'AI1_mv', "
+            "'AI2_raw', "
+            "'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', "
+            "'AI6_raw', 'AI6_mv', 'Timestamp'], 'ISO 8601':'NULL', "
+            "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
+            "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
             device_name, FIRMWARE_VERSION);
     fprintf(save_file,
             "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
             "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
-            "mv\tAX7_raw\tAX7_mv\tAX8_raw\tAX8_mv\n");
-#elif CONVERSION_MODE == RAW_ONLY
-    fprintf(save_file,
-            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
-            "'Channels indexes mV': [], 'Channels "
-            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
-            "['AI1_raw', 'AI2_raw', "
-            "'AI3_raw', "
-            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
-            "'AX7_raw', 'AX8_raw'], 'Device': '%s', "
-            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
-            "'O2', 'AI1_raw', 'AI2_raw', "
-            "'AI3_raw', "
-            "'AI4_raw', 'AI5_raw', 'AI6_raw', "
-            "'AX7_raw', 'AX8_raw'], 'ISO 8601': "
-            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
-            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
-            device_name, FIRMWARE_VERSION);
-    fprintf(save_file,
-            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
-            "raw\tAI4_raw\tAI5_raw\tAI6_raw\tAX7_raw\tAX8_raw\n");
+            "mv\tTimestamp\n");
 #endif
-#else
-#if CONVERSION_MODE == RAW_AND_MV
-    fprintf(
-        save_file,
-        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
-        "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
-        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', 'AI2_raw', "
-        "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-        "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], "
-        "'Device': '%s','Firmware version': "
-        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', 'AI1_mv', "
-        "'AI2_raw', "
-        "'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', "
-        "'AI6_raw', 'AI6_mv'], 'ISO 8601':'NULL', "
-        "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
-        "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
-        device_name, FIRMWARE_VERSION);
-    fprintf(save_file,
-            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
-            "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_mv\n");
-#elif CONVERSION_MODE == RAW_ONLY
-    fprintf(
-        save_file,
-        "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], 'Channels "
-        "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, 7, "
-        "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI2_raw', "
-        "'AI3_raw', "
-        "'AI4_raw', 'AI5_raw', 'AI6_raw'], "
-        "'Device': '%s','Firmware version': "
-        "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', "
-        "'AI2_raw', "
-        "'AI3_raw', 'AI4_raw', 'AI5_raw', "
-        "'AI6_raw'], 'ISO 8601':'NULL', "
-        "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
-        "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
-        device_name, FIRMWARE_VERSION);
-    fprintf(save_file,
-            "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI2_raw\tAI3_"
-            "raw\tAI4_raw\tAI5_raw\tAI6_raw\n");
+#if _ADC_EXT_ != NO_EXT_ADC
+    adcExtStart();
 #endif
+    fflush(save_file);
+    fsync(fileno(save_file));
+
+#if _ADC_EXT_ == NO_EXT_ADC
+    xTaskCreatePinnedToCore(&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20,
+                            &file_sync_task, 0);
 #endif
 
-    closeSDCard();
+    for (int i = 0; i < NUM_ACK_BUF; i++) {
+        buffer[i] = (char*)malloc(BUFFER_SIZE * sizeof(char));
+        if (buffer[i] == NULL) {
+            DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
+            exit(-1);
+        }
+        memset(buffer[i], 0, BUFFER_SIZE);
+    }
+
+    buffer_ptr = buffer[0];
 
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
@@ -455,7 +509,8 @@ void startAcquisitionSDCard(void) {
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
 #endif
 
-    DEBUG_PRINT_W("startAcquisition", "Acquisition started");
+    DEBUG_PRINT_W("startAcquisition", "Acquisition started: %lld",
+                  (int64_t)(esp_timer_get_time() & 0xFFFFFFFFFFFF));
     op_mode = OP_MODE_LIVE;
 }
 

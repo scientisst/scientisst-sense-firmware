@@ -219,7 +219,7 @@ void selectChsFromMaskScientisstJson(uint8_t* buff) {
             }
 
             DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added",
-                          channel_number - 1);
+                          channel_number);
         }
         channel_number--;
     }
