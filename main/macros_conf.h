@@ -12,8 +12,8 @@
 #define SCIENTISST_SENSE_FIRMWARE_MACROS_CONF_H
 
 // External ADC possible options
-#define NO_EXT_ADC 1  // External ADC disabled
-#define ADC_ADS 2     // ADS
+#define NO_EXT_ADC 1 // External ADC disabled
+#define ADC_ADS 2    // ADS
 #define ADC_MCP 3
 
 // Hardware version possible options
@@ -37,4 +37,4 @@
 #define RAW_ONLY 1
 #define RAW_AND_MV 2
 
-#endif  // SCIENTISST_SENSE_FIRMWARE_MACROS_CONF_H
+#endif // SCIENTISST_SENSE_FIRMWARE_MACROS_CONF_H

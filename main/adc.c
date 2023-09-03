@@ -4,16 +4,21 @@
     This file contains the declarations for the ADC interactions.
 */
 
+#include <stdio.h>
+
 #include "adc.h"
 #include "cJSON.h"
 #include "com.h"
 #include "config.h"
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "gpio.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "scientisst.h"
+#include "spi.h"
 
 #define DEFAULT_VREF 1100
 
@@ -84,7 +89,7 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         adc1_config_width(ADC_RESOLUTION);
 
         // Configure each adc channel
-        for (i = 0; i < DEFAULT_ADC_CHANNELS; i++)
+        for (i = 0; i < DEFAULT_ADC_CHANNELS; ++i)
         {
             configAdc(1, adc_resolution, analog_channels[i]);
         }
@@ -143,7 +148,7 @@ void acquireAdc1Channels(uint8_t *frame)
     uint8_t io_state = 0;
     uint8_t crc = 0;
 
-    for (int i = 0; i < num_intern_active_chs; i++)
+    for (int i = 0; i < num_intern_active_chs; ++i)
     {
         // 2 lsl because adc resolution is 12bits
         adc_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]) >> 2;
@@ -181,7 +186,7 @@ void acquireAdc1Channels(uint8_t *frame)
     } // Only the 6 upper bits of the 10-bit value are used
 
     // calculate CRC (except last byte (seq+CRC) )
-    for (int i = 0; i < packet_size - 1; i++)
+    for (int i = 0; i < packet_size - 1; ++i)
     {
         // calculate CRC nibble by nibble
         CALC_BYTE_CRC(crc, frame[i], crc_table);
@@ -194,7 +199,7 @@ void acquireAdc1Channels(uint8_t *frame)
     // store CRC and Seq in the last byte of the packet
     frame[packet_size - 1] = crc;
 
-    crc_seq++;
+    ++crc_seq;
 }
 
 /**
@@ -220,7 +225,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     io_state |= (gpio_out_state[1] & 0b1) << 4;
 
     // Get raw values from A1 to A6 (A1 to A6)
-    for (int i = 0; i < num_intern_active_chs; i++)
+    for (int i = 0; i < num_intern_active_chs; ++i)
     {
         adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
     }
@@ -232,10 +237,10 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
         mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
 
         // Store values of external channels into frame
-        for (int i = 0; i < num_extern_active_chs; i++)
+        for (int i = 0; i < num_extern_active_chs; ++i)
         {
             uint32_t adc_external_res = 0;
-            for (int j = 0; j < 3; j++)
+            for (int j = 0; j < 3; ++j)
             {
                 if ((ext_adc_raw_data[j] >> 28) == (active_ext_chs[i] - 6)) // Check if the channel is the one we want
                 {
@@ -267,12 +272,12 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
 #endif
 
     // Store values of internal channels into frame
-    for (int i = 0; i < num_intern_active_chs; i++)
+    for (int i = 0; i < num_intern_active_chs; ++i)
     {
         if (!wr_mid_byte_flag)
         {
             *(uint16_t *)(frame + frame_next_wr) |= adc_internal_res[i];
-            frame_next_wr++;
+            ++frame_next_wr;
             wr_mid_byte_flag = 1;
         }
         else
@@ -291,7 +296,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     *(uint16_t *)(frame + packet_size - 2) = crc_seq << 4;
 
     // calculate CRC (except last byte (seq+CRC) )
-    for (i = 0; i < packet_size - 2; i++)
+    for (int i = 0; i < packet_size - 2; ++i)
     {
         // calculate CRC nibble by nibble
         CALC_BYTE_CRC(crc, frame[i], crc_table);
@@ -326,7 +331,7 @@ void acquireChannelsJson(uint8_t *frame)
     char value_str[10];
     cJSON *item;
 
-    for (int i = 0; i < num_intern_active_chs; i++)
+    for (int i = 0; i < num_intern_active_chs; ++i)
     {
         adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
         DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
@@ -356,14 +361,14 @@ void acquireChannelsJson(uint8_t *frame)
         recv_ads = ads_rtrans->rx_buffer;
 
         // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-        for (int i = 0; i < num_extern_active_chs; i++)
+        for (int i = 0; i < num_extern_active_chs; ++i)
         {
             adc_external_res[i] = (*(uint32_t *)(recv_ads + 3 + (3 * (active_ext_chs[i] - 6)))) & 0x00FFFFFF;
         }
     }
 
     // Store values of channels into JSON object
-    for (int i = num_intern_active_chs - 1; i >= 0; i--)
+    for (int i = num_intern_active_chs - 1; i >= 0; --i)
     {
         sprintf(value_str, "%04d", adc_internal_res[i]);
         sprintf(ch_str, "AI%d", active_internal_chs[i] + 1);
@@ -373,7 +378,7 @@ void acquireChannelsJson(uint8_t *frame)
 
     if (num_extern_active_chs > 0)
     {
-        for (int i = num_extern_active_chs - 1; i >= 0; i--)
+        for (int i = num_extern_active_chs - 1; i >= 0; --i)
         {
             sprintf(value_str, "%08d", adc_external_res[i]);
             sprintf(ch_str, "AX%d", active_ext_chs[i] + 1 - 6);

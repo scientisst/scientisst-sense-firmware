@@ -57,8 +57,7 @@
 // Make sure that no invalid combination of parameters is selected
 
 // Check if the hardware version is valid
-#if HW_VERSION != HW_VERSION_CORE && HW_VERSION != HW_VERSION_NANO && \
-    HW_VERSION != HW_VERSION_CARDIO
+#if HW_VERSION != HW_VERSION_CORE && HW_VERSION != HW_VERSION_NANO && HW_VERSION != HW_VERSION_CARDIO
 #error invalid hardware version, check config.h
 #endif
 
@@ -68,14 +67,12 @@
 #endif
 
 // Check if the sd card is valid
-#if _SD_CARD_ENABLED_ != SD_CARD_DISABLED && \
-    _SD_CARD_ENABLED_ != SD_CARD_ENABLED
+#if _SD_CARD_ENABLED_ != SD_CARD_DISABLED && _SD_CARD_ENABLED_ != SD_CARD_ENABLED
 #error invalid sd card configuration, check config.h
 #endif
 
 // Check if the sd card format is valid
-#if FORMAT_SDCARD_IF_MOUNT_FAILED != DO_NOT_FORMAT_SDCARD && \
-    FORMAT_SDCARD_IF_MOUNT_FAILED != FORMAT_SDCARD
+#if FORMAT_SDCARD_IF_MOUNT_FAILED != DO_NOT_FORMAT_SDCARD && FORMAT_SDCARD_IF_MOUNT_FAILED != FORMAT_SDCARD
 #error invalid sd card format configuration, check config.h
 #endif
 
@@ -86,8 +83,7 @@
 
 // Check if the configuration is valid
 // Timestamp requires that no external adc is enabled
-#if _TIMESTAMP_ == TIMESTAMP_ENABLED && \
-    (_ADC_EXT_ != NO_EXT_ADC && _SD_CARD_ENABLED_ == SD_CARD_DISABLED)
+#if _TIMESTAMP_ == TIMESTAMP_ENABLED && (_ADC_EXT_ != NO_EXT_ADC && _SD_CARD_ENABLED_ == SD_CARD_DISABLED)
 #error timestamp requires that no external adc is enabled, check config.h
 #endif
 

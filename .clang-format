@@ -1,4 +1,4 @@
 BasedOnStyle: Microsoft
 IndentWidth: 4
-ColumnLimit: 125
+ColumnLimit: 110
 DerivePointerAlignment: false
