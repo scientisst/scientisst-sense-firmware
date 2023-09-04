@@ -22,9 +22,8 @@
 
 const uart_port_t serial_com_uart_num = UART_NUM_0;
 
-// Based on
-// https://github.com/espressif/esp-idf/blob/master/examples/peripherals/uart/uart_select/main/uart_select_example_main.c
-int serialInit(void) {
+int serialInit(void)
+{
     int fd;
 
     uart_config_t uart_config = {
@@ -41,13 +40,13 @@ int serialInit(void) {
     // Configure UART parameters
     ESP_ERROR_CHECK(uart_param_config(serial_com_uart_num, &uart_config));
 
-    if ((fd = open("/dev/uart/0", O_RDWR)) == -1) {
+    if ((fd = open("/dev/uart/0", O_RDWR)) == -1)
+    {
         DEBUG_PRINT_E("serialInit", "ERROR: OPENING UART PORT FAILED");
         return -1;
     }
 
-    // We have a driver now installed so set up the read/write functions to use
-    // driver also.
+    // We have a driver now installed so set up the read/write functions to use driver also.
     esp_vfs_dev_uart_use_driver(0);
 
     return fd;

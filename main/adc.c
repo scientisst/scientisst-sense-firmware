@@ -95,7 +95,8 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         }
 
         // Characterize ADC
-        val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+        val_type =
+            esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
@@ -117,7 +118,8 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         // Config ADC2 resolution
         configAdc(2, adc_resolution, ABAT_ADC_CH);
 
-        val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
+        val_type =
+            esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
@@ -239,24 +241,17 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
         // Store values of external channels into frame
         for (int i = 0; i < num_extern_active_chs; ++i)
         {
-            uint32_t adc_external_res = 0;
+            uint32_t adc_external_res = 1; // If the raw value is not found, it stays 1. Usefull for debugging
             for (int j = 0; j < 3; ++j)
             {
-                if ((ext_adc_raw_data[j] >> 28) == (active_ext_chs[i] - 6)) // Check if the channel is the one we want
+                if ((ext_adc_raw_data[j] >> 28) ==
+                    (active_ext_chs[i] - 6)) // Check if the channel is the one we want
                 {
-                    if ((ext_adc_raw_data[j] >> 24) & 0x01) // If the value is negative, set it to 0
-                    {
-                        adc_external_res = 0;
-                    }
-                    else
-                    {
-                        adc_external_res = ext_adc_raw_data[j] & 0x00FFFFFF;
-                    }
-
+                    // If the value is negative, round it to 0
+                    adc_external_res =
+                        ((ext_adc_raw_data[j] >> 24) & 0x01) ? 0 : (ext_adc_raw_data[j] & 0x00FFFFFF);
                     break;
                 }
-
-                adc_external_res = 1; // If the raw value is not found, set it to 1. Usefull for debugging
             }
 
             *(uint32_t *)(frame + frame_next_wr) |= adc_external_res;
@@ -334,7 +329,8 @@ void acquireChannelsJson(uint8_t *frame)
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
         adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
-        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i], adc_internal_res[i]);
+        DEBUG_PRINT_I("acquireAdc1Channels", "(adc_internal_res)A%d=%d", active_internal_chs[i],
+                      adc_internal_res[i]);
     }
 
     // Get and store the IO states into json

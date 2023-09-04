@@ -17,8 +17,6 @@
 
 #include "esp_log.h"
 
-#define GEN_ERR -1
-#define GEN_OK 1
 #define DEFAULT_TASK_STACK_SIZE 2048
 #define _DEBUG_ 2 ///< 0: No debug, 1: Debug, 2: Warning and Error only
 

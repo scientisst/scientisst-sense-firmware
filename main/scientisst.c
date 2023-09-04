@@ -324,8 +324,8 @@ void rcvTask(void *not_used)
     {
         if (sd_card_present)
             vTaskDelete(NULL);
-        // TCP client
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA))
+
+        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)) // TCP client
         {
             while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
@@ -336,9 +336,8 @@ void rcvTask(void *not_used)
                               op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
-            // TCP server
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
+        else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)) // TCP server
         {
             while ((send_fd = initTcpConnection(listen_fd)) < 0)
             {
@@ -349,9 +348,8 @@ void rcvTask(void *not_used)
                               op_settings.host_ip, op_settings.port_number);
             }
             send_func = &tcpSerialSend;
-            // UDP client
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
+        else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)) // UDP client
         {
             while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
@@ -362,9 +360,8 @@ void rcvTask(void *not_used)
                               op_settings.host_ip, op_settings.port_number);
             }
             send_func = &udpSend;
-            // Serial
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL))
+        else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL)) // Serial
         {
             while ((send_fd = serialInit()) < 0)
             {
@@ -444,11 +441,10 @@ void IRAM_ATTR acqAdc1Task(void *not_used)
                 if (snd_buff_idx[acq_curr_buff] + packet_size >= send_buff_len &&
                     bt_buffs_to_send[acq_next_buff] == 1)
                 {
-                    // Wait until next buffer is free
-                    do
+                    do // Wait until next buffer is free
                     {
                         DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
-                        vTaskDelay(100 / portTICK_PERIOD_MS);
+                        vTaskDelay(1 / portTICK_PERIOD_MS);
                         if (send_busy == 0)
                         {
                             xTaskNotifyGive(send_task);

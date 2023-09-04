@@ -28,44 +28,51 @@
 
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
 
-#define DEFAULT_VREF 1100
-#define BUFFER_SIZE (512 * 7 * 2) // 512 * 28 * 2
+#define BUFFER_SIZE (512 * 7 * 2)
 #define NUM_ACK_BUF (8 * 2)
-#define MOUNT_POINT "/sdcard"
 
-TaskHandle_t file_sync_task;
-char full_file_name[100];
-FILE *save_file = NULL;
-sdmmc_card_t *card;
-DMA_ATTR char *buffer[NUM_ACK_BUF];
-char *buffer_ptr = NULL;
-uint16_t buf_ready[NUM_ACK_BUF] = {0};
-SemaphoreHandle_t buf_ready_mutex[NUM_ACK_BUF];
-uint8_t buf_num_ack = 0;
-uint8_t buf_num_write = 0;
-uint32_t crc_seq_num = 0;
 #define CONVERSION_FACTOR 0.000393f // 391 would be exact
 //((3.3f * 2 * 1000) / (pow(2, 24) - 1))  // External ADC conversion factor
+
+TaskHandle_t file_sync_task;
+
+sdmmc_card_t *card;       ///< SD card handle
+char full_file_name[100]; ///< Full file name of the file on the SD card
+FILE *save_file = NULL;   ///< File handle of the file on the SD card
+
+DMA_ATTR char *buffer[NUM_ACK_BUF]; ///< Array buffers to store the data to be written to the SD card
+uint16_t buf_ready[NUM_ACK_BUF] = {
+    0}; ///< Array to store the number of bytes ready to be written to the SD card
+SemaphoreHandle_t buf_ready_mutex[NUM_ACK_BUF]; ///< Mutex to protect the buffer ready array, one for each
+                                                ///< buffer for faster access times
+
+char *buffer_ptr = NULL;   ///< Pointer to the current buffer to write to
+uint8_t buf_num_ack = 0;   ///< Number of the buffer where the data is being written to on acquisition
+uint8_t buf_num_write = 0; ///< Number of the buffer that is being written to the SD card
 
 void initializeDevice(void);
 
 /**
  * \brief Acquire the channels and store them in the SD card.
  *
- * This function acquires the channels and stores them in the SD card.
+ * This function acquires the channels and stores them in the SD card. If no EXT ADC is used, the data is
+ * stored into buffers and a second task will write the data to the SD card. If an EXT ADC is used, the data
+ * is written directly to the SD card. This is done because the SDCard and EXT ADC use the same SPI lines.
  *
  */
 void IRAM_ATTR acquireChannelsSDCard(void)
 {
+    static uint32_t crc_seq_num = 0;
     uint16_t adc_internal_res[6];
     float int_ch_mv[6];
-
+    uint32_t temp; // Used to separate integer and floating point instructions, reducing the latter that are
+                   // very expensive
 #if _ADC_EXT_ != NO_EXT_ADC
     uint32_t adc_external_res[2] = {1, 1};
     float ext_ch_mv[2] = {0, 0};
-    uint32_t *adc_external_res_ptr = adc_external_res;
 #endif
 
+    // Loop unrolled for speed. All intern channels are always active
     adc_internal_res[0] = adc1_get_raw(analog_channels[active_internal_chs[0]]);
     adc_internal_res[1] = adc1_get_raw(analog_channels[active_internal_chs[1]]);
     adc_internal_res[2] = adc1_get_raw(analog_channels[active_internal_chs[2]]);
@@ -73,40 +80,42 @@ void IRAM_ATTR acquireChannelsSDCard(void)
     adc_internal_res[4] = adc1_get_raw(analog_channels[active_internal_chs[4]]);
     adc_internal_res[5] = adc1_get_raw(analog_channels[active_internal_chs[5]]);
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ == ADC_MCP
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
-    for (int i = 0; i < num_extern_active_chs; i++, adc_external_res_ptr++)
+    for (int i = 0; i < 2; ++i) // Always both ext channels active
     {
         uint32_t ch_value = active_ext_chs[i] - 6;
         for (int j = 0; j < 3; j++)
         {
             if ((ext_adc_raw_data[j] >> 28) == ch_value)
             {
-                *adc_external_res_ptr =
+                adc_external_res[i] =
                     ((ext_adc_raw_data[j] >> 24) & 0x01) ? 0 : (ext_adc_raw_data[j] & 0x00FFFFFF);
+                ext_ch_mv[i] = adc_external_res[i] * CONVERSION_FACTOR;
                 break;
             }
         }
     }
+
 #endif
 
-#if CONVERSION_MODE == RAW_AND_MV
     // Convert raw data to millivolts
-    for (int j = 0; j < 6; j++)
-    {
-        uint32_t temp = (((adc1_chars.coeff_a * adc_internal_res[j]) + 32767) >> 16) + adc1_chars.coeff_b;
-        int_ch_mv[j] = temp * 3.399;
-    }
-#if _ADC_EXT_ != NO_EXT_ADC
-    for (int j = 0; j < 2; j++)
-    {
-        ext_ch_mv[j] = adc_external_res[j] * CONVERSION_FACTOR;
-    }
-#endif
-#endif
-    // Write the internal channel values
     // Loop unrolled for speed. All intern channels are always active
+    temp = (((adc1_chars.coeff_a * adc_internal_res[0]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[0] = temp * 3.399;
+    temp = (((adc1_chars.coeff_a * adc_internal_res[1]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[1] = temp * 3.399;
+    temp = (((adc1_chars.coeff_a * adc_internal_res[2]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[2] = temp * 3.399;
+    temp = (((adc1_chars.coeff_a * adc_internal_res[3]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[3] = temp * 3.399;
+    temp = (((adc1_chars.coeff_a * adc_internal_res[4]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[4] = temp * 3.399;
+    temp = (((adc1_chars.coeff_a * adc_internal_res[5]) + 32767) >> 16) + adc1_chars.coeff_b;
+    int_ch_mv[5] = temp * 3.399;
+
+    // Write the internal channel values
     buffer_ptr +=
         sprintf(buffer_ptr,
                 "%hu\t%hhu\t%hhu\t%hhu\t%hhu\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%."
@@ -116,7 +125,7 @@ void IRAM_ATTR acquireChannelsSDCard(void)
                 adc_internal_res[4], int_ch_mv[4], adc_internal_res[3], int_ch_mv[3], adc_internal_res[2],
                 int_ch_mv[2], adc_internal_res[1], int_ch_mv[1], adc_internal_res[0], int_ch_mv[0]);
 
-    crc_seq_num++;
+    ++crc_seq_num;
 
 #if _ADC_EXT_ != NO_EXT_ADC
     // Write the external channel values
@@ -129,9 +138,9 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 #if _ADC_EXT_ != NO_EXT_ADC
 
     write(fileno(save_file), buffer[0], (buffer_ptr - (buffer[0])));
-    buffer_ptr = (buffer[0]);
+    buffer_ptr = buffer[0];
 
-    if ((crc_seq_num % 3000) == 0)
+    if ((crc_seq_num % 3000) == 0) // Every 30 seconds force a sync (hardware write)
     {
         fsync(fileno(save_file));
     }
@@ -210,10 +219,6 @@ void IRAM_ATTR acquisitionSDCard(void *not_used)
         {
             acquireChannelsSDCard();
         }
-        else
-        {
-            DEBUG_PRINT_W("acqAdc1", "ulTaskNotifyTake timed out!");
-        }
     }
 }
 
@@ -224,16 +229,8 @@ void IRAM_ATTR acquisitionSDCard(void *not_used)
  */
 esp_err_t initSDCard(void)
 {
-    const char mount_point[] = MOUNT_POINT;
+    const char mount_point[] = "/sdcard";
     esp_err_t ret = ESP_OK;
-    for (int i = 0; i < NUM_ACK_BUF; i++)
-    {
-        if ((buf_ready_mutex[i] = xSemaphoreCreateMutex()) == NULL)
-        {
-            DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
-            abort();
-        }
-    }
 
     // SD card mount config
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
@@ -258,23 +255,23 @@ esp_err_t initSDCard(void)
         .intr_flags = 0,
     };
 
+    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+
+    gpio_pullup_en(PIN_NUM_MOSI); // Enable pull-up on MOSI
+
     ret = spi_bus_initialize(sd_spi_host.slot, &bus_cfg, SPI_DMA_CH_AUTO);
     if (ret != ESP_OK)
     {
         DEBUG_PRINT_E("initSDCard", "Failed to initialize bus.");
         return ESP_FAIL;
     }
-    gpio_pullup_en(PIN_NUM_MOSI); // Enable pull-up on MISO
 
-    DEBUG_PRINT_W("sdcard", "Initializing device...");
-    initializeDevice();
+    initializeDevice(); // EXT ADC has to be initialized before mounting the SD card, because they share
+                        // the same SPI bus. Other initializations are also done in this function.
 
-    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = PIN_NUM_CS;
     slot_config.host_id = sd_spi_host.slot;
-
     ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config, &mount_config, &card);
-
     if (ret != ESP_OK)
     {
         if (ret == ESP_FAIL)
@@ -293,7 +290,38 @@ esp_err_t initSDCard(void)
         return ESP_FAIL;
     }
 
-    return createFile();
+    ret = createFile();
+    if (ret != ESP_OK)
+    {
+        DEBUG_PRINT_E("initSDCard", "Failed to create file.");
+        return ESP_FAIL;
+    }
+
+    // Create mutexes for the buffer ready array
+    for (int i = 0; i < NUM_ACK_BUF; i++)
+    {
+        if ((buf_ready_mutex[i] = xSemaphoreCreateMutex()) == NULL)
+        {
+            DEBUG_PRINT_E("xSemaphoreCreateMutex", "Mutex creation failed");
+            abort();
+        }
+    }
+
+    // Allocate memory for the buffers
+    for (int i = 0; i < NUM_ACK_BUF; i++)
+    {
+        buffer[i] = (char *)malloc(BUFFER_SIZE * sizeof(char));
+        if (buffer[i] == NULL)
+        {
+            DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
+            exit(-1);
+        }
+        memset(buffer[i], 0, BUFFER_SIZE);
+    }
+
+    buffer_ptr = buffer[0];
+
+    return ESP_OK;
 }
 
 /**
@@ -310,30 +338,21 @@ esp_err_t createFile(void)
 {
     char int_str[15];
     struct stat st;
-    const char *file_name = MOUNT_POINT "/acquisition_datapoints";
+    const char *file_name = "/sdcard/acquisition_datapoints";
 
     strcpy(full_file_name, file_name);
     strcat(full_file_name, ".csv");
-
-    if (stat(full_file_name, &st) == 0)
-    { // If file already exists
-        for (int i = 1; i > 0; ++i)
-        { // Find a new file name
-            strcpy(full_file_name, file_name);
-            sprintf(int_str, "%d", i);
-            strcat(full_file_name, int_str);
-            strcat(full_file_name, ".csv");
-            if (stat(full_file_name, &st) != 0)
-            {
-                save_file = fopen(full_file_name, "w"); // Create new file
-                i = -5;
-                break;
-            }
-        }
-    }
-    else
+    for (uint32_t i = 0; /*Stop condition inside*/; ++i) // Find the next file name that does not exist
     {
-        save_file = fopen(full_file_name, "w"); // Create new file
+        strcpy(full_file_name, file_name);
+        sprintf(int_str, "%d", i);
+        strcat(full_file_name, int_str);
+        strcat(full_file_name, ".csv");
+        if (stat(full_file_name, &st) != 0) // If the file does not exist
+        {
+            save_file = fopen(full_file_name, "w"); // Create new file
+            break;
+        }
     }
 
     if (save_file == NULL)
@@ -343,6 +362,8 @@ esp_err_t createFile(void)
     }
 
 #if _ADC_EXT_ != NO_EXT_ADC
+    // When using the external ADC, the data is written directly to the SD card, so we need to disable
+    // buffering
     if (setvbuf(save_file, NULL, _IONBF, 0) != 0)
     {
         DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
@@ -355,19 +376,17 @@ esp_err_t createFile(void)
 /**
  * \brief Unmount the SD card and free the SPI bus.
  *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
 void unmountSDCard(void)
 {
-    const char mount_point[] = MOUNT_POINT;
-    closeSDCard();
+    const char mount_point[] = "/sdcard";
+    fclose(save_file);
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     spi_bus_free(sd_spi_host.slot);
 }
 
 void initializeDevice(void)
 {
-    uint8_t i;
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
 #if _ADC_EXT_ != NO_EXT_ADC
     int active_channels_sd = 0b11111111;
@@ -388,7 +407,7 @@ void initializeDevice(void)
 
     // Select the channels that are activated (with corresponding bit equal
     // to 1)
-    for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
+    for (int i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
     {
         if (!(active_channels_sd & i))
         {
@@ -410,22 +429,6 @@ void initializeDevice(void)
 
         DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number);
         channel_number--;
-    }
-
-    // Clear send buffs, because of potential previous live mode
-    bt_curr_buff = 0;
-    acq_curr_buff = 0;
-    // Clean send buff, because of send status and send firmware string
-    send_busy = 0;
-
-    crc_seq_num = 0;
-
-    // Clean send buffers, to be sure
-    for (uint8_t i = 0; i < NUM_BUFFERS; i++)
-    {
-        memset(snd_buff[i], 0, send_buff_len);
-        snd_buff_idx[i] = 0;
-        bt_buffs_to_send[i] = 0;
     }
 
     // Start external
@@ -455,12 +458,12 @@ void startAcquisitionSDCard(void)
 #if _ADC_EXT_ != NO_EXT_ADC
     fprintf(save_file,
             "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
-            "'Channels indexes mV': [], 'Channels "
+            "'Channels indexes mV': [6, 8, 10, 12, 14, 16, 18, 20], 'Channels "
             "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
             "['AI1_raw', 'AI1_mv', 'AI2_raw', "
             "'AI2_mv', 'AI3_raw', 'AI3_mv', "
             "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
-            "'AX7_raw', 'AX7_mv'], 'Device': '%s', "
+            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
             "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
             "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', "
             "'AI2_mv', 'AI3_raw', 'AI3_mv', "
@@ -479,7 +482,7 @@ void startAcquisitionSDCard(void)
             "'Channels "
             "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, "
             "7, "
-            "9, 11, 13, 15,], 'Channels labels': ['AI1_raw', 'AI1_mv', "
+            "9, 11, 13, 15], 'Channels labels': ['AI1_raw', 'AI1_mv', "
             "'AI2_raw', "
             "'AI2_mv', 'AI3_raw', 'AI3_mv', "
             "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], "
@@ -490,7 +493,7 @@ void startAcquisitionSDCard(void)
             "'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', "
             "'AI6_raw', 'AI6_mv', 'Timestamp'], 'ISO 8601':'NULL', "
             "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
-            "'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
+            "'Sampling rate (Hz)': 100, 'Timestamp': 0.0}\n",
             device_name, FIRMWARE_VERSION);
     fprintf(save_file, "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
                        "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
@@ -503,21 +506,9 @@ void startAcquisitionSDCard(void)
     fsync(fileno(save_file));
 
 #if _ADC_EXT_ == NO_EXT_ADC
+    // If no external ADC is used, start the secondary task that writes the data to the SD card
     xTaskCreatePinnedToCore(&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20, &file_sync_task, 0);
 #endif
-
-    for (int i = 0; i < NUM_ACK_BUF; i++)
-    {
-        buffer[i] = (char *)malloc(BUFFER_SIZE * sizeof(char));
-        if (buffer[i] == NULL)
-        {
-            DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
-            exit(-1);
-        }
-        memset(buffer[i], 0, BUFFER_SIZE);
-    }
-
-    buffer_ptr = buffer[0];
 
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
