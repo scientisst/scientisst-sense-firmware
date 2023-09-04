@@ -368,8 +368,9 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
     // WARNING: if changed, change same code in API
     if (sample_rate > 100)
     {
-        send_threshold = !(send_buff_len % packet_size) ? send_buff_len - packet_size
-                                                        : send_buff_len - (send_buff_len % packet_size);
+        send_threshold = !(send_buff_len % packet_size)
+                             ? send_buff_len - 1 // If buf len is a multiple of packet size
+                             : send_buff_len - (send_buff_len % packet_size); // Else
     }
     else
     {

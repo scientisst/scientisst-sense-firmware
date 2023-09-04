@@ -41,32 +41,36 @@
  */
 void IRAM_ATTR sendData(void)
 {
-    // Check if there's anything to send and if there is, check if it's enough
-    // to send
-    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
-    if (bt_buffs_to_send[bt_curr_buff])
+    while (1) // Loop to send all the available data
     {
+        int buf_ready = 0;
+        // Check if there's anything to send and if there is, check if it's enough
+        // to send
+        xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+        buf_ready = bt_buffs_to_send[bt_curr_buff];
         xSemaphoreGive(bt_buffs_to_send_mutex);
-        if (snd_buff_idx[bt_curr_buff] < send_threshold)
+        if (buf_ready)
+        {
+            if (snd_buff_idx[bt_curr_buff] < send_threshold)
+            {
+                send_busy = 0;
+                return;
+            }
+            else if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
+            {
+                send_busy = 0;
+                return;
+            }
+        }
+        else
         {
             send_busy = 0;
             return;
         }
-        else if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
-        {
-            send_busy = 0;
-            return;
-        }
-    }
-    else
-    {
-        xSemaphoreGive(bt_buffs_to_send_mutex);
-        send_busy = 0;
-        return;
-    }
 
-    send_busy = 1;
-    send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+        send_busy = 1;
+        send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+    }
 }
 
 /**
@@ -160,20 +164,21 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         {
             finalizeSend();
             // Try to send next buff
-            if (param->write.cong == 0)
-            { // bt write is free
+            if (param->write.cong == 0) // bt write is free
+            {
                 sendData();
             }
             else
             {
                 send_busy = SEND_AFTER_C0NG;
             }
-            // write failed because congestion, so wait event 'ESP_SPP_CONG_EVT' and 'param->cong.cong == 0' to resend the
-            // failed writing data.
+            // write failed because congestion, so wait event 'ESP_SPP_CONG_EVT' and 'param->cong.cong == 0'
+            // to resend the failed writing data.
         }
         else
         {
-            // To resend the same buffer (note that because the write was unsuccessful, bt_curr_buff wasn't updated)
+            // To resend the same buffer (note that because the write was unsuccessful, bt_curr_buff wasn't
+            // updated)
             send_busy = SEND_AFTER_C0NG;
         }
         break;
@@ -224,7 +229,8 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
 
 #if (CONFIG_BT_SSP_ENABLED == true)
     case ESP_BT_GAP_CFM_REQ_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
+        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d",
+                      param->cfm_req.num_val);
         esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
         break;
     case ESP_BT_GAP_KEY_NOTIF_EVT:
@@ -347,7 +353,8 @@ void getDeviceName(void)
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_SOFTAP);
         // Use esp_read_mac to infer the wifi softap mac addr based in the base mac addr read from EFUSE
     }
-    else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA) || !strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
+    else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA) ||
+             !strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
     {
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_STA);
         // Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
@@ -364,9 +371,10 @@ void getDeviceName(void)
     }
 
     // Make mac address human readable
-    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2], mac_iterface[3],
-            mac_iterface[4], mac_iterface[5]);
-    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
+    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2],
+            mac_iterface[3], mac_iterface[4], mac_iterface[5]);
+    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4],
+            mac_bt[5]);
 
     // Turn all characters of both mac address strings from lower case to upper case
     for (int pntr_idx = 0; pntr_idx < 2; pntr_idx++)

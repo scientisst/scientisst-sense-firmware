@@ -29,7 +29,7 @@
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
 
 #define BUFFER_SIZE (512 * 7 * 2)
-#define NUM_ACK_BUF (8 * 2)
+#define NUM_ACQ_BUF (8 * 2)
 
 #define CONVERSION_FACTOR 0.000393f // 391 would be exact
 //((3.3f * 2 * 1000) / (pow(2, 24) - 1))  // External ADC conversion factor
@@ -40,10 +40,10 @@ sdmmc_card_t *card;       ///< SD card handle
 char full_file_name[100]; ///< Full file name of the file on the SD card
 FILE *save_file = NULL;   ///< File handle of the file on the SD card
 
-DMA_ATTR char *buffer[NUM_ACK_BUF]; ///< Array buffers to store the data to be written to the SD card
-uint16_t buf_ready[NUM_ACK_BUF] = {
-    0}; ///< Array to store the number of bytes ready to be written to the SD card
-SemaphoreHandle_t buf_ready_mutex[NUM_ACK_BUF]; ///< Mutex to protect the buffer ready array, one for each
+DMA_ATTR char *buffer[NUM_ACQ_BUF]; ///< Array buffers to store the data to be written to the SD card
+/// Array to store the number of bytes ready to be written to the SD card
+uint16_t buf_ready[NUM_ACQ_BUF] = {0};
+SemaphoreHandle_t buf_ready_mutex[NUM_ACQ_BUF]; ///< Mutex to protect the buffer ready array, one for each
                                                 ///< buffer for faster access times
 
 char *buffer_ptr = NULL;   ///< Pointer to the current buffer to write to
@@ -51,7 +51,7 @@ uint8_t buf_num_ack = 0;   ///< Number of the buffer where the data is being wri
 uint8_t buf_num_write = 0; ///< Number of the buffer that is being written to the SD card
 
 void initializeDevice(void);
-
+esp_err_t createFile(void);
 /**
  * \brief Acquire the channels and store them in the SD card.
  *
@@ -147,18 +147,18 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
 #else
     // If the buffer is full, save it to the SD card
-    if (buffer_ptr - (buffer[buf_num_ack % NUM_ACK_BUF]) >= BUFFER_SIZE - 97)
+    if (buffer_ptr - (buffer[buf_num_ack % NUM_ACQ_BUF]) >= BUFFER_SIZE - 97)
     {
-        xSemaphoreTake(buf_ready_mutex[buf_num_ack % NUM_ACK_BUF], portMAX_DELAY);
-        buf_ready[buf_num_ack % NUM_ACK_BUF] = buffer_ptr - (buffer[buf_num_ack % NUM_ACK_BUF]);
-        xSemaphoreGive(buf_ready_mutex[buf_num_ack % NUM_ACK_BUF]);
+        xSemaphoreTake(buf_ready_mutex[buf_num_ack % NUM_ACQ_BUF], portMAX_DELAY);
+        buf_ready[buf_num_ack % NUM_ACQ_BUF] = buffer_ptr - (buffer[buf_num_ack % NUM_ACQ_BUF]);
+        xSemaphoreGive(buf_ready_mutex[buf_num_ack % NUM_ACQ_BUF]);
         xTaskNotifyGive(file_sync_task);
-        while (buf_ready[(buf_num_ack + 1) % NUM_ACK_BUF])
+        while (buf_ready[(buf_num_ack + 1) % NUM_ACQ_BUF])
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        buffer_ptr = (buffer[(++buf_num_ack) % NUM_ACK_BUF]);
+        buffer_ptr = (buffer[(++buf_num_ack) % NUM_ACQ_BUF]);
     }
 #endif
 }
@@ -171,20 +171,20 @@ void IRAM_ATTR fileSyncTask(void *not_used)
         {
             while (1)
             {
-                xSemaphoreTake(buf_ready_mutex[buf_num_write % NUM_ACK_BUF], portMAX_DELAY);
-                if (buf_ready[buf_num_write % NUM_ACK_BUF])
+                xSemaphoreTake(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF], portMAX_DELAY);
+                if (buf_ready[buf_num_write % NUM_ACQ_BUF])
                 {
-                    write(fileno(save_file), (buffer[buf_num_write % NUM_ACK_BUF]),
-                          buf_ready[buf_num_write % NUM_ACK_BUF]);
-                    buf_ready[buf_num_write % NUM_ACK_BUF] = 0;
-                    xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACK_BUF]);
+                    write(fileno(save_file), (buffer[buf_num_write % NUM_ACQ_BUF]),
+                          buf_ready[buf_num_write % NUM_ACQ_BUF]);
+                    buf_ready[buf_num_write % NUM_ACQ_BUF] = 0;
+                    xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF]);
                     fflush(save_file);
                     fsync(fileno(save_file));
                     buf_num_write++;
                 }
                 else
                 {
-                    xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACK_BUF]);
+                    xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF]);
                     break;
                 }
             }
@@ -298,7 +298,7 @@ esp_err_t initSDCard(void)
     }
 
     // Create mutexes for the buffer ready array
-    for (int i = 0; i < NUM_ACK_BUF; i++)
+    for (int i = 0; i < NUM_ACQ_BUF; i++)
     {
         if ((buf_ready_mutex[i] = xSemaphoreCreateMutex()) == NULL)
         {
@@ -308,7 +308,7 @@ esp_err_t initSDCard(void)
     }
 
     // Allocate memory for the buffers
-    for (int i = 0; i < NUM_ACK_BUF; i++)
+    for (int i = 0; i < NUM_ACQ_BUF; i++)
     {
         buffer[i] = (char *)malloc(BUFFER_SIZE * sizeof(char));
         if (buffer[i] == NULL)
