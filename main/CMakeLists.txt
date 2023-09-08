@@ -23,3 +23,6 @@ if (EXISTS ${WEB_SRC_DIR})
 else ()
     message(FATAL_ERROR "${WEB_SRC_DIR} doesn't exit")
 endif ()
+
+add_compile_options(-Wall -Wextra -Wundef -Wunused -Warray-bounds -Wbuiltin-macro-redefined)
+add_compile_options(-Wall -Wextra -Wundef -Wunused -Warray-bounds -Wbuiltin-macro-redefined)
