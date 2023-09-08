@@ -18,6 +18,7 @@
 #define SEND_AFTER_C0NG 2
 
 void IRAM_ATTR sendData(void);
+void IRAM_ATTR sendDataBluetooth(void);
 void IRAM_ATTR finalizeSend(void);
 void initBt(void);
 void getDeviceName(void);

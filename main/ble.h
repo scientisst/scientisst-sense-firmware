@@ -8,6 +8,9 @@
 #ifndef BLE_H
 #define BLE_H
 
+#include "esp_attr.h"
+#include "esp_err.h"
+
 #define GATTS_NOTIFY_LEN 517 //< Maximum length of the buffer to send in BLE mode
 
 void initBle(void);

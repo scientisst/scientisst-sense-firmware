@@ -164,10 +164,7 @@ esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
         n_left -= n_written;
         ptr += n_written;
     }
-    finalizeSend();
 
-    // Try to send next buff
-    sendData();
     return ESP_OK;
 }
 

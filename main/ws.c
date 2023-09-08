@@ -54,10 +54,6 @@ esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, uint8_t *buff)
         return ret;
     }
 
-    finalizeSend();
-
-    // Try to send next buff
-    sendData();
     return ESP_OK;
 }
 

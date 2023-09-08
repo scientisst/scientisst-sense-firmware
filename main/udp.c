@@ -100,10 +100,5 @@ esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, uint8_t *buff)
         return ESP_FAIL;
     }
 
-    finalizeSend();
-    DEBUG_PRINT_I("udpSend", "[UDP] Sent: %d bytes", len);
-
-    // Try to send next buff
-    sendData();
     return ESP_OK;
 }

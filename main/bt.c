@@ -33,44 +33,87 @@
 /**
  * \brief Function to send data using the appropriate send function.
  *
- * This function is called by the send task and sends the data using the
- * appropriate send function. It first checks if there's anything to send. The
- * buffer changing and clearing tasks are done after in finalizeSend() the
- * ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in
- * esp_spp_cb().
+
  */
 void IRAM_ATTR sendData(void)
 {
     while (1) // Loop to send all the available data
     {
-        int buf_ready = 0;
+        int buf_ready;
+        esp_err_t ret;
         // Check if there's anything to send and if there is, check if it's enough
         // to send
+        // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
+        // their own execution and do not interfere with the other task.
         xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
         buf_ready = bt_buffs_to_send[bt_curr_buff];
         xSemaphoreGive(bt_buffs_to_send_mutex);
-        if (buf_ready)
+
+        if (!buf_ready)
         {
-            if (snd_buff_idx[bt_curr_buff] < send_threshold)
-            {
-                send_busy = 0;
-                return;
-            }
-            else if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
-            {
-                send_busy = 0;
-                return;
-            }
+            send_busy = 0;
+            return;
         }
-        else
+
+        if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
         {
             send_busy = 0;
             return;
         }
 
         send_busy = 1;
-        send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+        ret = send_func(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
+
+        if (ret == ESP_FAIL) // If the send function failed, stop sending data. Connection was possibly lost
+            break;
+
+        xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+        bt_buffs_to_send[bt_curr_buff] = 0;
+        xSemaphoreGive(bt_buffs_to_send_mutex);
+
+        // Clear recently sent buffer
+        memset(snd_buff[bt_curr_buff], 0, snd_buff_idx[bt_curr_buff]);
+        snd_buff_idx[bt_curr_buff] = 0;
+
+        // Change send buffer
+        bt_curr_buff = (bt_curr_buff + 1) % (NUM_BUFFERS - 1);
     }
+}
+
+// Send Data for Bluetooth mode. Given that the bluetooth connection has to wait for events to send data, this
+// function is called by the event handler. If others modes used the same approach, it created a recursive
+// that could explode the stack.
+/* This function is called by the send task and sends the data using the
+ * appropriate send function. It first checks if there's anything to send. The
+ * buffer changing and clearing tasks are done after in finalizeSend() the
+ * ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in
+ * esp_spp_cb().
+ */
+void IRAM_ATTR sendDataBluetooth(void)
+{
+    int buf_ready = 0;
+    // Check if there's anything to send and if there is, check if it's enough
+    // to send
+    // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
+    // their own execution and do not interfere with the other task.
+    xSemaphoreTake(bt_buffs_to_send_mutex, portMAX_DELAY);
+    buf_ready = bt_buffs_to_send[bt_curr_buff];
+    xSemaphoreGive(bt_buffs_to_send_mutex);
+
+    if (!buf_ready)
+    {
+        send_busy = 0;
+        return;
+    }
+
+    if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
+    {
+        send_busy = 0;
+        return;
+    }
+
+    send_busy = 1;
+    esp_spp_write(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 }
 
 /**

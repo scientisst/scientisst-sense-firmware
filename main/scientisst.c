@@ -272,10 +272,12 @@ void initScientisst(void)
  */
 void IRAM_ATTR sendTask(void *not_used)
 {
+    void (*send_data_func)(void) = &sendData;
     if (!strcmp(op_settings.com_mode, COM_MODE_BT))
     {
         initBt();
         send_func = &esp_spp_write;
+        send_data_func = &sendDataBluetooth;
     }
     else if (!strcmp(op_settings.com_mode, COM_MODE_BLE))
     {
@@ -293,6 +295,7 @@ void IRAM_ATTR sendTask(void *not_used)
                                     &acq_adc1_task, 1);
             initBt();
             send_func = &esp_spp_write;
+            send_data_func = &sendDataBluetooth;
         }
         else
         {
@@ -309,7 +312,7 @@ void IRAM_ATTR sendTask(void *not_used)
     while (1)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        sendData();
+        send_data_func();
     }
 }
 
@@ -438,14 +441,17 @@ void IRAM_ATTR acqAdc1Task(void *not_used)
 
                 // Check if next buffer is full. If this happens, it means all buffers are full and bt task
                 // can't handle this sending throughput
-                while (bt_buffs_to_send[acq_next_buff] == 1)
+                if (bt_buffs_to_send[acq_next_buff] == 1)
                 {
                     DEBUG_PRINT_W("acqAdc1Task", "Sending buffer is full, cannot acquire");
-                    vTaskDelay(1 / portTICK_PERIOD_MS);
-                    if (send_busy == 0)
+                    do // Wait until next buffer is free
                     {
-                        xTaskNotifyGive(send_task);
-                    }
+                        if (send_busy == 0)
+                        {
+                            xTaskNotifyGive(send_task);
+                        }
+                        vTaskDelay(10 / portTICK_PERIOD_MS); // TODO: test with 1 MS
+                    } while (bt_buffs_to_send[acq_next_buff] == 1);
                 }
                 acq_curr_buff = acq_next_buff;
             }
