@@ -16,6 +16,7 @@
 #include "config.h"
 #include "esp_vfs_fat.h"
 #include "gpio.h"
+#include "imu.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "sd_card.h"
@@ -135,7 +136,7 @@ spi_transaction_t adc_ext_trans;
 
 // Op settings
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_SD_CARD,
+    .com_mode = COM_MODE_BT,
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 /*{
     .com_mode = COM_MODE_TCP_STA,
@@ -256,7 +257,7 @@ void initScientisst(void)
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
     xTaskCreatePinnedToCore(&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24, &acq_adc1_task, 1);
 #else
-    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
+    xTaskCreatePinnedToCore(&bno055_task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
 #endif
 }
 

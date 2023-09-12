@@ -24,7 +24,7 @@
 // Possible values for _ADC_EXT_:
 //   - NO_EXT_ADC (No external adc) [Default]
 //   - ADC_MCP (Enable external adc)
-#define _ADC_EXT_ ADC_MCP
+#define _ADC_EXT_ NO_EXT_ADC
 
 // Possible values for _TIMESTAMP_:
 //   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
@@ -43,7 +43,7 @@
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
 //   - FORMAT_SDCARD (Format sd card if mount failed) (BE CAREFUL, THIS WILL
 //     ERASE ALL DATA ON THE SD CARD)
-#define FORMAT_SDCARD_IF_MOUNT_FAILED FORMAT_SDCARD
+#define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
 
 /************************
  * CONFIGURATION CHECKS *
