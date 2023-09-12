@@ -284,9 +284,11 @@ void IRAM_ATTR sendTask(void *not_used)
         initBle();
         send_func = &sendBle;
     }
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+
     else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD))
     {
+
+#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
         if (initSDCard() != ESP_OK)
         {
             vTaskDelete(acq_adc1_task);
@@ -302,8 +304,15 @@ void IRAM_ATTR sendTask(void *not_used)
             sd_card_present = 1;
             startAcquisitionSDCard();
         }
-    }
+#else
+        DEBUG_PRINT_E(
+            "SD_CARD",
+            "SD Card is not enabled in config.h but set as com mode in op settings. Changing to BT mode");
+        initBt();
+        send_func = &esp_spp_write;
+        send_data_func = &sendDataBluetooth;
 #endif
+    }
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
     if (sd_card_present)
         vTaskDelete(NULL);
