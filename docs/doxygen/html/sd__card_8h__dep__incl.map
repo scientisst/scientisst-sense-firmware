@@ -1,6 +1,0 @@
-<map id="sd_card.h" name="sd_card.h">
-<area shape="rect" id="node1" title="SD card driver. This file implements the SD card driver." alt="" coords="97,5,181,32"/>
-<area shape="rect" id="node2" href="$com_8c.html" title="This file contains the functions that handle the communication with the client." alt="" coords="5,80,67,107"/>
-<area shape="rect" id="node3" href="$scientisst_8c.html" title="Main file for the Scientisst firmware." alt="" coords="91,80,186,107"/>
-<area shape="rect" id="node4" href="$sd__card_8c.html" title="SD card driver. This file implements the SD card driver." alt="" coords="211,80,293,107"/>
-</map>
