@@ -45,6 +45,11 @@
 //     ERASE ALL DATA ON THE SD CARD)
 #define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
 
+// Possible values for _IMU_ENABLED_:
+//   - IMU_DISABLED (Disable imu) [Default]
+//   - IMU_ENABLED (Enable imu)
+#define _IMU_ENABLED_ IMU_ENABLED
+
 /************************
  * CONFIGURATION CHECKS *
  ************************/

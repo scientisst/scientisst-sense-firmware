@@ -33,8 +33,8 @@
 #define TIMESTAMP_DISABLED 1
 #define TIMESTAMP_ENABLED 2
 
-// Conversion mode possible options
-#define RAW_ONLY 1
-#define RAW_AND_MV 2
+// IMU possible options
+#define IMU_DISABLED 1
+#define IMU_ENABLED 2
 
 #endif // SCIENTISST_SENSE_FIRMWARE_MACROS_CONF_H

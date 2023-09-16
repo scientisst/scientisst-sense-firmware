@@ -49,6 +49,7 @@ TaskHandle_t send_task;
 TaskHandle_t abat_task;
 TaskHandle_t rcv_task;
 TaskHandle_t acq_adc1_task;
+TaskHandle_t imu_task;
 
 // Mutex for the buffers
 SemaphoreHandle_t bt_buffs_to_send_mutex;
@@ -254,10 +255,15 @@ void initScientisst(void)
                                 &abat_task, 0);
     }
 
+#if _IMU_ENABLED_ == IMU_ENABLED
+    xTaskCreatePinnedToCore(&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 1);
+#endif
+
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
     xTaskCreatePinnedToCore(&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24, &acq_adc1_task, 1);
 #else
-    xTaskCreatePinnedToCore(&bno055_task, "acqAdc1Task", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
+    xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096 * 2, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task,
+                            1);
 #endif
 }
 

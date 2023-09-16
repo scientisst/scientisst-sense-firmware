@@ -14,7 +14,9 @@
 #define I2C_MASTER_NACK 1
 #define I2C_TIMEOUT_TICKS 40000
 
-void IRAM_ATTR i2c_master_init()
+uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
+
+void i2c_master_init()
 {
     i2c_config_t i2c_config = {.mode = I2C_MODE_MASTER,
                                .sda_io_num = SDA_PIN,
@@ -97,54 +99,52 @@ void IRAM_ATTR BNO055_delay_msek(u32 msek)
 
 void IRAM_ATTR bno055_task(void *not_used)
 {
-    i2c_master_init();
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
     struct bno055_t myBNO = {.bus_write = BNO055_I2C_bus_write,
                              .bus_read = BNO055_I2C_bus_read,
                              .dev_addr = BNO055_I2C_ADDR1,
                              .delay_msec = BNO055_delay_msek};
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    bno055_init(&myBNO);
-    bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
-    bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
+
     unsigned char accel_calib_status = 0;
     unsigned char gyro_calib_status = 0;
     unsigned char mag_calib_status = 0;
     unsigned char sys_calib_status = 0;
 
+    struct bno055_euler_t euler_hrp;
+    struct bno055_linear_accel_t linear_acce_xyz;
+
+    i2c_master_init();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    bno055_init(&myBNO);
+    bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
+    bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
+
     bno055_get_accel_calib_stat(&accel_calib_status);
     bno055_get_mag_calib_stat(&mag_calib_status);
     bno055_get_gyro_calib_stat(&gyro_calib_status);
     bno055_get_sys_calib_stat(&sys_calib_status);
-    float rollDeg;
-    float pitchDeg;
-    float yawDeg;
-    struct bno055_euler_t euler_hrp;
-    int i = 0;
-    uint64_t last_time = esp_timer_get_time();
-    uint64_t current_time;
+    // TODO: Check calibration status. How to handle not calibrated state?
+
     while (1)
     {
-        if (bno055_read_euler_hrp(&euler_hrp) == BNO055_SUCCESS)
+        if (bno055_read_euler_hrp(&euler_hrp) == BNO055_SUCCESS &&
+            bno055_read_linear_accel_xyz(&linear_acce_xyz) == BNO055_SUCCESS)
         {
-            // printf("\nhead: %.2f pitch: %.2f roll: %.2f", yawDeg, pitchDeg, rollDeg);
-            ++i;
-            if (i == 1000)
-            {
-                rollDeg = euler_hrp.r >> 4;
-                pitchDeg = euler_hrp.p >> 4;
-                yawDeg = euler_hrp.h >> 4;
-                current_time = esp_timer_get_time();
-                printf("%.2f\n", (float)(current_time - last_time) / 1000000);
-                last_time = current_time;
-                printf("head: %.2f pitch: %.2f roll: %.2f\n", yawDeg, pitchDeg, rollDeg);
-                i = 0;
-            }
+            imuValues[0] = (euler_hrp.r >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG; // Degrees 12 bits
+            imuValues[1] = (euler_hrp.p >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG;
+            imuValues[2] = (euler_hrp.h >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG;
+
+            imuValues[3] =
+                (linear_acce_xyz.x >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ; // m/s^2 12 bits but
+                                                   // has to be divided by 6.25 (6.25 * 16 = 100)
+            imuValues[4] = (linear_acce_xyz.y >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ;
+            imuValues[5] = (linear_acce_xyz.z >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ;
         }
         else
         {
-            printf("\nFalho");
+            DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
         }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS); // 10 ms delay == 100Hz
     }
 }

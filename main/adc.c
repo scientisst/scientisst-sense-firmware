@@ -16,6 +16,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "gpio.h"
+#include "imu.h"
 #include "macros.h"
 #include "macros_conf.h"
 #include "scientisst.h"
@@ -267,6 +268,24 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     }
 #endif
 
+#if _IMU_ENABLED_ == IMU_ENABLED
+    // Store values of IMU data into frame
+    for (int i = 0; i < 6; ++i)
+    {
+        if (!wr_mid_byte_flag)
+        {
+            *(uint16_t *)(frame + frame_next_wr) |= imuValues[i];
+            ++frame_next_wr;
+            wr_mid_byte_flag = 1;
+        }
+        else
+        {
+            *(uint16_t *)(frame + frame_next_wr) |= imuValues[i] << 4;
+            frame_next_wr += 2;
+            wr_mid_byte_flag = 0;
+        }
+    }
+#else
     // Store values of internal channels into frame
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
@@ -283,6 +302,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
             wr_mid_byte_flag = 0;
         }
     }
+#endif
 
     // Store IO states into frame
     frame[packet_size - 3] = io_state;
