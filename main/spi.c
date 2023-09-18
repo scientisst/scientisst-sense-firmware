@@ -121,21 +121,7 @@ void adcExtInit(void)
     read_transaction3.rx_buffer = (ext_adc_raw_data + 2);
 }
 
-/**
- * \brief Starts the external ADC.
- *
- */
-void adcExtStart(void)
-{
-    mcpStart();
-}
-
-void adcExtStop(void)
-{
-    mcpStop();
-}
-
-static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd)
+static inline uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd)
 {
     uint8_t cmd_byte = MCP_ADDR << 6;
 
@@ -157,7 +143,7 @@ static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd)
  *
  * \param cmd Command to be sent.
  */
-void IRAM_ATTR mcpSendCmd(uint8_t cmd)
+void mcpSendCmd(uint8_t cmd)
 {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
@@ -180,7 +166,7 @@ void IRAM_ATTR mcpSendCmd(uint8_t cmd)
  * \param tx_data Data to be written.
  * \param tx_data_bytes Amount of bytes to be written.
  */
-void IRAM_ATTR mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
+void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
 {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(address, WREG);
@@ -304,19 +290,15 @@ void mcpSetupRoutine(uint8_t channel_mask)
 }
 
 /**
- * \brief Starts the MCP.
+ * \brief Starts the external ADC.
  *
  */
-void mcpStart(void)
+void adcExtStart(void)
 {
     mcpSendCmd(START);
 }
 
-/**
- * \brief Stops the MCP.
- *
- */
-void mcpStop(void)
+void adcExtStop(void)
 {
     mcpSendCmd(FSHUTDOWN);
     spi_bus_remove_device(adc_ext_spi_handler);

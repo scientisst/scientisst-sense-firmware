@@ -117,23 +117,22 @@ esp_err_t (*send_func)(uint32_t, int, uint8_t *) = NULL; ///< Send function poin
 // ADC
 DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {
     ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4, ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7};
-uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
+DRAM_ATTR uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
 ///< Active internal channels | If all channels are active: = {5, 4, 3, 2, 1, 0}
-uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};
+DRAM_ATTR uint8_t active_ext_chs[EXT_ADC_CHANNELS] = {0, 0};
 ///< Active external channels | If all channels are active: = {7, 6}
-uint8_t num_intern_active_chs = 0;
-uint8_t num_extern_active_chs = 0;
-uint8_t op_mode = OP_MODE_IDLE; ///< Flag that indicastes if op mode is on (idle, live or config)
+DRAM_ATTR uint8_t num_intern_active_chs = 0;
+DRAM_ATTR uint8_t num_extern_active_chs = 0;
+DRAM_ATTR uint8_t op_mode = OP_MODE_IDLE; ///< Flag that indicastes if op mode is on (idle, live or config)
 uint32_t sample_rate = DEFAULT_SAMPLE_RATE;
 esp_adc_cal_characteristics_t adc1_chars;
 esp_adc_cal_characteristics_t adc2_chars;
-uint8_t gpio_out_state[2] = {0, 0}; ///< Output of 01 & O2 (O0 & O1)
+DRAM_ATTR uint8_t gpio_out_state[2] = {0, 0}; ///< Output of 01 & O2 (O0 & O1)
 
-uint32_t ext_adc_raw_data[3]; ///< Raw data from external adc
+DRAM_ATTR uint32_t ext_adc_raw_data[3]; ///< Raw data from external adc
 
 // SPI
-spi_device_handle_t adc_ext_spi_handler;
-spi_transaction_t adc_ext_trans;
+DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
 
 // Op settings
 op_settings_info_t op_settings = {
