@@ -57,7 +57,7 @@ SemaphoreHandle_t bt_buffs_to_send_mutex;
 sdmmc_host_t sd_spi_host = {
     .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
     .slot = SDSPI_DEFAULT_HOST, // TODO: SPI3_HOST
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     .max_freq_khz = (80 * 1000) / 64,
 #else
     .max_freq_khz = SDMMC_FREQ_DEFAULT * 2,
@@ -255,11 +255,11 @@ void initScientisst(void)
                                 &abat_task, 0);
     }
 
-#if _IMU_ENABLED_ == IMU_ENABLED
+#if _IMU_ == IMU_ENABLED
     xTaskCreatePinnedToCore(&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 0);
 #endif
 
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+#if _SD_CARD_ == SD_CARD_ENABLED
     xTaskCreatePinnedToCore(&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24, &acq_adc1_task, 1);
 #else
     xTaskCreatePinnedToCore(&acqAdc1Task, "acqAdc1Task", 4096 * 2, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task,
@@ -295,7 +295,7 @@ void IRAM_ATTR sendTask(void *not_used)
     else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD))
     {
 
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+#if _SD_CARD_ == SD_CARD_ENABLED
         if (initSDCard() != ESP_OK)
         {
             vTaskDelete(acq_adc1_task);
@@ -320,7 +320,7 @@ void IRAM_ATTR sendTask(void *not_used)
         send_data_func = &sendDataBluetooth;
 #endif
     }
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
+#if _SD_CARD_ == SD_CARD_ENABLED
     if (sd_card_present)
         vTaskDelete(NULL);
 #endif

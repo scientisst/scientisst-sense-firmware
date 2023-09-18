@@ -72,7 +72,7 @@ void adcExtInit(void)
 {
     esp_err_t ret;
 
-#if _SD_CARD_ENABLED_ != SD_CARD_ENABLED
+#if _SD_CARD_ != SD_CARD_ENABLED
     spi_bus_config_t buscfg = {
         .miso_io_num = SPI3_MISO_IO,
         .mosi_io_num = SPI3_MOSI_IO,
@@ -99,7 +99,7 @@ void adcExtInit(void)
         .flags = 0,
     };
 
-#if _SD_CARD_ENABLED_ == SD_CARD_DISABLED
+#if _SD_CARD_ == SD_CARD_DISABLED
     // Initialize the SPI bus
     ret = spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_DISABLED);
     ESP_ERROR_CHECK(ret);

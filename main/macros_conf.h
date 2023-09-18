@@ -12,8 +12,8 @@
 #define SCIENTISST_SENSE_FIRMWARE_MACROS_CONF_H
 
 // External ADC possible options
-#define NO_EXT_ADC 1 // External ADC disabled
-#define ADC_MCP 2
+#define EXT_ADC_DISABLED 1 // External ADC disabled
+#define EXT_ADC_ENABLED 2
 
 // Hardware version possible options
 #define HW_VERSION_CORE 1

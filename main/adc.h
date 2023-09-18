@@ -16,9 +16,9 @@
 #define ADC1_ATTENUATION ADC_ATTEN_DB_0
 #define ADC2_ATTENUATION ADC_ATTEN_DB_11
 
-#if HW_VERSION == HW_VERSION_CORE
+#if _HW_VERSION_ == HW_VERSION_CORE
 #define ABAT_ADC_CH ADC2_CHANNEL_5
-#elif HW_VERSION == HW_VERSION_CARDIO
+#elif _HW_VERSION_ == HW_VERSION_CARDIO
 #define ABAT_ADC_CH ADC2_CHANNEL_5
 #elif HW_VERSION == HW_VERSION_NANO
 #define ABAT_ADC_CH ADC1_CHANNEL_2 // GPIO38
@@ -35,10 +35,10 @@ void acquireAdc1Channels(uint8_t *frame);
 void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame);
 void acquireChannelsJson(uint8_t *frame);
 
-#define CALC_BYTE_CRC(_crc, _byte, _crc_table)                                                                              \
-    ({                                                                                                                      \
-        (_crc) = _crc_table[(_crc)] ^ ((_byte) >> 4);                                                                       \
-        (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                                       \
+#define CALC_BYTE_CRC(_crc, _byte, _crc_table)                                                               \
+    ({                                                                                                       \
+        (_crc) = _crc_table[(_crc)] ^ ((_byte) >> 4);                                                        \
+        (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                        \
     })
 
 #endif

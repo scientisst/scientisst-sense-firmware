@@ -44,7 +44,7 @@ void configLedC(void)
     // Set LED Controller with previously prepared configuration
     ledc_channel_config(&ledc_channel);
 
-#if HW_VERSION != HW_VERSION_CARDIO
+#if _HW_VERSION_ != HW_VERSION_CARDIO
     ledc_channel.channel = LEDC_CHANNEL_G;
     ledc_channel.gpio_num = STATE_LED_G_IO;
     ledc_channel_config(&ledc_channel);
@@ -56,7 +56,7 @@ void configLedC(void)
 
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#if HW_VERSION != HW_VERSION_CARDIO
+#if _HW_VERSION_ != HW_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
@@ -102,7 +102,7 @@ void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_ma
  */
 void gpioInit(void)
 {
-#if HW_VERSION == HW_VERSION_CARDIO
+#if _HW_VERSION_ == HW_VERSION_CARDIO
     gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE,
                ((1ULL << STATE_LED_R_IO) | (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) |
                 (1ULL << SPI3_CS0_IO)),

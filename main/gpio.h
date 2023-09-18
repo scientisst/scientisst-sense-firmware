@@ -14,11 +14,11 @@
 #include "driver/ledc.h"
 #include "macros_conf.h"
 
-#if HW_VERSION == HW_VERSION_CORE
+#if _HW_VERSION_ == HW_VERSION_CORE
 #define STATE_LED_R_IO GPIO_NUM_22
 #define STATE_LED_B_IO GPIO_NUM_13
 #define STATE_LED_G_IO GPIO_NUM_17
-#elif HW_VERSION == HW_VERSION_NANO
+#elif _HW_VERSION_ == HW_VERSION_NANO
 #define STATE_LED_R_IO GPIO_NUM_13
 #define STATE_LED_B_IO GPIO_NUM_22
 #define STATE_LED_G_IO GPIO_NUM_10
@@ -40,9 +40,9 @@
 #define SPI3_SCLK_IO GPIO_NUM_18
 #define SPI3_CS0_IO GPIO_NUM_5
 #define SPI3_CS1_IO GPIO_NUM_4
-#if HW_VERSION == HW_VERSION_CORE
+#if _HW_VERSION_ == HW_VERSION_CORE
 #define MCP_DRDY_IO GPIO_NUM_16
-#elif HW_VERSION == HW_VERSION_CARDIO
+#elif _HW_VERSION_ == HW_VERSION_CARDIO
 #define MCP_DRDY_IO GPIO_NUM_16
 #elif HW_VERSION == HW_VERSION_NANO
 #define MCP_DRDY_IO GPIO_NUM_9
@@ -70,7 +70,7 @@ void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_ma
 void gpioInit(void);
 void configLedC(void);
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
 void IRAM_ATTR gpioDrdyIsrHandler(void *not_used);
 void adcExtDrdyGpio(int io_num);
 #endif

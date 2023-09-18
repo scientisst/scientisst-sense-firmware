@@ -220,7 +220,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     uint8_t crc = 0;
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
-#if _IMU_ENABLED_ == IMU_DISABLED
+#if _IMU_ == IMU_DISABLED
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
 #endif
 
@@ -230,7 +230,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     io_state |= (gpio_out_state[0] & 0b1) << 5;
     io_state |= (gpio_out_state[1] & 0b1) << 4;
 
-#if _IMU_ENABLED_ == IMU_DISABLED
+#if _IMU_ == IMU_DISABLED
     // Get raw values from A1 to A6 (A1 to A6)
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
@@ -238,7 +238,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     }
 #endif
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     if (num_extern_active_chs > 0)
     {
         // Get raw values from AX1 & AX2 (A6 and A7)
@@ -272,7 +272,7 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     }
 #endif
 
-#if _IMU_ENABLED_ == IMU_ENABLED
+#if _IMU_ == IMU_ENABLED
     // Store values of IMU data into frame
     for (int i = 0; i < 6; ++i)
     {

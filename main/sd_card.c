@@ -65,7 +65,7 @@ void IRAM_ATTR acquireChannelsSDCard(void)
     float int_ch_mv[6];
     uint32_t temp; // Used to separate integer and floating point instructions, reducing the latter that are
                    // very expensive
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     uint32_t adc_external_res[2] = {1, 1};
     float ext_ch_mv[2] = {0, 0};
 #endif
@@ -78,7 +78,7 @@ void IRAM_ATTR acquireChannelsSDCard(void)
     adc_internal_res[4] = adc1_get_raw(analog_channels[active_internal_chs[4]]);
     adc_internal_res[5] = adc1_get_raw(analog_channels[active_internal_chs[5]]);
 
-#if _ADC_EXT_ == ADC_MCP
+#if _ADC_EXT_ == EXT_ADC_ENABLED
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
     for (int i = 0; i < 2; ++i) // Always both ext channels active
@@ -125,7 +125,7 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
     ++crc_seq_num;
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     // Write the external channel values
     buffer_ptr += sprintf(buffer_ptr, "\t%u\t%.3f\t%u\t%.3f", adc_external_res[1], ext_ch_mv[1],
                           adc_external_res[0], ext_ch_mv[0]);
@@ -133,7 +133,7 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
     buffer_ptr += sprintf(buffer_ptr, "\t%lld\n", esp_timer_get_time());
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
 
     write(fileno(save_file), buffer[0], (buffer_ptr - (buffer[0])));
     buffer_ptr = buffer[0];
@@ -232,7 +232,7 @@ esp_err_t initSDCard(void)
 
     // SD card mount config
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-#if FORMAT_SDCARD_IF_MOUNT_FAILED == FORMAT_SDCARD
+#if _FORMAT_SDCARD_IF_MOUNT_FAILED_ == FORMAT_SDCARD
         .format_if_mount_failed = true,
 #else
         .format_if_mount_failed = false,
@@ -359,7 +359,7 @@ esp_err_t createFile(void)
         return ESP_FAIL;
     }
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     // When using the external ADC, the data is written directly to the SD card, so we need to disable
     // buffering
     if (setvbuf(save_file, NULL, _IONBF, 0) != 0)
@@ -386,7 +386,7 @@ void unmountSDCard(void)
 void initializeDevice(void)
 {
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     int active_channels_sd = 0b11111111;
 #else
     int active_channels_sd = 0b00111111;
@@ -397,7 +397,7 @@ void initializeDevice(void)
     num_intern_active_chs = 0;
     num_extern_active_chs = 0;
 
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     sample_rate = 100;
 #else
     sample_rate = 1000;
@@ -430,7 +430,7 @@ void initializeDevice(void)
     }
 
     // Start external
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     uint8_t channel_mask = 0;
     for (int i = 0; i < num_extern_active_chs; i++)
     {
@@ -453,7 +453,7 @@ void initializeDevice(void)
  */
 void startAcquisitionSDCard(void)
 {
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     fprintf(save_file,
             "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
             "'Channels indexes mV': [6, 8, 10, 12, 14, 16, 18, 20], 'Channels "
@@ -497,13 +497,13 @@ void startAcquisitionSDCard(void)
                        "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
                        "mv\tTimestamp\n");
 #endif
-#if _ADC_EXT_ != NO_EXT_ADC
+#if _ADC_EXT_ != EXT_ADC_DISABLED
     adcExtStart();
 #endif
     fflush(save_file);
     fsync(fileno(save_file));
 
-#if _ADC_EXT_ == NO_EXT_ADC
+#if _ADC_EXT_ == EXT_ADC_DISABLED
     // If no external ADC is used, start the secondary task that writes the data to the SD card
     xTaskCreatePinnedToCore(&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20, &file_sync_task, 0);
 #endif
@@ -517,7 +517,7 @@ void startAcquisitionSDCard(void)
     // Set live mode duty cycle for state led
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#if HW_VERSION != HW_VERSION_CARDIO
+#if _HW_VERSION_ != HW_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
