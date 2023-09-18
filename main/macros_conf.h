@@ -13,8 +13,7 @@
 
 // External ADC possible options
 #define NO_EXT_ADC 1 // External ADC disabled
-#define ADC_ADS 2    // ADS
-#define ADC_MCP 3
+#define ADC_MCP 2
 
 // Hardware version possible options
 #define HW_VERSION_CORE 1

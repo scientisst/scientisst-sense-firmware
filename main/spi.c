@@ -20,9 +20,6 @@
 #include "macros_conf.h"
 #include "scientisst.h"
 
-#if _ADC_EXT_ != NO_EXT_ADC
-
-#if _ADC_EXT_ == ADC_MCP
 // Refer to MCP3564 Datasheet for configuration options
 #define VALUE_CONFIG0 (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
 #define VALUE_CONFIG1 0
@@ -63,7 +60,6 @@ spi_transaction_t cmd_transaction = {
     .rxlength = 8,
 };
 uint8_t gpio_already_init_flag = 0;
-#endif
 
 /**
  * \brief Initializes SPI bus and SPI interface with the ext adc.
@@ -117,17 +113,12 @@ void adcExtInit(void)
 #endif
 
     // Config Drdy GPIO and interrupt
-#if (_ADC_EXT_ == ADC_MCP)
     if (!gpio_already_init_flag)
         adcExtDrdyGpio(MCP_DRDY_IO);
 
     read_transaction1.rx_buffer = ext_adc_raw_data;
     read_transaction2.rx_buffer = (ext_adc_raw_data + 1);
     read_transaction3.rx_buffer = (ext_adc_raw_data + 2);
-
-#elif (_ADC_EXT_ == ADC_ADS)
-    adcExtDrdyGpio(ADS_DRDY_IO);
-#endif
 }
 
 /**
@@ -136,27 +127,13 @@ void adcExtInit(void)
  */
 void adcExtStart(void)
 {
-#if (_ADC_EXT_ == ADC_MCP)
     mcpStart();
-#elif (_ADC_EXT_ == ADC_ADS)
-    adsStart();
-#else // NO_EXT_ADC
-    DEBUG_PRINT_E("adcExtStart", "External ADC not enabled");
-#endif
 }
 
 void adcExtStop(void)
 {
-#if (_ADC_EXT_ == ADC_MCP)
     mcpStop();
-#elif (_ADC_EXT_ == ADC_ADS)
-    adsStop();
-#endif
 }
-
-#endif
-
-#if (_ADC_EXT_ == ADC_MCP)
 
 static uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd)
 {
@@ -345,198 +322,3 @@ void mcpStop(void)
     spi_bus_remove_device(adc_ext_spi_handler);
     spi_bus_free(SPI3_HOST);
 }
-
-/**************************************************************************************************************************************************/
-#elif (_ADC_EXT_ == ADC_ADS)
-void adsSendCmd(uint8_t cmd)
-{
-    spi_transaction_t transaction;
-
-    memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
-    transaction.flags = SPI_TRANS_USE_TXDATA;
-    transaction.length = 8;
-    transaction.tx_data[0] = cmd;
-    transaction.rx_buffer = NULL; // skip read phase
-    spi_device_polling_transmit(adc_ext_spi_handler, &transaction);
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-}
-
-void adsWriteRegister(uint8_t address, uint8_t data)
-{
-    uint8_t first_opcode = address | WREG;
-    uint8_t second_opcode = 0x00;
-
-    switch (address)
-    {
-    case 1:
-        data = data & 0x87;
-        break;
-    case 2:
-        data = data & 0xFB;
-        data |= 0x80;
-        break;
-    case 3:
-        data = data & 0xFD;
-        data |= 0x10;
-        break;
-    case 7:
-        data = data & 0x3F;
-        break;
-    case 8:
-        data = data & 0x5F;
-        break;
-    case 9:
-        data |= 0x02;
-        break;
-    case 10:
-        data = data & 0x87;
-        data |= 0x01;
-        break;
-    case 11:
-        data = data & 0x0F;
-        break;
-    default:
-        break;
-    }
-
-    spi_transaction_t transaction;
-
-    memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
-    transaction.flags = SPI_TRANS_USE_TXDATA;
-    transaction.length = 24;
-    transaction.tx_data[0] = first_opcode;
-    transaction.tx_data[1] = second_opcode;
-    transaction.tx_data[2] = data;
-    transaction.rx_buffer = NULL; // skip read phase
-    spi_device_polling_transmit(adc_ext_spi_handler,
-                                &transaction); // Transmit!
-
-    // vTaskDelay(10/portTICK_PERIOD_MS);
-    vTaskDelay(40 / portTICK_PERIOD_MS);
-}
-
-void adsSetupRoutine()
-{
-    // Config Drdy GPIO and interrupt
-    adcExtDrdyGpio(ADS_DRDY_IO);
-
-    adsSendCmd(RESET);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-
-    adsSendCmd(SDATAC);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-
-    // adsReadRegister(ADS1292_REG_ID);
-    // adsReadRegister(ADS1292_REG_CONFIG1);
-    // adsReadRegister(ADS1292_REG_CONFIG2);
-
-    adsWriteRegister(ADS1292_REG_CONFIG2,
-                     0x80);                   // disable reference buffer, Lead-off comparator, etc
-    adsWriteRegister(ADS1292_REG_LOFF, 0x10); // lead-off defaults
-
-    adsWriteRegister(ADS1292_REG_CH1SET,
-                     0x10); // Unit gain, normal electrode input
-    adsWriteRegister(ADS1292_REG_CH2SET,
-                     0x10); // Unit gain, normal electrode input
-
-    adsWriteRegister(ADS1292_REG_RLDSENS, 0x00);  // RLD settings defaults
-    adsWriteRegister(ADS1292_REG_LOFFSENS, 0x00); // LOFF settings defaults
-    adsWriteRegister(ADS1292_REG_RESP1, 0x02);    // respiration defaults
-    adsWriteRegister(ADS1292_REG_RESP2, 0x03);    // respiration defaults
-}
-
-//_sampling_rate (Hz) needs to be either 16kHz | 8kHz | 4kHz | 2kHz | 1kHz |
-// 500Hz | 250Hz
-void adsSetSamplingRate(uint16_t _sampling_rate)
-{
-    if (_sampling_rate != 16000 && _sampling_rate != 8000 && _sampling_rate != 4000 &&
-        _sampling_rate != 2000 && _sampling_rate != 1000 && _sampling_rate != 500 && _sampling_rate != 250)
-    {
-        DEBUG_PRINT_E("adsSetSamplingRate", "ADS sample rate not valid. Defaulting to 16kHz");
-        _sampling_rate = 16000;
-    }
-    // value to right in register: 0 - 16kHz || 1 - 8kHz || 2 - 4kHz || 3 - 2kHz
-    // || 4 - 1kHz || 5 - 500Hz || 6 - 250Hz
-    adsWriteRegister(ADS1292_REG_CONFIG1, (uint8_t)(7 - log2(_sampling_rate / 125)));
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-}
-
-// Configure ads with the channels chosen. Configure SPI transaction in function
-// of the CHs chosen
-void adsConfigureChannels(uint8_t ads_channel_mask)
-{
-    // 24 status bits + 24 bits x 2 channels = 9bytes required. But DMA buffer
-    // needs to be 32bit aligned
-    uint8_t *rx_data_ads = heap_caps_malloc(3 * sizeof(uint32_t), MALLOC_CAP_DMA);
-    memset(rx_data_ads, 0, 3 * sizeof(uint32_t));
-
-    memset(&adc_ext_trans, 0,
-           sizeof(adc_ext_trans)); // zero out the transaction
-
-    switch (ads_channel_mask)
-    {
-    case 0: // no ADS channels
-    case 1: // CH1
-        adsWriteRegister(ADS1292_REG_CH1SET,
-                         0x10);                     // CH1 enabled, gain 1, connected to electrode in
-        adsWriteRegister(ADS1292_REG_CH2SET, 0x80); // CH2 disabled
-        adc_ext_trans.length = 48;                  // length is MAX(sending length, recieving length)
-        adc_ext_trans.rxlength = 48;                // 24 status bits + 24 bits x 1 channels
-        break;
-    case 2:                                         // CH2
-        adsWriteRegister(ADS1292_REG_CH1SET, 0x80); // CH1 disabled
-        adsWriteRegister(ADS1292_REG_CH2SET,
-                         0x10);      // CH2 enabled, gain 1, connected to electrode in
-        adc_ext_trans.length = 48;   // length is MAX(sending length, recieving length)
-        adc_ext_trans.rxlength = 48; // 24 status bits + 24 bits x 1 channels
-        break;
-    case 3: // CH1 + CH2
-        adsWriteRegister(ADS1292_REG_CH1SET,
-                         0x10); // CH1 enabled, gain 1, connected to electrode in
-        adsWriteRegister(ADS1292_REG_CH2SET,
-                         0x10);      // CH2 enabled, gain 1, connected to electrode in
-        adc_ext_trans.length = 72;   // length is MAX(sending length, recieving length)
-        adc_ext_trans.rxlength = 72; // 24 status bits + 24 bits x 2 channels
-        break;
-    }
-    adc_ext_trans.tx_buffer = NULL; // skip write phase
-    adc_ext_trans.rx_buffer = rx_data_ads;
-}
-
-void adsStart()
-{
-    adsSetSamplingRate(sample_rate);
-    // Update ads continous transaction to indicate flag for post call back of
-    // spi transfer
-    adc_ext_trans.user = (void *)ADS_CONTINUOUS_TRANS;
-    adsSendCmd(RDATAC);
-    adsSendCmd(START);
-    // spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans,
-    // portMAX_DELAY);
-}
-
-void adsStop()
-{
-    // spi_transaction_t *ads_rtrans;
-
-    // Update ads continous transaction to indicate flag for post call back of
-    // spi transfer
-    adc_ext_trans.user = NULL;
-    // Get the trans result of the last queued trans (by adsEndTransCb)
-    // spi_device_get_trans_result(adc_ext_spi_handler, &ads_rtrans,
-    // portMAX_DELAY);
-    adsSendCmd(STOP);
-}
-
-// Call back in the end of a transaction made in live mode (when ads is in
-// continous mode)
-void IRAM_ATTR adsEndTransCb(spi_transaction_t *trans)
-{
-    if ((uint8_t)(trans->user) == ADS_CONTINUOUS_TRANS)
-    {
-        spi_device_queue_trans(adc_ext_spi_handler, &adc_ext_trans, portMAX_DELAY);
-    }
-}
-
-#endif

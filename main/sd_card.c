@@ -26,8 +26,6 @@
 #include "spi.h"
 #include "timer.h"
 
-#if _SD_CARD_ENABLED_ == SD_CARD_ENABLED
-
 #define BUFFER_SIZE (512 * 7 * 2)
 #define NUM_ACQ_BUF (8 * 2)
 
@@ -530,5 +528,3 @@ void startAcquisitionSDCard(void)
                   (int64_t)(esp_timer_get_time() & 0xFFFFFFFFFFFF));
     op_mode = OP_MODE_LIVE;
 }
-
-#endif // USE_SDCARD
