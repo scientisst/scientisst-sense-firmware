@@ -220,7 +220,9 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     uint8_t crc = 0;
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
+#if _IMU_ENABLED_ == IMU_DISABLED
     uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
+#endif
 
     // Get the IO states
     io_state = gpio_get_level(I0_IO) << 7;
@@ -228,11 +230,13 @@ void IRAM_ATTR acquireChannelsScientisst(uint8_t *frame)
     io_state |= (gpio_out_state[0] & 0b1) << 5;
     io_state |= (gpio_out_state[1] & 0b1) << 4;
 
+#if _IMU_ENABLED_ == IMU_DISABLED
     // Get raw values from A1 to A6 (A1 to A6)
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
         adc_internal_res[i] = adc1_get_raw(analog_channels[active_internal_chs[i]]);
     }
+#endif
 
 #if _ADC_EXT_ != NO_EXT_ADC
     if (num_extern_active_chs > 0)

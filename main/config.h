@@ -45,10 +45,18 @@
 //     ERASE ALL DATA ON THE SD CARD)
 #define FORMAT_SDCARD_IF_MOUNT_FAILED DO_NOT_FORMAT_SDCARD
 
+/**********************
+ * IMU CONFIGURATION *
+ **********************/
 // Possible values for _IMU_ENABLED_:
 //   - IMU_DISABLED (Disable imu) [Default]
 //   - IMU_ENABLED (Enable imu)
 #define _IMU_ENABLED_ IMU_ENABLED
+
+// Possible values for _IMU_CALIBRATION_:
+//   - LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED (Lock imu acquisition until calibrated)
+//   - ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING (Allow imu acquisition while calibrating) [Default]
+#define _IMU_CALIBRATION_ LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
 
 /************************
  * CONFIGURATION CHECKS *
@@ -74,6 +82,11 @@
 // Check if the sd card format is valid
 #if FORMAT_SDCARD_IF_MOUNT_FAILED != DO_NOT_FORMAT_SDCARD && FORMAT_SDCARD_IF_MOUNT_FAILED != FORMAT_SDCARD
 #error invalid sd card format configuration, check config.h
+#endif
+
+// Check if the imu is valid
+#if _IMU_ENABLED_ != IMU_DISABLED && _IMU_ENABLED_ != IMU_ENABLED
+#error invalid imu configuration, check config.h
 #endif
 
 // Check if the configuration is valid

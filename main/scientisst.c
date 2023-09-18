@@ -256,7 +256,7 @@ void initScientisst(void)
     }
 
 #if _IMU_ENABLED_ == IMU_ENABLED
-    xTaskCreatePinnedToCore(&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 1);
+    xTaskCreatePinnedToCore(&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 0);
 #endif
 
 #if _SD_CARD_ENABLED_ == SD_CARD_ENABLED

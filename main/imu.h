@@ -5,6 +5,8 @@
 #ifndef SCIENTISST_SENSE_IMU_H
 #define SCIENTISST_SENSE_IMU_H
 
+#include <stdint.h>
+
 extern uint16_t imuValues[6];
 
 void bno055_task(void *not_used);

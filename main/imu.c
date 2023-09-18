@@ -2,9 +2,11 @@
 #include "bno055.h"
 #include "driver/i2c.h"
 #include "gpio.h"
+#include "macros.h"
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #define SDA_PIN SDA_IO
@@ -14,20 +16,15 @@
 #define I2C_MASTER_NACK 1
 #define I2C_TIMEOUT_TICKS 40000
 
-uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
+s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+void BNO055_delay_msek(u32 msek);
 
-void i2c_master_init()
-{
-    i2c_config_t i2c_config = {.mode = I2C_MODE_MASTER,
-                               .sda_io_num = SDA_PIN,
-                               .scl_io_num = SCL_PIN,
-                               .sda_pullup_en = GPIO_PULLUP_ENABLE,
-                               .scl_pullup_en = GPIO_PULLUP_ENABLE,
-                               .master.clk_speed = 400000};
-    i2c_param_config(I2C_NUM_0, &i2c_config);
-    i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
-    i2c_set_timeout(I2C_NUM_0, I2C_TIMEOUT_TICKS);
-}
+DRAM_ATTR struct bno055_t BNO_handle = {.bus_write = BNO055_I2C_bus_write,
+                                        .bus_read = BNO055_I2C_bus_read,
+                                        .dev_addr = BNO055_I2C_ADDR1,
+                                        .delay_msec = BNO055_delay_msek};
+DRAM_ATTR uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
 
 s8 IRAM_ATTR BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 {
@@ -97,26 +94,28 @@ void IRAM_ATTR BNO055_delay_msek(u32 msek)
     vTaskDelay(msek / portTICK_PERIOD_MS);
 }
 
-void IRAM_ATTR bno055_task(void *not_used)
+void init_IMU(void)
 {
-    struct bno055_t myBNO = {.bus_write = BNO055_I2C_bus_write,
-                             .bus_read = BNO055_I2C_bus_read,
-                             .dev_addr = BNO055_I2C_ADDR1,
-                             .delay_msec = BNO055_delay_msek};
-
     unsigned char accel_calib_status = 0;
     unsigned char gyro_calib_status = 0;
     unsigned char mag_calib_status = 0;
     unsigned char sys_calib_status = 0;
+    i2c_config_t i2c_config = {.mode = I2C_MODE_MASTER,
+                               .sda_io_num = SDA_PIN,
+                               .scl_io_num = SCL_PIN,
+                               .sda_pullup_en = GPIO_PULLUP_ENABLE,
+                               .scl_pullup_en = GPIO_PULLUP_ENABLE,
+                               .master.clk_speed = 400000};
 
-    struct bno055_euler_t euler_hrp;
-    struct bno055_linear_accel_t linear_acce_xyz;
-
-    i2c_master_init();
+    // Initialize I2C
+    i2c_param_config(I2C_NUM_0, &i2c_config);
+    i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
+    i2c_set_timeout(I2C_NUM_0, I2C_TIMEOUT_TICKS);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    bno055_init(&myBNO);
+    // Initialize IMU and get calibration status
+    bno055_init(&BNO_handle);
     bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
     bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
 
@@ -124,7 +123,37 @@ void IRAM_ATTR bno055_task(void *not_used)
     bno055_get_mag_calib_stat(&mag_calib_status);
     bno055_get_gyro_calib_stat(&gyro_calib_status);
     bno055_get_sys_calib_stat(&sys_calib_status);
-    // TODO: Check calibration status. How to handle not calibrated state?
+    DEBUG_PRINT_W("IMU_TASK", "Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
+                  mag_calib_status, sys_calib_status);
+
+#if _IMU_CALIBRATION_ == LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
+    while (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 ||
+           sys_calib_status != 3)
+    {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        bno055_get_accel_calib_stat(&accel_calib_status);
+        bno055_get_mag_calib_stat(&mag_calib_status);
+        bno055_get_gyro_calib_stat(&gyro_calib_status);
+        bno055_get_sys_calib_stat(&sys_calib_status);
+        DEBUG_PRINT_W("IMU_TASK", "Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
+                      mag_calib_status, sys_calib_status);
+    }
+#elif _IMU_CALIBRATION_ == ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+    if (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)
+    {
+        DEBUG_PRINT_W("IMU_TASK", "IMU not calibrated, using it anyway");
+    }
+#endif
+
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+}
+
+void IRAM_ATTR bno055_task(void *not_used)
+{
+    struct bno055_euler_t euler_hrp;
+    struct bno055_linear_accel_t linear_acce_xyz;
+
+    init_IMU();
 
     while (1)
     {
@@ -132,14 +161,14 @@ void IRAM_ATTR bno055_task(void *not_used)
             bno055_read_linear_accel_xyz(&linear_acce_xyz) == BNO055_SUCCESS)
         {
             imuValues[0] = (euler_hrp.r >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG; // Degrees 12 bits
-            imuValues[1] = (euler_hrp.p >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG;
-            imuValues[2] = (euler_hrp.h >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG;
+            imuValues[1] = (euler_hrp.p >> 4) & 0x0FFF;
+            imuValues[2] = (euler_hrp.h >> 4) & 0x0FFF;
 
             imuValues[3] =
                 (linear_acce_xyz.x >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ; // m/s^2 12 bits but
                                                    // has to be divided by 6.25 (6.25 * 16 = 100)
-            imuValues[4] = (linear_acce_xyz.y >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ;
-            imuValues[5] = (linear_acce_xyz.z >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ;
+            imuValues[4] = (linear_acce_xyz.y >> 4) & 0x0FFF;
+            imuValues[5] = (linear_acce_xyz.z >> 4) & 0x0FFF;
         }
         else
         {
