@@ -162,16 +162,19 @@ void IRAM_ATTR bno055_task(void *not_used)
     while (1)
     {
         // Read IMU data
+#if _IMU_DATA_ACQUISITION_ == EULER_ANGLES_AND_LINEAR_ACCELERATION
         if (bno055_read_euler_hrp(&euler_hrp) == BNO055_ERROR)
         {
             DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
             continue;
         }
+#elif _IMU_DATA_ACQUISITION_ == ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
         if (bno055_read_linear_accel_xyz(&linear_acce_xyz) == BNO055_ERROR)
         {
             DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
             continue;
         }
+#endif
         if (bno055_read_gyro_xyz(&gyro_xyz) == BNO055_ERROR)
         {
             DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
