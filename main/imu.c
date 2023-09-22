@@ -150,30 +150,52 @@ void init_IMU(void)
 
 void IRAM_ATTR bno055_task(void *not_used)
 {
+#if _IMU_DATA_ACQUISITION_ == EULER_ANGLES_AND_LINEAR_ACCELERATION
     struct bno055_euler_t euler_hrp;
+#elif _IMU_DATA_ACQUISITION_ == ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+    struct bno055_gyro_t gyro_xyz;
+#endif
     struct bno055_linear_accel_t linear_acce_xyz;
 
     init_IMU();
 
     while (1)
     {
-        if (bno055_read_euler_hrp(&euler_hrp) == BNO055_SUCCESS &&
-            bno055_read_linear_accel_xyz(&linear_acce_xyz) == BNO055_SUCCESS)
-        {
-            imuValues[0] = (euler_hrp.r >> 4) & 0x0FFF; // / BNO055_EULER_DIV_DEG; // Degrees 12 bits
-            imuValues[1] = (euler_hrp.p >> 4) & 0x0FFF;
-            imuValues[2] = (euler_hrp.h >> 4) & 0x0FFF;
-
-            imuValues[3] =
-                (linear_acce_xyz.x >> 4) & 0x0FFF; // / BNO055_LINEAR_ACCEL_DIV_MSQ; // m/s^2 12 bits but
-                                                   // has to be divided by 6.25 (6.25 * 16 = 100)
-            imuValues[4] = (linear_acce_xyz.y >> 4) & 0x0FFF;
-            imuValues[5] = (linear_acce_xyz.z >> 4) & 0x0FFF;
-        }
-        else
+        // Read IMU data
+        if (bno055_read_euler_hrp(&euler_hrp) == BNO055_ERROR)
         {
             DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
+            continue;
         }
+        if (bno055_read_linear_accel_xyz(&linear_acce_xyz) == BNO055_ERROR)
+        {
+            DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
+            continue;
+        }
+        if (bno055_read_gyro_xyz(&gyro_xyz) == BNO055_ERROR)
+        {
+            DEBUG_PRINT_E("IMU_TASK", "Error reading IMU data");
+            continue;
+        }
+
+        // Convert IMU data to 12 bits and store it in imuValues. Check bno055.h for more info on how these
+        // convertions are done
+
+#if _IMU_DATA_ACQUISITION_ == EULER_ANGLES_AND_LINEAR_ACCELERATION
+        imuValues[0] = (euler_hrp.r >> 4) & 0x0FFF; // /  Degrees, 12 bits
+        imuValues[1] = (euler_hrp.p >> 4) & 0x0FFF;
+        imuValues[2] = (euler_hrp.h >> 4) & 0x0FFF;
+#elif _IMU_DATA_ACQUISITION_ == ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+        imuValues[0] = (gyro_xyz.x >> 4) & 0x0FFF; //  Degrees/s, 12 bits
+        imuValues[1] = (gyro_xyz.y >> 4) & 0x0FFF;
+        imuValues[2] = (gyro_xyz.z >> 4) & 0x0FFF;
+#endif
+
+        //  m/s^2 12 bits but has to be divided by 6.25 on post-processing (6.25 * 16 = 100)
+        imuValues[3] = (linear_acce_xyz.x >> 4) & 0x0FFF;
+        imuValues[4] = (linear_acce_xyz.y >> 4) & 0x0FFF;
+        imuValues[5] = (linear_acce_xyz.z >> 4) & 0x0FFF;
+
         vTaskDelay(10 / portTICK_PERIOD_MS); // 10 ms delay == 100Hz
     }
 }

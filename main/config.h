@@ -53,6 +53,11 @@
 //   - IMU_ENABLED (Enable imu)
 #define _IMU_ IMU_ENABLED
 
+// Possible values for _IMU_DATA_ACQUISITION_:
+//   - EULER_ANGLES_AND_LINEAR_ACCELERATION (Euler angles and linear acceleration) [Default]
+//   - ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION (Angular velocity and linear acceleration)
+#define _IMU_DATA_ACQUISITION_ ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+
 // Possible values for _IMU_CALIBRATION_:
 //   - LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED (Lock imu acquisition until calibrated)
 //   - ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING (Allow imu acquisition while calibrating) [Default]
