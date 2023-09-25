@@ -37,7 +37,7 @@
 // Possible values for _SD_CARD_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ SD_CARD_DISABLED
+#define _SD_CARD_ SD_CARD_ENABLED
 
 // Possible values for _FORMAT_SDCARD_IF_MOUNT_FAILED_:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
@@ -51,7 +51,7 @@
 // Possible values for _IMU_:
 //   - IMU_DISABLED (Disable imu) [Default]
 //   - IMU_ENABLED (Enable imu)
-#define _IMU_ IMU_ENABLED
+#define _IMU_ IMU_DISABLED
 
 // Possible values for _IMU_DATA_ACQUISITION_:
 //   - EULER_ANGLES_AND_LINEAR_ACCELERATION (Euler angles and linear acceleration) [Default]
@@ -93,6 +93,18 @@
 // Check if the imu is valid
 #if _IMU_ != IMU_DISABLED && _IMU_ != IMU_ENABLED
 #error invalid imu configuration, check config.h
+#endif
+
+// Check if the imu data acquisition is valid
+#if _IMU_DATA_ACQUISITION_ != EULER_ANGLES_AND_LINEAR_ACCELERATION &&                                        \
+    _IMU_DATA_ACQUISITION_ != ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+#error invalid imu data acquisition configuration, check config.h
+#endif
+
+// Check if the imu calibration is valid
+#if _IMU_CALIBRATION_ != LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED &&                                            \
+    _IMU_CALIBRATION_ != ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+#error invalid imu calibration configuration, check config.h
 #endif
 
 // Check if the configuration is valid

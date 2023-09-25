@@ -38,15 +38,15 @@ sdmmc_card_t *card;       ///< SD card handle
 char full_file_name[100]; ///< Full file name of the file on the SD card
 FILE *save_file = NULL;   ///< File handle of the file on the SD card
 
-DMA_ATTR char *buffer[NUM_ACQ_BUF]; ///< Array buffers to store the data to be written to the SD card
+DMA_ATTR uint8_t *buffer[NUM_ACQ_BUF]; ///< Array buffers to store the data to be written to the SD card
 /// Array to store the number of bytes ready to be written to the SD card
 uint16_t buf_ready[NUM_ACQ_BUF] = {0};
 SemaphoreHandle_t buf_ready_mutex[NUM_ACQ_BUF]; ///< Mutex to protect the buffer ready array, one for each
                                                 ///< buffer for faster access times
 
-char *buffer_ptr = NULL;   ///< Pointer to the current buffer to write to
-uint8_t buf_num_ack = 0;   ///< Number of the buffer where the data is being written to on acquisition
-uint8_t buf_num_write = 0; ///< Number of the buffer that is being written to the SD card
+uint8_t *buffer_ptr = NULL; ///< Pointer to the current buffer to write to
+uint8_t buf_num_acq = 0;    ///< Number of the buffer where the data is being written to on acquisition
+uint8_t buf_num_write = 0;  ///< Number of the buffer that is being written to the SD card
 
 void initializeDevice(void);
 esp_err_t createFile(void);
@@ -60,37 +60,42 @@ esp_err_t createFile(void);
  */
 void IRAM_ATTR acquireChannelsSDCard(void)
 {
-    static uint32_t crc_seq_num = 0;
-    uint16_t adc_internal_res[6];
-    float int_ch_mv[6];
-    uint32_t temp; // Used to separate integer and floating point instructions, reducing the latter that are
-                   // very expensive
-#if _ADC_EXT_ != EXT_ADC_DISABLED
-    uint32_t adc_external_res[2] = {1, 1};
-    float ext_ch_mv[2] = {0, 0};
-#endif
+    static uint32_t crc_seq_num = 0; // Static variable that counts the number of packets sent
+
+    *(uint16_t *)buffer_ptr = (crc_seq_num & 0xFFF) << 4;
+    *(uint16_t *)buffer_ptr |= (gpio_get_level(I0_IO) & 0b1) | ((gpio_get_level(I1_IO) & 0b1) << 1) |
+                               ((gpio_out_state[0] & 0b1) << 2) | ((gpio_out_state[1] & 0b1) << 3);
+    buffer_ptr += 2;
+
+    ++crc_seq_num;
 
     // Loop unrolled for speed. All intern channels are always active
-    adc_internal_res[0] = adc1_get_raw(analog_channels[active_internal_chs[0]]);
-    adc_internal_res[1] = adc1_get_raw(analog_channels[active_internal_chs[1]]);
-    adc_internal_res[2] = adc1_get_raw(analog_channels[active_internal_chs[2]]);
-    adc_internal_res[3] = adc1_get_raw(analog_channels[active_internal_chs[3]]);
-    adc_internal_res[4] = adc1_get_raw(analog_channels[active_internal_chs[4]]);
-    adc_internal_res[5] = adc1_get_raw(analog_channels[active_internal_chs[5]]);
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[5]]) & 0x0FFF;
+    buffer_ptr += 2;
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[4]]) & 0x0FFF;
+    buffer_ptr += 2;
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[3]]) & 0x0FFF;
+    buffer_ptr += 2;
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[2]]) & 0x0FFF;
+    buffer_ptr += 2;
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[1]]) & 0x0FFF;
+    buffer_ptr += 2;
+    *(uint16_t *)buffer_ptr = adc1_get_raw(analog_channels[active_internal_chs[0]]) & 0x0FFF;
+    buffer_ptr += 2;
 
 #if _ADC_EXT_ == EXT_ADC_ENABLED
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     mcpReadADCValues(REG_ADCDATA, 4 * num_extern_active_chs);
-    for (int i = 0; i < 2; ++i) // Always both ext channels active
+    for (int i = 1; i >= 0; --i) // Always both ext channels active
     {
         uint32_t ch_value = active_ext_chs[i] - 6;
         for (int j = 0; j < 3; j++)
         {
             if ((ext_adc_raw_data[j] >> 28) == ch_value)
             {
-                adc_external_res[i] =
+                *(uint32_t *)buffer_ptr =
                     ((ext_adc_raw_data[j] >> 24) & 0x01) ? 0 : (ext_adc_raw_data[j] & 0x00FFFFFF);
-                ext_ch_mv[i] = adc_external_res[i] * CONVERSION_FACTOR;
+                buffer_ptr += 3;
                 break;
             }
         }
@@ -98,40 +103,12 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
 #endif
 
-    // Convert raw data to millivolts
-    // Loop unrolled for speed. All intern channels are always active
-    temp = (((adc1_chars.coeff_a * adc_internal_res[0]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[0] = temp * 3.399;
-    temp = (((adc1_chars.coeff_a * adc_internal_res[1]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[1] = temp * 3.399;
-    temp = (((adc1_chars.coeff_a * adc_internal_res[2]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[2] = temp * 3.399;
-    temp = (((adc1_chars.coeff_a * adc_internal_res[3]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[3] = temp * 3.399;
-    temp = (((adc1_chars.coeff_a * adc_internal_res[4]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[4] = temp * 3.399;
-    temp = (((adc1_chars.coeff_a * adc_internal_res[5]) + 32767) >> 16) + adc1_chars.coeff_b;
-    int_ch_mv[5] = temp * 3.399;
-
-    // Write the internal channel values
-    buffer_ptr +=
-        sprintf(buffer_ptr,
-                "%hu\t%hhu\t%hhu\t%hhu\t%hhu\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%.0f\t%hu\t%."
-                "0f\t%hu\t%.0f\t%hu\t%.0f",
-                (crc_seq_num & 0xFFF), gpio_get_level(I0_IO), gpio_get_level(I1_IO),
-                (gpio_out_state[0] & 0b1), (gpio_out_state[1] & 0b1), adc_internal_res[5], int_ch_mv[5],
-                adc_internal_res[4], int_ch_mv[4], adc_internal_res[3], int_ch_mv[3], adc_internal_res[2],
-                int_ch_mv[2], adc_internal_res[1], int_ch_mv[1], adc_internal_res[0], int_ch_mv[0]);
-
-    ++crc_seq_num;
-
 #if _ADC_EXT_ != EXT_ADC_DISABLED
-    // Write the external channel values
-    buffer_ptr += sprintf(buffer_ptr, "\t%u\t%.3f\t%u\t%.3f", adc_external_res[1], ext_ch_mv[1],
-                          adc_external_res[0], ext_ch_mv[0]);
+    *(uint64_t *)buffer_ptr = esp_timer_get_time();
+#else
+    *(uint64_t *)buffer_ptr = esp_timer_get_time();
 #endif
-
-    buffer_ptr += sprintf(buffer_ptr, "\t%lld\n", esp_timer_get_time());
+    buffer_ptr += 8;
 
 #if _ADC_EXT_ != EXT_ADC_DISABLED
 
@@ -145,18 +122,18 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
 #else
     // If the buffer is full, save it to the SD card
-    if (buffer_ptr - (buffer[buf_num_ack % NUM_ACQ_BUF]) >= BUFFER_SIZE - 97)
+    if (buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]) >= BUFFER_SIZE - 97)
     {
-        xSemaphoreTake(buf_ready_mutex[buf_num_ack % NUM_ACQ_BUF], portMAX_DELAY);
-        buf_ready[buf_num_ack % NUM_ACQ_BUF] = buffer_ptr - (buffer[buf_num_ack % NUM_ACQ_BUF]);
-        xSemaphoreGive(buf_ready_mutex[buf_num_ack % NUM_ACQ_BUF]);
+        xSemaphoreTake(buf_ready_mutex[buf_num_acq % NUM_ACQ_BUF], portMAX_DELAY);
+        buf_ready[buf_num_acq % NUM_ACQ_BUF] = buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]);
+        xSemaphoreGive(buf_ready_mutex[buf_num_acq % NUM_ACQ_BUF]);
         xTaskNotifyGive(file_sync_task);
-        while (buf_ready[(buf_num_ack + 1) % NUM_ACQ_BUF])
+        while (buf_ready[(buf_num_acq + 1) % NUM_ACQ_BUF])
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        buffer_ptr = (buffer[(++buf_num_ack) % NUM_ACQ_BUF]);
+        buffer_ptr = (buffer[(++buf_num_acq) % NUM_ACQ_BUF]);
     }
 #endif
 }
@@ -308,7 +285,7 @@ esp_err_t initSDCard(void)
     // Allocate memory for the buffers
     for (int i = 0; i < NUM_ACQ_BUF; i++)
     {
-        buffer[i] = (char *)malloc(BUFFER_SIZE * sizeof(char));
+        buffer[i] = (uint8_t *)malloc(BUFFER_SIZE * sizeof(uint8_t));
         if (buffer[i] == NULL)
         {
             DEBUG_PRINT_E("malloc", "Error allocating memory for send buffers");
@@ -339,16 +316,16 @@ esp_err_t createFile(void)
     const char *file_name = "/sdcard/acquisition_datapoints";
 
     strcpy(full_file_name, file_name);
-    strcat(full_file_name, ".csv");
+    strcat(full_file_name, ".bin");
     for (uint32_t i = 0; /*Stop condition inside*/; ++i) // Find the next file name that does not exist
     {
         strcpy(full_file_name, file_name);
         sprintf(int_str, "%d", i);
         strcat(full_file_name, int_str);
-        strcat(full_file_name, ".csv");
+        strcat(full_file_name, ".bin");
         if (stat(full_file_name, &st) != 0) // If the file does not exist
         {
-            save_file = fopen(full_file_name, "w"); // Create new file
+            save_file = fopen(full_file_name, "wb"); // Create new file
             break;
         }
     }
@@ -453,53 +430,35 @@ void initializeDevice(void)
  */
 void startAcquisitionSDCard(void)
 {
-#if _ADC_EXT_ != EXT_ADC_DISABLED
-    fprintf(save_file,
-            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6, 7, 8], "
-            "'Channels indexes mV': [6, 8, 10, 12, 14, 16, 18, 20], 'Channels "
-            "indexes raw': [5, 7, 9, 11, 13, 15, 17, 19], 'Channels labels': "
-            "['AI1_raw', 'AI1_mv', 'AI2_raw', "
-            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
-            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv'], 'Device': '%s', "
-            "'Firmware version': '%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', "
-            "'O2', 'AI1_raw', 'AI1_mv', 'AI2_raw', "
-            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv',"
-            "'AX7_raw', 'AX7_mv', 'AX8_raw', 'AX8_mv', 'Timestamp'], 'ISO 8601': "
-            "'NULL', 'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, "
-            "12, 24, 24], 'Sampling rate (Hz)': 1000, 'Timestamp': 0.0}\n",
-            device_name, FIRMWARE_VERSION);
-    fprintf(save_file, "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
-                       "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
-                       "mv\tAX7_raw\tAX7_mv\tAX8_raw\tAX8_mv\tTimestamp\n");
+    uint8_t file_header[25] = {0};
 
-#else
-    fprintf(save_file,
-            "#{'API version': 'NULL', 'Channels': [1, 2, 3, 4, 5, 6], "
-            "'Channels "
-            "indexes mV': [6, 8, 10, 12, 14, 16], 'Channels indexes raw': [5, "
-            "7, "
-            "9, 11, 13, 15], 'Channels labels': ['AI1_raw', 'AI1_mv', "
-            "'AI2_raw', "
-            "'AI2_mv', 'AI3_raw', 'AI3_mv', "
-            "'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', 'AI6_raw', 'AI6_mv'], "
-            "'Device': '%s','Firmware version': "
-            "'%s', 'Header': ['NSeq', 'I1', 'I2', 'O1', 'O2', AI1_raw', "
-            "'AI1_mv', "
-            "'AI2_raw', "
-            "'AI3_raw', 'AI3_mv', 'AI4_raw', 'AI4_mv', 'AI5_raw', 'AI5_mv', "
-            "'AI6_raw', 'AI6_mv', 'Timestamp'], 'ISO 8601':'NULL', "
-            "'Resolution (bits)': [4, 1, 1, 1, 1, 12, 12, 12, 12, 12, 12,], "
-            "'Sampling rate (Hz)': 100, 'Timestamp': 0.0}\n",
-            device_name, FIRMWARE_VERSION);
-    fprintf(save_file, "#NSeq\tI1\tI2\tO1\tO2\tAI1_raw\tAI1_mv\tAI2_raw\tAI2_mv\tAI3_"
-                       "raw\tAI3_mv\tAI4_raw\tAI4_mv\tAI5_raw\tAI5_mv\tAI6_raw\tAI6_"
-                       "mv\tTimestamp\n");
-#endif
-#if _ADC_EXT_ != EXT_ADC_DISABLED
+    file_header[0] = 0x01;  // File version
+    file_header[1] = 0x02;  // # of Bytes of SeqNum
+    file_header[2] = 0x01;  // Is seq num fused with DIO? (4 bits for DIO, 12 bits for seq num)
+    file_header[3] = 0x02;  // # of digital inputs
+    file_header[4] = 0x00;  // # of Bytes for each digital input
+    file_header[5] = 0x02;  // # of digital outputs
+    file_header[6] = 0x00;  // # of Bytes for each digital output
+    file_header[7] = 0x06;  // # of internal ADC channels
+    file_header[8] = 0x02;  // # of Bytes for each internal ADC channel
+    file_header[9] = 0x00;  // # of external ADC channels
+    file_header[10] = 0x00; // # of Bytes for each external ADC channel
+    file_header[11] = 0x01; // Internal ADC data type ID
+    file_header[12] = 0x01; // External ADC data type ID
+    file_header[13] = 0x01; // Timestamp enable?
+    file_header[14] = 0x08; // # of Bytes for timestamp
+    *(uint16_t *)&file_header[15] = (uint16_t)sample_rate; // Sample rate
+    *(int *)&file_header[17] = adc1_chars.coeff_a;         // ADC1 coeff_a
+    *(int *)&file_header[21] = adc1_chars.coeff_b;         // ADC1 coeff_b
+
+#if _ADC_EXT_ == EXT_ADC_ENABLED
+    file_header[9] = 0x02;  // # of external ADC channels
+    file_header[10] = 0x03; // # of Bytes for each external ADC channel
     adcExtStart();
 #endif
+
+    // Write the file header
+    fwrite(file_header, sizeof(uint8_t), 25, save_file);
     fflush(save_file);
     fsync(fileno(save_file));
 

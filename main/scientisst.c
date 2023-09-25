@@ -135,9 +135,15 @@ DRAM_ATTR uint32_t ext_adc_raw_data[3]; ///< Raw data from external adc
 DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
 
 // Op settings
+#if _SD_CARD_ == SD_CARD_ENABLED
+op_settings_info_t op_settings = {
+    .com_mode = COM_MODE_SD_CARD,
+}; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+#else
 op_settings_info_t op_settings = {
     .com_mode = COM_MODE_BT,
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
+#endif
 /*{
     .com_mode = COM_MODE_TCP_STA,
     .host_ip = "192.168.1.100",
