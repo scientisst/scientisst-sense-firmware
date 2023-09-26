@@ -138,6 +138,7 @@ DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
 #if _SD_CARD_ == SD_CARD_ENABLED
 op_settings_info_t op_settings = {
     .com_mode = COM_MODE_SD_CARD,
+    .is_battery_threshold_inflated = 0,
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 #else
 op_settings_info_t op_settings = {
@@ -502,6 +503,12 @@ void IRAM_ATTR AbatTask(void *not_used)
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
     timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, (uint32_t)ABAT_CHECK_FREQUENCY);
 
+    if (op_settings.is_battery_threshold_inflated == 1)
+    {
+        battery_threshold += 50;
+        bat_led_status_gpio = 1;
+    }
+
     while (1)
     {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
@@ -520,12 +527,16 @@ void IRAM_ATTR AbatTask(void *not_used)
                 // Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the
                 // threshold
                 battery_threshold += 50;
+                op_settings.is_battery_threshold_inflated = 0;
+                saveOpSettingsInfo(&op_settings);
             }
             else if (bat_led_status_gpio && !turn_led_on)
             {
                 // It already charged passed the real threshold, so update the battery_threshold to its real
                 // value
                 battery_threshold -= 50;
+                op_settings.is_battery_threshold_inflated = 0;
+                saveOpSettingsInfo(&op_settings);
             }
 
             bat_led_status_gpio = turn_led_on;

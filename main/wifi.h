@@ -30,6 +30,7 @@ typedef struct
     char bit_mode[10];
     char port_o1[5];
     char port_o2[5];
+    uint8_t is_battery_threshold_inflated;
 } op_settings_info_t;
 
 int wifiInit(uint8_t force_ap);
