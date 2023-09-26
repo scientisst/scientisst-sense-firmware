@@ -509,6 +509,7 @@ void IRAM_ATTR AbatTask(void *not_used)
             if (adc2_get_raw(ABAT_ADC_CH, ADC_RESOLUTION, (int *)&raw) != ESP_OK)
             {
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
+                continue;
             }
             abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DIVIDER_FACTOR;
 
