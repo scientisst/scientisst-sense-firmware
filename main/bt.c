@@ -13,9 +13,11 @@
 #include <string.h>
 
 #include "com.h"
+#include "esp_attr.h"
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
+#include "esp_err.h"
 #include "esp_gap_bt_api.h"
 #include "esp_log.h"
 #include "esp_spp_api.h"
@@ -209,7 +211,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
             // Try to send next buff
             if (param->write.cong == 0) // bt write is free
             {
-                sendData();
+                sendDataBluetooth();
             }
             else
             {

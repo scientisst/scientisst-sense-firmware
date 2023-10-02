@@ -112,17 +112,21 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
 #if _ADC_EXT_ != EXT_ADC_DISABLED
 
-    write(fileno(save_file), buffer[0], (buffer_ptr - (buffer[0])));
-    buffer_ptr = buffer[0];
+    if ((crc_seq & 127) == 0)
+    {
+        write(fileno(save_file), buffer[0], (buffer_ptr - (buffer[0])));
+        buffer_ptr = buffer[0];
+    }
 
-    if ((crc_seq_num % 3000) == 0) // Every 30 seconds force a sync (hardware write)
+    if ((crc_seq_num % 30000) == 0) // Every 30 seconds force a sync (hardware write)
     {
         fsync(fileno(save_file));
     }
 
 #else
     // If the buffer is full, save it to the SD card
-    if (buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]) >= BUFFER_SIZE - 97)
+    if (buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]) >=
+        BUFFER_SIZE - 22) // 28 is max size, 22 when no adc ext
     {
         xSemaphoreTake(buf_ready_mutex[buf_num_acq % NUM_ACQ_BUF], portMAX_DELAY);
         buf_ready[buf_num_acq % NUM_ACQ_BUF] = buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]);
@@ -377,7 +381,7 @@ void initializeDevice(void)
 #if _ADC_EXT_ != EXT_ADC_DISABLED
     sample_rate = 100;
 #else
-    sample_rate = 1000;
+    sample_rate = 3000;
 #endif
 
     // Select the channels that are activated (with corresponding bit equal
