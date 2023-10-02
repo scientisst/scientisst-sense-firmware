@@ -24,12 +24,12 @@
 // Possible values for _ADC_EXT_:
 //   - NO_EXT_ADC (No external adc) [Default]
 //   - ADC_MCP (Enable external adc)
-#define _ADC_EXT_ ADC_MCP
+#define _ADC_EXT_ NO_EXT_ADC
 
 // Possible values for _TIMESTAMP_:
 //   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
 //   - TIMESTAMP_ENABLED (Enable timestamp on AX1 and AX2 channels)
-#define _TIMESTAMP_ TIMESTAMP_ENABLED
+#define _TIMESTAMP_ TIMESTAMP_DISABLED
 
 /************************
  * SDCARD CONFIGURATION *
@@ -37,7 +37,7 @@
 // Possible values for _SD_CARD_ENABLED_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ENABLED_ SD_CARD_ENABLED
+#define _SD_CARD_ENABLED_ SD_CARD_DISABLED
 
 // Possible values for FORMAT_SDCARD_IF_MOUNT_FAILED:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
