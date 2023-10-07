@@ -35,7 +35,6 @@
 #define ABAT_PRIORITY 1
 #define WIFI_RCV_PRIORITY 1
 #define ACQ_ADC1_PRIORITY 10
-#define ACQ_ADC_EXT_PRIORITY 11
 
 // Functions have to be declared with void* as argument even though it is not used to avoid compiler warnings
 void IRAM_ATTR sendTask(void *not_used);

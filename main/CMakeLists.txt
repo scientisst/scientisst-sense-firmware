@@ -11,7 +11,7 @@ else ()
 endif ()
 
 idf_component_register(SRCS ${srcs}
-        INCLUDE_DIRS "." "../../"
+        INCLUDE_DIRS "." "../"
         REQUIRES ${requires}
         EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/certs/cacert.pem" "${CMAKE_CURRENT_LIST_DIR}/certs/prvtkey.pem"
 )
