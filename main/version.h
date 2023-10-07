@@ -8,6 +8,6 @@
 #define VERSION_H
 
 #define VERSION_CAN_INCREMENT_FLAG 1
-#define FIRMWARE_VERSION "3.3.0-750b400"
+#define FIRMWARE_VERSION "3.4.0-2f98a93"
 
 #endif
