@@ -18,7 +18,7 @@
 #include "esp_log.h"
 
 #define DEFAULT_TASK_STACK_SIZE 2048
-#define _DEBUG_ 0 ///< 0: No debug, 1: Warning and Error only, 2: Full Debug
+#define _DEBUG_ 1 ///< 0: No debug, 1: Warning and Error only, 2: Full Debug
 
 #if (_DEBUG_ == 2)
 // This macros is only define if _DEBUG_ is defined
