@@ -18,15 +18,15 @@
 #include "esp_log.h"
 
 #define DEFAULT_TASK_STACK_SIZE 2048
-#define _DEBUG_ 2 ///< 0: No debug, 1: Debug, 2: Warning and Error only
+#define _DEBUG_ 0 ///< 0: No debug, 1: Warning and Error only, 2: Full Debug
 
-#if (_DEBUG_ == 1)
+#if (_DEBUG_ == 2)
 // This macros is only define if _DEBUG_ is defined
 #define DEBUG_PRINT_I(func, ...) ({ ESP_LOGI((func), __VA_ARGS__); })
 #define DEBUG_PRINT_W(func, ...) ({ ESP_LOGW((func), __VA_ARGS__); })
 #define DEBUG_PRINT_E(func, ...) ({ ESP_LOGE((func), __VA_ARGS__); })
 
-#elif (_DEBUG_ == 2)
+#elif (_DEBUG_ == 1)
 #define DEBUG_PRINT_I(...)
 #define DEBUG_PRINT_W(func, ...) ({ ESP_LOGW((func), __VA_ARGS__); })
 #define DEBUG_PRINT_E(func, ...) ({ ESP_LOGE((func), __VA_ARGS__); })

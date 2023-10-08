@@ -141,7 +141,7 @@ op_settings_info_t op_settings = {
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 #else
 op_settings_info_t op_settings = {
-    .com_mode = COM_MODE_BT,
+    .com_mode = COM_MODE_SERIAL,
 }; ///< Struct that holds the wifi acquisition configuration (e.g. SSID, password, sample rate...)
 #endif
 /*{
