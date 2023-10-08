@@ -21,8 +21,8 @@
 #define TIMER_GRP_ABAT 1
 #define TIMER_IDX_ABAT 1
 
-bool IRAM_ATTR timerGrp0Isr(void);
-bool IRAM_ATTR timerGrp1Isr(void);
+bool timerGrp0Isr(void);
+bool timerGrp1Isr(void);
 void timerGrpInit(int timer_group, int timer_idx, bool (*timer_isr)());
 void timerStart(int timer_group, int timer_idx, uint32_t frequency);
 void timerPause(int timer_group, int timer_idx);

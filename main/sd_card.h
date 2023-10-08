@@ -16,7 +16,7 @@
 
 esp_err_t initSDCard(void);
 void startAcquisitionSDCard(void);
-void IRAM_ATTR acquisitionSDCard(void *not_used);
+void acquisitionSDCard(void *not_used);
 
 
 #endif // SCIENTISST_SENSE_FIRMWARE_SD_CARD_H

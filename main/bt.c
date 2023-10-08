@@ -118,6 +118,7 @@ void IRAM_ATTR sendDataBluetooth(void)
     esp_spp_write(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 }
 
+
 /**
  * \brief Function to finalize the send process.
  *

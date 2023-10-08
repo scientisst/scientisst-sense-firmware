@@ -48,6 +48,6 @@ void adcExtInit(void);
 void adcExtStart(void);
 void adcExtStop(void);
 void mcpSetupRoutine(uint8_t channel_mask);
-void IRAM_ATTR mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes);
+void mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes);
 
 #endif

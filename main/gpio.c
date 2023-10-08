@@ -137,7 +137,7 @@ void adcExtDrdyGpio(int io_num)
     gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL << io_num)), 0, 0);
 
     // install gpio isr service
-    gpio_install_isr_service(0);
+    gpio_install_isr_service(0); // TODO: Test ESP_INTR_FLAG_IRAM
 
     // hook isr handler for specific gpio pin
     gpio_isr_handler_add(io_num, (gpio_isr_t)gpioDrdyIsrHandler, NULL);
