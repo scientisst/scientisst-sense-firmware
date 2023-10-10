@@ -32,8 +32,6 @@
 #include "version.h"
 #include "wifi.h"
 
-#define FIRMWARE_BITALINO_VERSION "BITalino_v5.1\n"
-
 extern TaskHandle_t send_task;
 extern TaskHandle_t abat_task;
 extern TaskHandle_t rcv_task;

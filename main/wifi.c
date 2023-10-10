@@ -303,8 +303,7 @@ int wifiInit(uint8_t force_ap)
     netbiosns_set_name(MDNS_HOST_NAME);
 
     // Check if saved op_mode is access point
-    if (force_ap || !strcmp(op_settings.com_mode, COM_MODE_TCP_AP) ||
-        !strcmp(op_settings.com_mode, COM_MODE_WS_AP))
+    if (force_ap || (op_settings.com_mode == COM_MODE_TCP_AP) || (op_settings.com_mode == COM_MODE_WS_AP))
     {
         wifi_init_softap();
         return ESP_OK;
@@ -328,7 +327,6 @@ int wifiInit(uint8_t force_ap)
 // TODO: CHANGE THIS TO A MACRO
 uint8_t isComModeWifi(void)
 {
-    return (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP) ||
-            !strcmp(op_settings.com_mode, COM_MODE_TCP_STA) ||
-            !strcmp(op_settings.com_mode, COM_MODE_UDP_STA) || !strcmp(op_settings.com_mode, COM_MODE_WS_AP));
+    return ((op_settings.com_mode == COM_MODE_TCP_AP) || (op_settings.com_mode == COM_MODE_TCP_STA) ||
+            (op_settings.com_mode == COM_MODE_UDP_STA) || (op_settings.com_mode == COM_MODE_WS_AP));
 }

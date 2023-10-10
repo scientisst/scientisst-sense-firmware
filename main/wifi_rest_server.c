@@ -325,7 +325,24 @@ static void opSettingsSaveMember(char *member, char *value)
     }
     else if (!strcmp(member, "com_mode"))
     {
-        strcpy(op_settings.com_mode, value);
+        if (!strcmp(value, "tcp_ap"))
+            op_settings.com_mode = COM_MODE_TCP_AP;
+        else if (!strcmp(value, "tcp_sta"))
+            op_settings.com_mode = COM_MODE_TCP_STA;
+        else if (!strcmp(value, "udp_sta"))
+            op_settings.com_mode = COM_MODE_UDP_STA;
+        else if (!strcmp(value, "bt"))
+            op_settings.com_mode = COM_MODE_BT;
+        else if (!strcmp(value, "serial"))
+            op_settings.com_mode = COM_MODE_SERIAL;
+        else if (!strcmp(value, "ws_ap"))
+            op_settings.com_mode = COM_MODE_WS_AP;
+        else if (!strcmp(value, "ble"))
+            op_settings.com_mode = COM_MODE_BLE;
+        else if (!strcmp(value, "sd_card"))
+            op_settings.com_mode = COM_MODE_SD_CARD;
+        else
+            op_settings.com_mode = COM_MODE_BT;
     }
     else if (!strcmp(member, "host_ip"))
     {

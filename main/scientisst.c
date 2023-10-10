@@ -37,11 +37,10 @@
 #define ACQ_ADC1_PRIORITY 10
 
 // Functions have to be declared with void* as argument even though it is not used to avoid compiler warnings
-void IRAM_ATTR sendTask(void *not_used);
+void sendTask(void *not_used);
 void rcvTask(void *not_used);
-void IRAM_ATTR AbatTask(void *not_used);
-void IRAM_ATTR acqAdc1Task(void *not_used);
-void IRAM_ATTR acqAdcExtTask(void *not_used);
+void AbatTask(void *not_used);
+void acqAdc1Task(void *not_used);
 void opModeConfig(void);
 
 TaskHandle_t send_task;
@@ -230,9 +229,9 @@ void initScientisst(void)
     xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
 
     // If op_mode is Wifi or Serial
-    if (isComModeWifi() || !strcmp(op_settings.com_mode, COM_MODE_SERIAL))
+    if (isComModeWifi() || (op_settings.com_mode == COM_MODE_SERIAL))
     {
-        if (!strcmp(op_settings.com_mode, COM_MODE_WS_AP))
+        if (op_settings.com_mode == COM_MODE_WS_AP)
         {
             DEBUG_PRINT_W("WS", "Starting web server");
             start_webserver();
@@ -240,7 +239,7 @@ void initScientisst(void)
         }
         else
         {
-            if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
+            if (op_settings.com_mode == COM_MODE_TCP_AP)
             {
                 if ((listen_fd = initTcpServer(op_settings.port_number)) < 0)
                 {
@@ -285,19 +284,19 @@ void initScientisst(void)
 void IRAM_ATTR sendTask(void *not_used)
 {
     void (*send_data_func)(void) = &sendData;
-    if (!strcmp(op_settings.com_mode, COM_MODE_BT))
+    if (op_settings.com_mode == COM_MODE_BT)
     {
         initBt();
         send_func = &esp_spp_write;
         send_data_func = &sendDataBluetooth;
     }
-    else if (!strcmp(op_settings.com_mode, COM_MODE_BLE))
+    else if (op_settings.com_mode == COM_MODE_BLE)
     {
         initBle();
         send_func = &sendBle;
     }
 
-    else if (!strcmp(op_settings.com_mode, COM_MODE_SD_CARD))
+    else if (op_settings.com_mode == COM_MODE_SD_CARD)
     {
 
 #if _SD_CARD_ == SD_CARD_ENABLED
@@ -349,7 +348,7 @@ void rcvTask(void *not_used)
         if (sd_card_present)
             vTaskDelete(NULL);
 
-        if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA)) // TCP client
+        if (op_settings.com_mode == COM_MODE_TCP_STA) // TCP client
         {
             while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
@@ -361,7 +360,7 @@ void rcvTask(void *not_used)
             }
             send_func = &tcpSerialSend;
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP)) // TCP server
+        else if (op_settings.com_mode == COM_MODE_TCP_AP) // TCP server
         {
             while ((send_fd = initTcpConnection(listen_fd)) < 0)
             {
@@ -373,7 +372,7 @@ void rcvTask(void *not_used)
             }
             send_func = &tcpSerialSend;
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_UDP_STA)) // UDP client
+        else if (op_settings.com_mode == COM_MODE_UDP_STA) // UDP client
         {
             while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0)
             {
@@ -385,7 +384,7 @@ void rcvTask(void *not_used)
             }
             send_func = &udpSend;
         }
-        else if (!strcmp(op_settings.com_mode, COM_MODE_SERIAL)) // Serial
+        else if (op_settings.com_mode == COM_MODE_SERIAL) // Serial
         {
             while ((send_fd = serialInit()) < 0)
             {
@@ -415,7 +414,7 @@ void IRAM_ATTR acqAdc1Task(void *not_used)
     // Config all possible adc channels
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
 
-    if (!strcmp(op_settings.com_mode, COM_MODE_BLE))
+    if (op_settings.com_mode == COM_MODE_BLE)
     {
         send_buff_len = GATTS_NOTIFY_LEN;
     }

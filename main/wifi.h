@@ -7,20 +7,23 @@
 
 #include <stdint.h>
 
-#define COM_MODE_TCP_AP "tcp_ap"
-#define COM_MODE_TCP_STA "tcp_sta"
-#define COM_MODE_UDP_STA "udp_sta"
-#define COM_MODE_BT "bt"
-#define COM_MODE_SERIAL "serial"
-#define COM_MODE_WS_AP "ws_ap"
-#define COM_MODE_BLE "ble"
-#define COM_MODE_SD_CARD "sd_card"
+typedef enum
+{
+    COM_MODE_TCP_AP,
+    COM_MODE_TCP_STA,
+    COM_MODE_UDP_STA,
+    COM_MODE_BT,
+    COM_MODE_SERIAL,
+    COM_MODE_WS_AP,
+    COM_MODE_BLE,
+    COM_MODE_SD_CARD,
+} com_mode_t;
 
 typedef struct
 {
     char ssid[32];
     char password[64];
-    char com_mode[8];
+    com_mode_t com_mode;
     char host_ip[16];
     char port_number[6];
     char bit_when[9];

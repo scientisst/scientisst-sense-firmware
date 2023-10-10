@@ -118,7 +118,6 @@ void IRAM_ATTR sendDataBluetooth(void)
     esp_spp_write(send_fd, snd_buff_idx[bt_curr_buff], snd_buff[bt_curr_buff]);
 }
 
-
 /**
  * \brief Function to finalize the send process.
  *
@@ -394,13 +393,12 @@ void getDeviceName(void)
     memcpy(mac_bt, mac, 6);
 
     // Use esp_read_mac to infer the wifi station mac addr based in the base mac addr read from EFUSE
-    if (!strcmp(op_settings.com_mode, COM_MODE_TCP_AP))
+    if (op_settings.com_mode == COM_MODE_TCP_AP)
     {
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_SOFTAP);
         // Use esp_read_mac to infer the wifi softap mac addr based in the base mac addr read from EFUSE
     }
-    else if (!strcmp(op_settings.com_mode, COM_MODE_TCP_STA) ||
-             !strcmp(op_settings.com_mode, COM_MODE_UDP_STA))
+    else if (op_settings.com_mode == COM_MODE_TCP_STA || op_settings.com_mode == COM_MODE_UDP_STA)
     {
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_STA);
         // Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE

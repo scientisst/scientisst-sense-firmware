@@ -25,4 +25,3 @@ else ()
 endif ()
 
 add_compile_options(-Wall -Wextra -Wundef -Wunused -Warray-bounds -Wbuiltin-macro-redefined)
-add_compile_options(-Wall -Wextra -Wundef -Wunused -Warray-bounds -Wbuiltin-macro-redefined)

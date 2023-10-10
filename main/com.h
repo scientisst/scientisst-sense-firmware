@@ -1,8 +1,6 @@
 /** \file com.h
     \brief This file contains the definitions of the functions used to process
    the received data.
-
-    //TODO: Add more info
 */
 
 #ifndef _COM_H
