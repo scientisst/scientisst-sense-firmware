@@ -10,6 +10,7 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+#include "sci_macros.h"
 #include "sci_macros_conf.h"
 
 /*************************
@@ -21,15 +22,12 @@
 //   - HW_VERSION_CARDIO (Cardio)
 #define _HW_VERSION_ HW_VERSION_CORE
 
+#define DEFAULT_COM_MODE COM_MODE_BT
+
 // Possible values for _ADC_EXT_:
 //   - EXT_ADC_DISABLED (No external adc) [Default]
 //   - EXT_ADC_ENABLED (Enable external adc)
-#define _ADC_EXT_ EXT_ADC_DISABLED
-
-// Possible values for _TIMESTAMP_:
-//   - TIMESTAMP_DISABLED (Disable timestamp) [Default]
-//   - TIMESTAMP_ENABLED (Enable timestamp on AX1 and AX2 channels)
-#define _TIMESTAMP_ TIMESTAMP_DISABLED
+#define _ADC_EXT_ EXT_ADC_ENABLED
 
 /************************
  * SDCARD CONFIGURATION *
@@ -44,6 +42,12 @@
 //   - FORMAT_SDCARD (Format sd card if mount failed) (BE CAREFUL, THIS WILL
 //     ERASE ALL DATA ON THE SD CARD)
 #define _FORMAT_SDCARD_IF_MOUNT_FAILED_ DO_NOT_FORMAT_SDCARD
+
+// Possible values for NUMBER_EXT_ADC_CHANNELS:
+//   - (2) [Default]
+//   - (1)
+//   - (0) (This is equivalent to EXT_ADC_DISABLED but without the optimizations made when it is disabled)
+#define NUMBER_EXT_ADC_CHANNELS 2
 
 /**********************
  * IMU CONFIGURATION *
@@ -85,8 +89,7 @@
 #endif
 
 // Check if the sd card format is valid
-#if _FORMAT_SDCARD_IF_MOUNT_FAILED_ != DO_NOT_FORMAT_SDCARD &&                                               \
-    _FORMAT_SDCARD_IF_MOUNT_FAILED_ != FORMAT_SDCARD
+#if _FORMAT_SDCARD_IF_MOUNT_FAILED_ != DO_NOT_FORMAT_SDCARD && _FORMAT_SDCARD_IF_MOUNT_FAILED_ != FORMAT_SDCARD
 #error invalid sd card format configuration, check config.h
 #endif
 
@@ -96,21 +99,15 @@
 #endif
 
 // Check if the imu data acquisition is valid
-#if _IMU_DATA_ACQUISITION_ != EULER_ANGLES_AND_LINEAR_ACCELERATION &&                                        \
+#if _IMU_DATA_ACQUISITION_ != EULER_ANGLES_AND_LINEAR_ACCELERATION &&                                                       \
     _IMU_DATA_ACQUISITION_ != ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
 #error invalid imu data acquisition configuration, check config.h
 #endif
 
 // Check if the imu calibration is valid
-#if _IMU_CALIBRATION_ != LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED &&                                            \
+#if _IMU_CALIBRATION_ != LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED &&                                                           \
     _IMU_CALIBRATION_ != ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
 #error invalid imu calibration configuration, check config.h
-#endif
-
-// Check if the configuration is valid
-// Timestamp requires that no external adc is enabled
-#if _TIMESTAMP_ == TIMESTAMP_ENABLED && (_ADC_EXT_ != EXT_ADC_DISABLED && _SD_CARD_ == SD_CARD_DISABLED)
-#error timestamp requires that no external adc is enabled, check config.h
 #endif
 
 #endif

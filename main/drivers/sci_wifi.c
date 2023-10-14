@@ -21,6 +21,7 @@
 #include "lwip/sys.h"
 #include "mdns.h"
 #include "nvs_flash.h"
+
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
 #include "sci_scientisst.h"
@@ -71,8 +72,7 @@ void wifi_init_softap(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(
-        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
 
     wifi_config_t wifi_config = {
         .ap = {.ssid_len = 0,
@@ -81,7 +81,7 @@ void wifi_init_softap(void)
                .max_connection = EXAMPLE_MAX_STA_CONN,
                .authmode = WIFI_AUTH_WPA_WPA2_PSK},
     };
-    memcpy(wifi_config.ap.ssid, device_name, strlen(device_name) + 1);
+    memcpy(wifi_config.ap.ssid, scientisst_device_settings.device_name, strlen(scientisst_device_settings.device_name) + 1);
 
     if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0)
     {
@@ -92,8 +92,8 @@ void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    DEBUG_PRINT_W("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d",
-                  wifi_config.ap.ssid, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
+    DEBUG_PRINT_W("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid,
+                  EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }
 
 // wifi
@@ -159,10 +159,10 @@ int wifi_init_sta(void)
 
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL,
-                                                        &instance_got_ip));
+    ESP_ERROR_CHECK(
+        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(
+        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
 
     wifi_config_t wifi_config = {
         .sta =
@@ -175,11 +175,11 @@ int wifi_init_sta(void)
     };
 
     //  If ssid is empty "", attempt to connect will not fail. This is not desirable
-    if (strcmp(op_settings.ssid, ""))
+    if (strcmp(scientisst_device_settings.op_settings.ssid, ""))
     {
-        strcpy((char *)wifi_config.sta.ssid, op_settings.ssid);
+        strcpy((char *)wifi_config.sta.ssid, scientisst_device_settings.op_settings.ssid);
     }
-    strcpy((char *)wifi_config.sta.password, op_settings.password);
+    strcpy((char *)wifi_config.sta.password, scientisst_device_settings.op_settings.password);
 
     // If there's no password, there is no authmode.
     if (!strcmp((char *)wifi_config.sta.password, ""))
@@ -194,8 +194,8 @@ int wifi_init_sta(void)
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
      * or connection failed for EXAMPLE_ESP_MAXIMUM_RETRY number of re-tries
      * (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE,
-                                           pdFALSE, portMAX_DELAY);
+    EventBits_t bits =
+        xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
 
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we
      * can test which event actually happened. */
@@ -207,8 +207,8 @@ int wifi_init_sta(void)
     }
     else if (bits & WIFI_FAIL_BIT)
     {
-        DEBUG_PRINT_W("wifi station", "Failed to connect to SSID:%s, password:%s",
-                      (char *)wifi_config.sta.ssid, (char *)wifi_config.sta.password);
+        DEBUG_PRINT_W("wifi station", "Failed to connect to SSID:%s, password:%s", (char *)wifi_config.sta.ssid,
+                      (char *)wifi_config.sta.password);
         ret = ESP_FAIL;
     }
     else
@@ -303,7 +303,8 @@ int wifiInit(uint8_t force_ap)
     netbiosns_set_name(MDNS_HOST_NAME);
 
     // Check if saved op_mode is access point
-    if (force_ap || (op_settings.com_mode == COM_MODE_TCP_AP) || (op_settings.com_mode == COM_MODE_WS_AP))
+    if (force_ap || (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP) ||
+        (scientisst_device_settings.op_settings.com_mode == COM_MODE_WS_AP))
     {
         wifi_init_softap();
         return ESP_OK;
@@ -327,6 +328,8 @@ int wifiInit(uint8_t force_ap)
 // TODO: CHANGE THIS TO A MACRO
 uint8_t isComModeWifi(void)
 {
-    return ((op_settings.com_mode == COM_MODE_TCP_AP) || (op_settings.com_mode == COM_MODE_TCP_STA) ||
-            (op_settings.com_mode == COM_MODE_UDP_STA) || (op_settings.com_mode == COM_MODE_WS_AP));
+    return ((scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP) ||
+            (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_STA) ||
+            (scientisst_device_settings.op_settings.com_mode == COM_MODE_UDP_STA) ||
+            (scientisst_device_settings.op_settings.com_mode == COM_MODE_WS_AP));
 }

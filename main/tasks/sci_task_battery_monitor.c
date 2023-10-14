@@ -13,8 +13,6 @@
 #include "sci_scientisst.h"
 #include "sci_timer.h"
 
-#define ABAT_DIVIDER_FACTOR 2
-
 /**
  * \brief Task that acquires data from adc2 (battery).
  *
@@ -33,9 +31,9 @@ void IRAM_ATTR task_battery_monitor(void *not_used)
     timerGrpInit(TIMER_GRP_ABAT, TIMER_IDX_ABAT, timerGrp1Isr);
     timerStart(TIMER_GRP_ABAT, TIMER_IDX_ABAT, (uint32_t)ABAT_CHECK_FREQUENCY);
 
-    if (op_settings.is_battery_threshold_inflated == 1)
+    if (scientisst_device_settings.op_settings.is_battery_threshold_inflated == 1)
     {
-        battery_threshold += 50;
+        scientisst_device_settings.battery_threshold += 50;
         bat_led_status_gpio = 1;
     }
 
@@ -48,25 +46,25 @@ void IRAM_ATTR task_battery_monitor(void *not_used)
                 DEBUG_PRINT_E("adc2_get_raw", "Error!");
                 continue;
             }
-            abat = esp_adc_cal_raw_to_voltage((uint32_t)raw, &adc2_chars) * ABAT_DIVIDER_FACTOR;
+            abat = get_adc_internal_value(ADC_INTERNAL_2, ABAT_ADC_CH, 1);
 
-            turn_led_on = abat <= battery_threshold;
+            turn_led_on = abat <= scientisst_device_settings.battery_threshold;
 
             if (!bat_led_status_gpio && turn_led_on)
             {
                 // Inflate threshold so that it doesn't blink due to abat oscilations in the edge of the
                 // threshold
-                battery_threshold += 50;
-                op_settings.is_battery_threshold_inflated = 0;
-                saveOpSettingsInfo(&op_settings);
+                scientisst_device_settings.battery_threshold += 50;
+                scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
+                saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
             }
             else if (bat_led_status_gpio && !turn_led_on)
             {
                 // It already charged passed the real threshold, so update the battery_threshold to its real
                 // value
-                battery_threshold -= 50;
-                op_settings.is_battery_threshold_inflated = 0;
-                saveOpSettingsInfo(&op_settings);
+                scientisst_device_settings.battery_threshold -= 50;
+                scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
+                saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
             }
 
             bat_led_status_gpio = turn_led_on;

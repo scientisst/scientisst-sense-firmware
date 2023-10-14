@@ -18,7 +18,7 @@
 #define SEND_AFTER_C0NG 2
 
 void initBt(void);
-void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
+void sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
 void getDeviceName(void);
 
 #endif

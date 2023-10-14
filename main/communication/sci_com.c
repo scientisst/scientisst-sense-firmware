@@ -41,8 +41,8 @@ void processRcv(uint8_t *buff, int len)
     uint8_t cmd = buff[0] & 0b00000011;
 
     // Live mode with 0 channels selected
-    if ((api_config.api_mode == API_MODE_BITALINO && buff[0] == 1) ||
-        (api_config.api_mode != API_MODE_BITALINO && buff[0] == 1 && buff[1] == 0))
+    if ((scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO && buff[0] == 1) ||
+        (scientisst_device_settings.api_config.api_mode != API_MODE_BITALINO && buff[0] == 1 && buff[1] == 0))
     {
         return;
     }
@@ -56,7 +56,7 @@ void processRcv(uint8_t *buff, int len)
     {
         triggerDAC(buff);
     }
-    else if (op_mode == OP_MODE_LIVE)
+    else if (scientisst_device_settings.op_mode == OP_MODE_LIVE)
     {
         if (!buff[0])
         {
@@ -72,7 +72,7 @@ void processRcv(uint8_t *buff, int len)
                 DEBUG_PRINT_E("processRcv", "Simulation mode is no longer supported");
             }
             // Get channels from mask
-            api_config.select_ch_mask_func(buff);
+            scientisst_device_settings.api_config.select_ch_mask_func(buff);
             startAcquisition(buff, cmd);
         }
         else if (cmd == 0b11) // Configuration command
@@ -97,7 +97,7 @@ void processRcv(uint8_t *buff, int len)
         }
         else if (!cmd) // Set battery threshold
         {
-            battery_threshold = 3400 + (((uint16_t)(buff[0] & 0b11111100) >> 2) * 400) / 64;
+            scientisst_device_settings.battery_threshold = 3400 + (((uint16_t)(buff[0] & 0b11111100) >> 2) * 400) / 64;
         }
     }
 }
@@ -114,9 +114,9 @@ void triggerGpio(uint8_t *buff)
     uint8_t o1_lvl = (buff[0] & 0b00000100) >> 2;
 
     gpio_set_level(O0_IO, o1_lvl);
-    gpio_out_state[0] = o1_lvl;
+    scientisst_device_settings.gpio_out_state[0] = o1_lvl;
     gpio_set_level(O1_IO, o2_lvl);
-    gpio_out_state[1] = o2_lvl;
+    scientisst_device_settings.gpio_out_state[1] = o2_lvl;
 
     DEBUG_PRINT_W("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
 }
@@ -144,18 +144,18 @@ void changeAPI(uint8_t mode)
 {
     if (mode == API_MODE_BITALINO)
     {
-        api_config.api_mode = API_MODE_BITALINO;
-        api_config.select_ch_mask_func = &selectChsFromMask;
+        scientisst_device_settings.api_config.api_mode = API_MODE_BITALINO;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMask;
     }
     else if (mode == API_MODE_SCIENTISST)
     {
-        api_config.api_mode = API_MODE_SCIENTISST;
-        api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
+        scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
     }
     else if (mode == API_MODE_JSON)
     {
-        api_config.api_mode = API_MODE_JSON;
-        api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
+        scientisst_device_settings.api_config.api_mode = API_MODE_JSON;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
     }
 
     DEBUG_PRINT_W("changeAPI", "API changed to %d", mode);
@@ -173,34 +173,33 @@ uint8_t getPacketSize(void)
 {
     uint8_t _packet_size = 0;
 
-    if (api_config.api_mode == API_MODE_BITALINO)
+    if (scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO)
     {
         // Table that has the packet size in function of the number of channels
-        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {
-            0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};
+        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};
 
-        _packet_size = packet_size_num_chs[num_intern_active_chs];
+        _packet_size = packet_size_num_chs[scientisst_device_settings.num_intern_active_chs];
     }
-    else if (api_config.api_mode == API_MODE_SCIENTISST)
+    else if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
     {
         // Add 24bit channel's contributuion to packet size
-        _packet_size += 3 * num_extern_active_chs;
+        _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
 
         // Add 12bit channel's contributuion to packet size
-        if (!(num_intern_active_chs % 2))
+        if (!(scientisst_device_settings.num_intern_active_chs % 2))
         { // If it's an even number
-            _packet_size += ((num_intern_active_chs * 12) / 8);
+            _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
         }
         else
         {
             //-4 because 4 bits can go in the I/0 byte
-            _packet_size += (((num_intern_active_chs * 12) - 4) / 8);
+            _packet_size += (((scientisst_device_settings.num_intern_active_chs * 12) - 4) / 8);
         }
         _packet_size += 3; // for the I/Os and seq+crc bytes
     }
-    else if (api_config.api_mode == API_MODE_JSON)
+    else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
     {
-        const char *json_str = cJSON_Print(json);
+        const char *json_str = cJSON_Print(scientisst_buffers.json);
         _packet_size = strlen(json_str) + 1;
         free((void *)json_str);
     }
@@ -225,8 +224,8 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
 
     // Reset previous active chs
-    num_intern_active_chs = 0;
-    num_extern_active_chs = 0;
+    scientisst_device_settings.num_intern_active_chs = 0;
+    scientisst_device_settings.num_extern_active_chs = 0;
 
     // Select the channels that are activated (with corresponding bit equal to 1)
     for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
@@ -236,13 +235,15 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
             // Store the activated channels
             if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) || i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2))
             {
-                active_ext_chs[num_extern_active_chs] = channel_number - 1;
-                num_extern_active_chs++;
+                scientisst_device_settings.active_ext_chs[scientisst_device_settings.num_extern_active_chs] =
+                    channel_number - 1;
+                scientisst_device_settings.num_extern_active_chs++;
             }
             else
             {
-                active_internal_chs[num_intern_active_chs] = channel_number - 1;
-                num_intern_active_chs++;
+                scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
+                    channel_number - 1;
+                scientisst_device_settings.num_intern_active_chs++;
             }
 
             DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number);
@@ -250,36 +251,36 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
         channel_number--;
     }
 
-    if (api_config.api_mode == API_MODE_JSON)
+    if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
     {
-        if (json != NULL)
+        if (scientisst_buffers.json != NULL)
         {
             cJSON_Delete(json);
-            json = NULL;
+            scientisst_buffers.json = NULL;
         }
-        json = cJSON_CreateObject();
+        scientisst_buffers.json = cJSON_CreateObject();
 
         sprintf(value_str, "%04d", 4095);
-        for (int j = num_intern_active_chs - 1; j >= 0; j--)
+        for (int j = scientisst_device_settings.num_intern_active_chs - 1; j >= 0; j--)
         {
-            sprintf(aux_str, "AI%d", active_internal_chs[j] + 1);
-            cJSON_AddStringToObject(json, aux_str, value_str);
+            sprintf(aux_str, "AI%d", scientisst_device_settings.active_internal_chs[j] + 1);
+            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
         }
 
         sprintf(value_str, "%08d", 16777215);
-        for (int j = num_extern_active_chs - 1; j >= 0; j--)
+        for (int j = scientisst_device_settings.num_extern_active_chs - 1; j >= 0; j--)
         {
-            sprintf(aux_str, "AX%d", active_ext_chs[j] + 1 - 6);
-            cJSON_AddStringToObject(json, aux_str, value_str);
+            sprintf(aux_str, "AX%d", scientisst_device_settings.active_ext_chs[j] + 1 - 6);
+            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
         }
 
         // Add IO state json objects
-        cJSON_AddStringToObject(json, "I1", "0");
-        cJSON_AddStringToObject(json, "I2", "0");
-        cJSON_AddStringToObject(json, "O1", "0");
-        cJSON_AddStringToObject(json, "O2", "0");
+        cJSON_AddStringToObject(scientisst_buffers.json, "I1", "0");
+        cJSON_AddStringToObject(scientisst_buffers.json, "I2", "0");
+        cJSON_AddStringToObject(scientisst_buffers.json, "O1", "0");
+        cJSON_AddStringToObject(scientisst_buffers.json, "O2", "0");
     }
-    packet_size = getPacketSize();
+    scientisst_buffers.packet_size = getPacketSize();
 }
 
 /**
@@ -294,23 +295,23 @@ void selectChsFromMask(uint8_t *buff)
     int channel_number = DEFAULT_ADC_CHANNELS;
 
     // Reset previous active chs
-    num_intern_active_chs = 0;
-    num_extern_active_chs = 0;
+    scientisst_device_settings.num_intern_active_chs = 0;
+    scientisst_device_settings.num_extern_active_chs = 0;
 
     // Select the channels that are activated (with corresponding bit equal to 1)
-    for (int i = 1 << (DEFAULT_ADC_CHANNELS + NUM_UNUSED_BITS_FOR_CH_MASK - 1);
-         i > NUM_UNUSED_BITS_FOR_CH_MASK; i >>= 1)
+    for (int i = 1 << (DEFAULT_ADC_CHANNELS + NUM_UNUSED_BITS_FOR_CH_MASK - 1); i > NUM_UNUSED_BITS_FOR_CH_MASK; i >>= 1)
     {
         if (buff[0] & i)
         {
             // Store the activated channels into the respective acq_config.channels array
-            active_internal_chs[num_intern_active_chs] = channel_number - 1;
-            num_intern_active_chs++;
+            scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
+                channel_number - 1;
+            scientisst_device_settings.num_intern_active_chs++;
             DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number - 1);
         }
         channel_number--;
     }
-    packet_size = getPacketSize();
+    scientisst_buffers.packet_size = getPacketSize();
 }
 
 /**
@@ -323,7 +324,7 @@ void setSampleRate(uint8_t *buff)
     uint32_t aux = 1;
 
     // API mode bitalino only needs the 2 bits for the sample rate.
-    if (api_config.api_mode == API_MODE_BITALINO)
+    if (scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO)
     {
         for (int i = 0; i < (buff[0] >> 6); i++)
         {
@@ -335,7 +336,7 @@ void setSampleRate(uint8_t *buff)
         aux = (*(uint16_t *)(buff + 1) & 0xFFFF);
     }
 
-    sample_rate = aux;
+    scientisst_device_settings.sample_rate = aux;
 
     DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", sample_rate);
 }
@@ -356,8 +357,8 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 {
 
     // Clear send buffs, because of potential previous live mode
-    bt_curr_buff = 0;
-    acq_curr_buff = 0;
+    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.acq_curr_buff = 0;
     // Clean send buff, because of send status and send firmware string
     send_busy = 0;
 
@@ -366,31 +367,33 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
     // Clean send buffers, to be sure
     for (int i = 0; i < NUM_BUFFERS; i++)
     {
-        memset(frame_buffer[i], 0, frame_buffer_length);
-        frame_buffer_write_idx[i] = 0;
-        frame_buffer_ready_to_send[i] = 0;
+        memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
+        scientisst_buffers.frame_buffer_write_idx[i] = 0;
+        scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
 
     // WARNING: if changed, change same code in API
-    if (sample_rate > 100)
+    if (scientisst_device_settings.sample_rate > 100)
     {
-        send_threshold = !(frame_buffer_length % packet_size)
-                             ? frame_buffer_length // If buf len is a multiple of packet size
-                             : frame_buffer_length - (frame_buffer_length % packet_size); // Else
+        scientisst_buffers.send_threshold =
+            !(scientisst_buffers.frame_buffer_length_bytes % scientisst_buffers.packet_size)
+                ? scientisst_buffers.frame_buffer_length_bytes // If buf len is a multiple of packet size
+                : scientisst_buffers.frame_buffer_length_bytes -
+                      (scientisst_buffers.frame_buffer_length_bytes % scientisst_buffers.packet_size); // Else
     }
     else
     {
-        send_threshold = packet_size;
+        scientisst_buffers.send_threshold = scientisst_buffers.packet_size;
     }
 
     // Start external
 #if _ADC_EXT_ == EXT_ADC_ENABLED
-    if (num_extern_active_chs)
+    if (scientisst_device_settings.num_extern_active_chs)
     {
         uint8_t channel_mask = 0;
-        for (int i = 0; i < num_extern_active_chs; i++)
+        for (int i = 0; i < scientisst_device_settings.num_extern_active_chs; i++)
         {
-            channel_mask |= 0b1 << (active_ext_chs[i] - 6);
+            channel_mask |= 0b1 << (scientisst_device_settings.active_ext_chs[i] - 6);
         }
         mcpSetupRoutine(channel_mask);
         adcExtStart();
@@ -398,7 +401,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 #endif
 
     // Init timer for adc task top start
-    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, sample_rate);
+    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, scientisst_device_settings.sample_rate);
 
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
@@ -414,7 +417,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 #endif
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition started");
-    op_mode = OP_MODE_LIVE;
+    scientisst_device_settings.op_mode = OP_MODE_LIVE;
 }
 
 /**
@@ -440,13 +443,13 @@ void stopAcquisition(void)
 
     // Stop external
 #if _ADC_EXT_ != EXT_ADC_DISABLED
-    if (num_extern_active_chs)
+    if (scientisst_device_settings.num_extern_active_chs)
     {
         adcExtStop();
     }
 #endif
 
-    op_mode = OP_MODE_IDLE;
+    scientisst_device_settings.op_mode = OP_MODE_IDLE;
 
     vTaskDelay(50 / portTICK_PERIOD_MS);
 
@@ -456,18 +459,18 @@ void stopAcquisition(void)
     // Clean send buffers
     for (uint8_t i = 0; i < NUM_BUFFERS; i++)
     {
-        memset(frame_buffer[i], 0, frame_buffer_length);
-        frame_buffer_write_idx[i] = 0;
-        frame_buffer_ready_to_send[i] = 0;
+        memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
+        scientisst_buffers.frame_buffer_write_idx[i] = 0;
+        scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
 
-    bt_curr_buff = 0;
-    acq_curr_buff = 0;
+    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.acq_curr_buff = 0;
     send_busy = 0;
 
     // Reset previous active chs
-    num_intern_active_chs = 0;
-    num_extern_active_chs = 0;
+    scientisst_device_settings.num_intern_active_chs = 0;
+    scientisst_device_settings.num_extern_active_chs = 0;
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition stopped");
 }
@@ -484,18 +487,18 @@ void sendStatusPacket(void)
     uint8_t i;
     uint16_t true_send_threshold;
 
-    memset(frame_buffer[NUM_BUFFERS - 1], 0, frame_buffer_write_idx[NUM_BUFFERS - 1]);
-    frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
-    frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
-    true_send_threshold = send_threshold;
-    send_threshold = 0;
+    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1]);
+    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
+    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
+    true_send_threshold = scientisst_buffers.send_threshold;
+    scientisst_buffers.send_threshold = 0;
 
     // calculate CRC (except last byte (seq+CRC) )
     for (i = 0; i < STATUS_PACKET_SIZE - 1; i++)
     {
         // calculate CRC nibble by nibble
-        crc = crc_table[crc] ^ (frame_buffer[NUM_BUFFERS - 1][i] >> 4);
-        crc = crc_table[crc] ^ (frame_buffer[NUM_BUFFERS - 1][i] & 0x0F);
+        crc = crc_table[crc] ^ (scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][i] >> 4);
+        crc = crc_table[crc] ^ (scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][i] & 0x0F);
     }
 
     // calculate CRC for last byte (I1|I2|O1|O2|CRC)
@@ -503,19 +506,19 @@ void sendStatusPacket(void)
     crc = (0) | crc_table[crc]; // TODO: Onde está 0, meter os valores de I1|I2|O1|O2
 
     // store CRC and Seq in the last byte of the packet
-    frame_buffer[NUM_BUFFERS - 1][STATUS_PACKET_SIZE - 1] = crc;
+    scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][STATUS_PACKET_SIZE - 1] = crc;
 
-    frame_buffer_write_idx[NUM_BUFFERS - 1] += STATUS_PACKET_SIZE;
+    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += STATUS_PACKET_SIZE;
 
-    bt_curr_buff = NUM_BUFFERS - 1;
+    scientisst_buffers.bt_curr_buff = NUM_BUFFERS - 1;
 
     // send new data
     xTaskNotifyGive(send_task);
     // Wait for send task to send data, TODO: find a better way to do this
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    bt_curr_buff = 0;
-    send_threshold = true_send_threshold;
+    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.send_threshold = true_send_threshold;
 }
 
 /**
@@ -531,37 +534,38 @@ void sendFirmwareVersionPacket(void)
 {
     uint16_t true_send_threshold;
 
-    memset(frame_buffer[NUM_BUFFERS - 1], 0, frame_buffer_write_idx[NUM_BUFFERS - 1]);
-    frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
-    frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
-    true_send_threshold = send_threshold;
-    send_threshold = 0;
+    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1]);
+    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
+    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
+    true_send_threshold = scientisst_buffers.send_threshold;
+    scientisst_buffers.send_threshold = 0;
 
-    if (api_config.api_mode != API_MODE_BITALINO)
+    if (scientisst_device_settings.api_config.api_mode != API_MODE_BITALINO)
     {
-        memcpy(frame_buffer[NUM_BUFFERS - 1], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
-        frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_VERSION) + 1;
+        memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
+        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_VERSION) + 1;
 
         // Send ADC1 configurations for raw2voltage precision conversions
-        memcpy(frame_buffer[NUM_BUFFERS - 1] + frame_buffer_write_idx[NUM_BUFFERS - 1], &adc1_chars,
-               6 * sizeof(uint32_t));
-        // We don't want to send the 2 last pointers of adc1_chars struct
-        frame_buffer_write_idx[NUM_BUFFERS - 1] += 6 * sizeof(uint32_t);
+        memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1] + scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1],
+               &(scientisst_device_settings.adc_chars[ADC_INTERNAL_1]), 6 * sizeof(uint32_t));
+        // We don't want to send the 2 last pointers of adc_chars struct
+        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += 6 * sizeof(uint32_t);
     }
     else
     {
-        memcpy(frame_buffer[NUM_BUFFERS - 1], FIRMWARE_BITALINO_VERSION, strlen(FIRMWARE_BITALINO_VERSION));
-        frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_BITALINO_VERSION);
+        memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], FIRMWARE_BITALINO_VERSION,
+               strlen(FIRMWARE_BITALINO_VERSION));
+        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_BITALINO_VERSION);
     }
 
-    bt_curr_buff = NUM_BUFFERS - 1;
+    scientisst_buffers.bt_curr_buff = NUM_BUFFERS - 1;
 
     xTaskNotifyGive(send_task);
     // Wait for send task to send data, TODO: find a better way to do this
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    bt_curr_buff = 0;
-    send_threshold = true_send_threshold;
+    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.send_threshold = true_send_threshold;
 
     DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
 }

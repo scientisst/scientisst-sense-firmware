@@ -29,23 +29,24 @@
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
 #include "nvs_flash.h"
+#include "sdkconfig.h"
+#include "sdmmc_cmd.h"
+
 #include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
 #include "sci_scientisst.h"
-#include "sdkconfig.h"
-#include "sdmmc_cmd.h"
 
 #define WEB_MOUNT_POINT "/www" // Specify the mount point in VFS.
 
-#define REST_CHECK(a, str, goto_tag, ...)                                                                    \
-    do                                                                                                       \
-    {                                                                                                        \
-        if (!(a))                                                                                            \
-        {                                                                                                    \
-            DEBUG_PRINT_E("esp-rest", "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__);                \
-            goto goto_tag;                                                                                   \
-        }                                                                                                    \
+#define REST_CHECK(a, str, goto_tag, ...)                                                                                   \
+    do                                                                                                                      \
+    {                                                                                                                       \
+        if (!(a))                                                                                                           \
+        {                                                                                                                   \
+            DEBUG_PRINT_E("esp-rest", "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__);                               \
+            goto goto_tag;                                                                                                  \
+        }                                                                                                                   \
     } while (0)
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
@@ -186,7 +187,9 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
  */
 static esp_err_t op_settings_get_handler(httpd_req_t *req)
 {
-    cJSON *root, *connectionInfo, *bitalinoInfo;
+    cJSON *root;
+    cJSON *connectionInfo;
+    cJSON *bitalinoInfo;
 
     httpd_resp_set_type(req, "application/json");
 
@@ -195,20 +198,20 @@ static esp_err_t op_settings_get_handler(httpd_req_t *req)
     cJSON_AddItemToObject(root, "bitalinoInfo", bitalinoInfo = cJSON_CreateObject());
 
     // if no error
-    if (is_op_settings_valid)
+    if (scientisst_device_settings.is_op_settings_valid)
     {
         DEBUG_PRINT_I("op_settings_get_handler", "Success reading from flash op_settings");
-        cJSON_AddStringToObject(connectionInfo, "ssid", op_settings.ssid);
-        cJSON_AddStringToObject(connectionInfo, "password", op_settings.password);
-        cJSON_AddStringToObject(connectionInfo, "host_ip", op_settings.host_ip);
-        cJSON_AddStringToObject(connectionInfo, "port_number", op_settings.port_number);
-        cJSON_AddStringToObject(bitalinoInfo, "bit_when", op_settings.bit_when);
-        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", op_settings.sampling_rate);
-        cJSON_AddStringToObject(bitalinoInfo, "no_channels", op_settings.no_channels);
-        cJSON_AddStringToObject(bitalinoInfo, "channels", op_settings.channels);
-        cJSON_AddStringToObject(bitalinoInfo, "bit_mode", op_settings.bit_mode);
-        cJSON_AddStringToObject(bitalinoInfo, "port_o1", op_settings.port_o1);
-        cJSON_AddStringToObject(bitalinoInfo, "port_o2", op_settings.port_o2);
+        cJSON_AddStringToObject(connectionInfo, "ssid", scientisst_device_settings.op_settings.ssid);
+        cJSON_AddStringToObject(connectionInfo, "password", scientisst_device_settings.op_settings.password);
+        cJSON_AddStringToObject(connectionInfo, "host_ip", scientisst_device_settings.op_settings.host_ip);
+        cJSON_AddStringToObject(connectionInfo, "port_number", scientisst_device_settings.op_settings.port_number);
+        cJSON_AddStringToObject(bitalinoInfo, "bit_when", scientisst_device_settings.op_settings.bit_when);
+        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", scientisst_device_settings.op_settings.sampling_rate);
+        cJSON_AddStringToObject(bitalinoInfo, "no_channels", scientisst_device_settings.op_settings.no_channels);
+        cJSON_AddStringToObject(bitalinoInfo, "channels", scientisst_device_settings.op_settings.channels);
+        cJSON_AddStringToObject(bitalinoInfo, "bit_mode", scientisst_device_settings.op_settings.bit_mode);
+        cJSON_AddStringToObject(bitalinoInfo, "port_o1", scientisst_device_settings.op_settings.port_o1);
+        cJSON_AddStringToObject(bitalinoInfo, "port_o2", scientisst_device_settings.op_settings.port_o2);
     }
     else
     {
@@ -261,7 +264,7 @@ static esp_err_t op_settings_post_handler(httpd_req_t *req)
     // Save op_settings in flash
     printf("%s \n", buf);
     parseHttpForm(buf);
-    saveOpSettingsInfo(&op_settings);
+    saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
 
     httpd_resp_set_type(req, "text/html");
     httpd_resp_set_status(req, "301 Moved Permanently");
@@ -317,68 +320,68 @@ static void opSettingsSaveMember(char *member, char *value)
 {
     if (!strcmp(member, "ssid"))
     {
-        strcpy(op_settings.ssid, value);
+        strcpy(scientisst_device_settings.op_settings.ssid, value);
     }
     else if (!strcmp(member, "password"))
     {
-        strcpy(op_settings.password, value);
+        strcpy(scientisst_device_settings.op_settings.password, value);
     }
     else if (!strcmp(member, "com_mode"))
     {
         if (!strcmp(value, "tcp_ap"))
-            op_settings.com_mode = COM_MODE_TCP_AP;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_TCP_AP;
         else if (!strcmp(value, "tcp_sta"))
-            op_settings.com_mode = COM_MODE_TCP_STA;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_TCP_STA;
         else if (!strcmp(value, "udp_sta"))
-            op_settings.com_mode = COM_MODE_UDP_STA;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_UDP_STA;
         else if (!strcmp(value, "bt"))
-            op_settings.com_mode = COM_MODE_BT;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_BT;
         else if (!strcmp(value, "serial"))
-            op_settings.com_mode = COM_MODE_SERIAL;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_SERIAL;
         else if (!strcmp(value, "ws_ap"))
-            op_settings.com_mode = COM_MODE_WS_AP;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_WS_AP;
         else if (!strcmp(value, "ble"))
-            op_settings.com_mode = COM_MODE_BLE;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_BLE;
         else if (!strcmp(value, "sd_card"))
-            op_settings.com_mode = COM_MODE_SD_CARD;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_SD_CARD;
         else
-            op_settings.com_mode = COM_MODE_BT;
+            scientisst_device_settings.op_settings.com_mode = COM_MODE_BT;
     }
     else if (!strcmp(member, "host_ip"))
     {
-        strcpy(op_settings.host_ip, value);
+        strcpy(scientisst_device_settings.op_settings.host_ip, value);
     }
     else if (!strcmp(member, "port_number"))
     {
-        strcpy(op_settings.port_number, value);
+        strcpy(scientisst_device_settings.op_settings.port_number, value);
     }
     else if (!strcmp(member, "bit_when"))
     {
-        strcpy(op_settings.bit_when, value);
+        strcpy(scientisst_device_settings.op_settings.bit_when, value);
     }
     else if (!strcmp(member, "sampling_rate"))
     {
-        strcpy(op_settings.sampling_rate, value);
+        strcpy(scientisst_device_settings.op_settings.sampling_rate, value);
     }
     else if (!strcmp(member, "no_channels"))
     {
-        strcpy(op_settings.no_channels, value);
+        strcpy(scientisst_device_settings.op_settings.no_channels, value);
     }
     else if (!strcmp(member, "channels"))
     {
-        strcpy(op_settings.channels, value);
+        strcpy(scientisst_device_settings.op_settings.channels, value);
     }
     else if (!strcmp(member, "bit_mode"))
     {
-        strcpy(op_settings.bit_mode, value);
+        strcpy(scientisst_device_settings.op_settings.bit_mode, value);
     }
     else if (!strcmp(member, "port_o1"))
     {
-        strcpy(op_settings.port_o1, value);
+        strcpy(scientisst_device_settings.op_settings.port_o1, value);
     }
     else if (!strcmp(member, "port_o2"))
     {
-        strcpy(op_settings.port_o2, value);
+        strcpy(scientisst_device_settings.op_settings.port_o2, value);
     }
     else
     {
@@ -415,10 +418,8 @@ esp_err_t start_rest_server(const char *base_path)
     httpd_register_uri_handler(server, &op_settings_get_uri);
 
     /* URI handler for light brightness control */
-    httpd_uri_t op_settings_post_uri = {.uri = "/settingsDone",
-                                        .method = HTTP_POST,
-                                        .handler = op_settings_post_handler,
-                                        .user_ctx = rest_context};
+    httpd_uri_t op_settings_post_uri = {
+        .uri = "/settingsDone", .method = HTTP_POST, .handler = op_settings_post_handler, .user_ctx = rest_context};
     httpd_register_uri_handler(server, &op_settings_post_uri);
 
     /* URI handler for getting web server files */
@@ -444,10 +445,8 @@ err:
  */
 esp_err_t init_fs_www(void)
 {
-    esp_vfs_spiffs_conf_t conf = {.base_path = WEB_MOUNT_POINT,
-                                  .partition_label = NULL,
-                                  .max_files = 5,
-                                  .format_if_mount_failed = false};
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = WEB_MOUNT_POINT, .partition_label = NULL, .max_files = 5, .format_if_mount_failed = false};
     esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
     if (ret != ESP_OK)

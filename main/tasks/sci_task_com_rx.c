@@ -23,26 +23,28 @@ _Noreturn void rcvTask(const void *not_used)
 {
     while (1)
     {
-        if (op_settings.com_mode == COM_MODE_TCP_STA) // TCP client
+        if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_STA) // TCP client
         {
-            while ((send_fd = initTcpClient(op_settings.host_ip, op_settings.port_number)) < 0)
+            while ((send_fd = initTcpClient(scientisst_device_settings.op_settings.host_ip,
+                                            scientisst_device_settings.op_settings.port_number)) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
-                              op_settings.host_ip, op_settings.port_number);
+                              scientisst_device_settings.op_settings.host_ip,
+                              scientisst_device_settings.op_settings.port_number);
             }
         }
-        else if (op_settings.com_mode == COM_MODE_TCP_AP) // TCP server
+        else if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP) // TCP server
         {
-            if (initTcpServer(op_settings.port_number) != ESP_OK)
+            if (initTcpServer(scientisst_device_settings.op_settings.port_number) != ESP_OK)
             {
                 DEBUG_PRINT_E("serverTCP",
                               "Cannot init TCP Server on port %s specified "
                               "in the configuration. Redo the "
                               "configuration. Trying again...",
-                              op_settings.port_number);
+                              scientisst_device_settings.op_settings.port_number);
             }
             while ((send_fd = initTcpConnection()) < 0)
             {
@@ -50,21 +52,24 @@ _Noreturn void rcvTask(const void *not_used)
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to TCP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
-                              op_settings.host_ip, op_settings.port_number);
+                              scientisst_device_settings.op_settings.host_ip,
+                              scientisst_device_settings.op_settings.port_number);
             }
         }
-        else if (op_settings.com_mode == COM_MODE_UDP_STA) // UDP client
+        else if (scientisst_device_settings.op_settings.com_mode == COM_MODE_UDP_STA) // UDP client
         {
-            while ((send_fd = initUdpClient(op_settings.host_ip, op_settings.port_number)) < 0)
+            while ((send_fd = initUdpClient(scientisst_device_settings.op_settings.host_ip,
+                                            scientisst_device_settings.op_settings.port_number)) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
                 DEBUG_PRINT_E("rcvTask",
                               "Cannot connect to UDP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
-                              op_settings.host_ip, op_settings.port_number);
+                              scientisst_device_settings.op_settings.host_ip,
+                              scientisst_device_settings.op_settings.port_number);
             }
         }
-        else if (op_settings.com_mode == COM_MODE_SERIAL) // Serial
+        else if (scientisst_device_settings.op_settings.com_mode == COM_MODE_SERIAL) // Serial
         {
             while ((send_fd = serialInit()) < 0)
             {
@@ -114,8 +119,8 @@ static void wifiSerialRcv(void)
         {
             if (read_bytes != CMD_MAX_BYTES)
             {
-                DEBUG_PRINT_E("wifiSerialRcv", "Received %d bytes and the acceptable amount is %d",
-                              read_bytes, CMD_MAX_BYTES);
+                DEBUG_PRINT_E("wifiSerialRcv", "Received %d bytes and the acceptable amount is %d", read_bytes,
+                              CMD_MAX_BYTES);
             }
             len = CMD_MAX_BYTES;
         }

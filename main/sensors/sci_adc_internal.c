@@ -24,6 +24,39 @@
 #include "sci_task_imu.h"
 
 #define DEFAULT_VREF 1100
+#define ABAT_DIVIDER_FACTOR 2
+
+// ADC
+DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
+                                                                 ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7};
+
+uint16_t IRAM_ATTR get_adc_internal_value(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag)
+{
+    uint16_t value = 0;
+    esp_err_t res;
+
+    if (adc_index == ADC_INTERNAL_1)
+    {
+        value = (uint16_t)adc1_get_raw(analog_channels[scientisst_device_settings.active_internal_chs[adc_channel]]);
+    }
+    else if (adc_index == ADC_INTERNAL_2)
+    {
+        res = adc2_get_raw(adc_channel, ADC_RESOLUTION, (int *)&value);
+        if (res != ESP_OK)
+        {
+            DEBUG_PRINT_E("adc2_get_raw", "Error!");
+            return 0;
+        }
+    }
+
+    if (convert_to_mV_flag)
+    {
+        value = (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
+                ABAT_DIVIDER_FACTOR;
+    }
+
+    return value;
+}
 
 /**
  * \brief configure Adc
@@ -62,7 +95,6 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel)
  */
 void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
 {
-    uint8_t i;
     esp_adc_cal_value_t val_type;
 
     // Check if TP is burned into eFuse
@@ -92,14 +124,14 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         adc1_config_width(ADC_RESOLUTION);
 
         // Configure each adc channel
-        for (i = 0; i < DEFAULT_ADC_CHANNELS; ++i)
+        for (int i = 0; i < DEFAULT_ADC_CHANNELS; ++i)
         {
             configAdc(1, adc_resolution, analog_channels[i]);
         }
 
         // Characterize ADC
-        val_type =
-            esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc1_chars);
+        val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF,
+                                            &(scientisst_device_settings.adc_chars[0]));
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
@@ -121,8 +153,8 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         // Config ADC2 resolution
         configAdc(2, adc_resolution, ABAT_ADC_CH);
 
-        val_type =
-            esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF, &adc2_chars);
+        val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF,
+                                            &(scientisst_device_settings.adc_chars[1]));
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {

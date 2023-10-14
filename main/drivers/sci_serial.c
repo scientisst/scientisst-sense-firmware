@@ -13,12 +13,13 @@
 #include "driver/uart.h"
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
+#include "sys/select.h"
+#include "sys/unistd.h"
+
 #include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
 #include "sci_scientisst.h"
-#include "sys/select.h"
-#include "sys/unistd.h"
 
 const uart_port_t serial_com_uart_num = UART_NUM_0;
 

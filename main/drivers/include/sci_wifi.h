@@ -7,17 +7,7 @@
 
 #include <stdint.h>
 
-typedef enum
-{
-    COM_MODE_TCP_AP,
-    COM_MODE_TCP_STA,
-    COM_MODE_UDP_STA,
-    COM_MODE_BT,
-    COM_MODE_SERIAL,
-    COM_MODE_WS_AP,
-    COM_MODE_BLE,
-    COM_MODE_SD_CARD,
-} com_mode_t;
+#include "sci_config.h"
 
 typedef struct
 {

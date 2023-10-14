@@ -58,6 +58,9 @@ spi_device_interface_config_t devcfg = {
     .flags = 0,
 };
 
+// SPI
+DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
+
 // Preallocated and fill SPI transactions for reading ADC values. This allows higher aquisition frequencies
 spi_transaction_t read_transaction1 = {
     .flags = SPI_TRANS_USE_TXDATA,
@@ -99,7 +102,7 @@ void adcExtInit(sdmmc_host_t *spi_host)
     esp_err_t ret;
 
     devcfg.clock_speed_hz =
-        (num_extern_active_chs == 1) ? ADC_EXT_SLCK_HZ_1_EXT_CH : ADC_EXT_SLCK_HZ_2_EXT_CH;
+        (scientisst_device_settings.num_extern_active_chs == 1) ? ADC_EXT_SLCK_HZ_1_EXT_CH : ADC_EXT_SLCK_HZ_2_EXT_CH;
 
     if (spi_host != NULL)
     { // If SD card is using the SPI bus

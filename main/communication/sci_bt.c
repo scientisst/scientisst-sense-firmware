@@ -49,9 +49,9 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8
     // to send
     // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
     // their own execution and do not interfere with the other task.
-    xSemaphoreTake(mutex_buffers_ready_to_send, portMAX_DELAY);
-    buf_ready = frame_buffer_ready_to_send[bt_curr_buff];
-    xSemaphoreGive(mutex_buffers_ready_to_send);
+    xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
+    buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff];
+    xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
     if (!buf_ready)
     {
@@ -59,14 +59,15 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8
         return;
     }
 
-    if (op_mode != OP_MODE_LIVE && bt_curr_buff != (NUM_BUFFERS - 1))
+    if (scientisst_device_settings.op_mode != OP_MODE_LIVE && scientisst_buffers.bt_curr_buff != (NUM_BUFFERS - 1))
     {
         send_busy = 0;
         return;
     }
 
     send_busy = 1;
-    esp_spp_write(send_fd, frame_buffer_write_idx[bt_curr_buff], frame_buffer[bt_curr_buff]);
+    esp_spp_write(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff],
+                  scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff]);
 }
 
 /**
@@ -76,16 +77,17 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8
  */
 void IRAM_ATTR finalizeSend(void)
 {
-    xSemaphoreTake(mutex_buffers_ready_to_send, portMAX_DELAY);
-    frame_buffer_ready_to_send[bt_curr_buff] = 0;
-    xSemaphoreGive(mutex_buffers_ready_to_send);
+    xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
+    scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff] = 0;
+    xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
     // Clear recently sent buffer
-    memset(frame_buffer[bt_curr_buff], 0, frame_buffer_write_idx[bt_curr_buff]);
-    frame_buffer_write_idx[bt_curr_buff] = 0;
+    memset(scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff], 0,
+           scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff]);
+    scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff] = 0;
 
     // Change send buffer
-    bt_curr_buff = (bt_curr_buff + 1) % (NUM_BUFFERS - 1);
+    scientisst_buffers.bt_curr_buff = (scientisst_buffers.bt_curr_buff + 1) % (NUM_BUFFERS - 1);
 }
 
 /**
@@ -99,10 +101,10 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
     {
     case ESP_SPP_INIT_EVT:
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_INIT_EVT");
-        esp_bt_dev_set_device_name(device_name);
+        esp_bt_dev_set_device_name(scientisst_device_settings.device_name);
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         esp_spp_start_srv(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
-        ESP_LOGI("Init Bluetooth", "Device online with the name: %s", device_name);
+        ESP_LOGI("Init Bluetooth", "Device online with the name: %s", scientisst_device_settings.device_name);
         break;
     case ESP_SPP_SRV_OPEN_EVT: // Server connection open (first client connection)
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_SRV_OPEN_EVT");
@@ -225,8 +227,7 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
 
 #if (CONFIG_BT_SSP_ENABLED == true)
     case ESP_BT_GAP_CFM_REQ_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d",
-                      param->cfm_req.num_val);
+        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
         esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
         break;
     case ESP_BT_GAP_KEY_NOTIF_EVT:
@@ -344,12 +345,13 @@ void getDeviceName(void)
     memcpy(mac_bt, mac, 6);
 
     // Use esp_read_mac to infer the wifi station mac addr based in the base mac addr read from EFUSE
-    if (op_settings.com_mode == COM_MODE_TCP_AP)
+    if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP)
     {
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_SOFTAP);
         // Use esp_read_mac to infer the wifi softap mac addr based in the base mac addr read from EFUSE
     }
-    else if (op_settings.com_mode == COM_MODE_TCP_STA || op_settings.com_mode == COM_MODE_UDP_STA)
+    else if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_STA ||
+             scientisst_device_settings.op_settings.com_mode == COM_MODE_UDP_STA)
     {
         res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_STA);
         // Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
@@ -366,10 +368,9 @@ void getDeviceName(void)
     }
 
     // Make mac address human readable
-    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2],
-            mac_iterface[3], mac_iterface[4], mac_iterface[5]);
-    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4],
-            mac_bt[5]);
+    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2], mac_iterface[3],
+            mac_iterface[4], mac_iterface[5]);
+    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
 
     // Turn all characters of both mac address strings from lower case to upper case
     for (int pntr_idx = 0; pntr_idx < 2; pntr_idx++)
@@ -387,10 +388,10 @@ void getDeviceName(void)
             str[i] = c;
         }
     }
-    sprintf(device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char *)(mac_bt_str + 12));
+    sprintf(scientisst_device_settings.device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char *)(mac_bt_str + 12));
 
     DEBUG_PRINT_W("getDeviceName",
                   "Device name is: %s, COM Mode MAC address is: %s, Bluetooth "
                   "Classic MAC address is: %s",
-                  device_name, mac_interface_str, mac_bt_str);
+                  scientisst_device_settings.device_name, mac_interface_str, mac_bt_str);
 }

@@ -12,12 +12,13 @@
 #include "esp_netif.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
+#include "sys/param.h"
+
 #include "sci_bt.h"
 #include "sci_com.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
 #include "sci_scientisst.h"
-#include "sys/param.h"
 
 static const size_t max_clients = 1;
 
@@ -123,8 +124,7 @@ esp_err_t get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-const httpd_uri_t ws = {
-    .uri = "/", .method = HTTP_GET, .handler = rcv_handler, .user_ctx = NULL, .is_websocket = true};
+const httpd_uri_t ws = {.uri = "/", .method = HTTP_GET, .handler = rcv_handler, .user_ctx = NULL, .is_websocket = true};
 
 const httpd_uri_t cert_get = {.uri = "/cert", .method = HTTP_GET, .handler = get_handler, .user_ctx = NULL};
 

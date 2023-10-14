@@ -33,37 +33,49 @@
 #include "sci_com.h"
 #include "sci_version.h"
 
+typedef struct
+{
+    char device_name[17];                              //
+    uint16_t battery_threshold;                        //
+    uint8_t num_intern_active_chs;                     //
+    uint8_t num_extern_active_chs;                     //
+    uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS]; ///< If all channels are active: = {5, 4, 3, 2, 1, 0}
+    uint8_t active_ext_chs[EXT_ADC_CHANNELS];          ///< If all channels are active: = {7, 6}
+    const uint8_t analog_channels[DEFAULT_ADC_CHANNELS];
+    esp_adc_cal_characteristics_t adc_chars[2]; ///< Internal ADC characteristics
+    uint8_t gpio_out_state[2];                  ///< Output of 01 & O2 (O0 & O1)
+    api_config_t api_config;                    //
+    op_settings_info_t op_settings;             ///< Holds settings that should be saved on flash between reboots
+    uint8_t op_mode;                            ///< Flag that indicastes if op mode is on (idle, live or config)
+    uint32_t sample_rate;                       ///< Sample rate of the acquisition
+    uint8_t is_op_settings_valid;               ///< Indicates if op_settings has been loaded from flash
+} scientisst_device_t;
+
+typedef struct
+{
+    uint8_t *frame_buffer[NUM_BUFFERS];           ///< Buffer that holds the frames to be sent
+    uint32_t frame_buffer_length_bytes;           ///< Length of each send buffer, set to optimal value depending on com mode
+    uint16_t frame_buffer_write_idx[NUM_BUFFERS]; ///< The index of the first free element in for each buffer
+    uint8_t frame_buffer_ready_to_send[NUM_BUFFERS]; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
+    SemaphoreHandle_t mutex_buffers_ready_to_send;   ///< Mutex for buffers_ready_to_send
+    uint8_t bt_curr_buff;                            ///< Index of the buffer that bt task is currently sending
+    uint8_t acq_curr_buff;                           ///< Index of the buffer that adc task is currently using
+    uint8_t packet_size;                             ///< Current packet size (dependent on number of channels used)
+    uint16_t send_threshold;                         ///< Based on buffer and packet sizes, threshold that triggers a send
+    FILE *sd_card_save_file;                         ///< File where data is saved in SD card mode
+    cJSON *json;
+
+} scientisst_buffers_t;
+
 extern TaskHandle_t send_task;
 extern TaskHandle_t abat_task;
 extern TaskHandle_t rcv_task;
 extern TaskHandle_t acq_adc1_task;
-extern uint8_t *frame_buffer[NUM_BUFFERS];
-extern uint32_t frame_buffer_length;
-extern uint8_t packet_size;
-extern uint16_t frame_buffer_write_idx[];
-extern uint8_t frame_buffer_ready_to_send[];
-extern const uint8_t analog_channels[];
-extern uint8_t active_internal_chs[];
-extern uint8_t num_intern_active_chs;
-extern uint8_t op_mode;
-extern uint32_t sample_rate;
-extern spi_device_handle_t adc_ext_spi_handler;
-extern esp_adc_cal_characteristics_t adc1_chars;
-extern esp_adc_cal_characteristics_t adc2_chars;
-extern char device_name[];
+
+extern scientisst_device_t scientisst_device_settings;
+extern scientisst_buffers_t scientisst_buffers;
+
 extern uint8_t send_busy;
-extern SemaphoreHandle_t mutex_buffers_ready_to_send;
-extern uint16_t send_threshold;
-extern uint8_t bt_curr_buff;
-extern uint8_t acq_curr_buff;
-extern Api_Config api_config;
-extern uint8_t active_ext_chs[];
-extern uint8_t num_extern_active_chs;
-extern cJSON *json;
-extern uint8_t gpio_out_state[];
-extern uint16_t battery_threshold;
-extern op_settings_info_t op_settings;
-extern uint8_t is_op_settings_valid;
 extern uint32_t ext_adc_raw_data[3];
 
 void initScientisst(void);

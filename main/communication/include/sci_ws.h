@@ -8,9 +8,9 @@
 #ifndef _WS_H
 #define _WS_H
 
-#include "deps/esp-idf/components/esp_http_server/include/esp_http_server.h"
-
 #include "sdkconfig.h"
+
+#include "deps/esp-idf/components/esp_http_server/include/esp_http_server.h"
 
 #if !CONFIG_HTTPD_WS_SUPPORT
 #error This example cannot be used unless HTTPD_WS_SUPPORT is enabled in esp-http-server component configuration

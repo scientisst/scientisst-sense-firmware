@@ -113,20 +113,19 @@ esp_err_t init_IMU(void)
     ret += bno055_get_mag_calib_stat(&mag_calib_status);
     ret += bno055_get_gyro_calib_stat(&gyro_calib_status);
     ret += bno055_get_sys_calib_stat(&sys_calib_status);
-    DEBUG_PRINT_W("IMU_TASK", "Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
-                  mag_calib_status, sys_calib_status);
+    DEBUG_PRINT_W("IMU_TASK", "Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status, mag_calib_status,
+                  sys_calib_status);
 
 #if _IMU_CALIBRATION_ == LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
-    while (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 ||
-           sys_calib_status != 3)
+    while (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)
     {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         bno055_get_accel_calib_stat(&accel_calib_status);
         bno055_get_mag_calib_stat(&mag_calib_status);
         bno055_get_gyro_calib_stat(&gyro_calib_status);
         bno055_get_sys_calib_stat(&sys_calib_status);
-        DEBUG_PRINT_W("IMU_TASK", "IMU not ready. Calibration status: %d %d %d %d", accel_calib_status,
-                      gyro_calib_status, mag_calib_status, sys_calib_status);
+        DEBUG_PRINT_W("IMU_TASK", "IMU not ready. Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
+                      mag_calib_status, sys_calib_status);
     }
 #elif _IMU_CALIBRATION_ == ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
     if (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)

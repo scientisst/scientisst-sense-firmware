@@ -11,6 +11,7 @@
 #include "driver/dac.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
+
 #include "sci_config.h"
 #include "sci_macros_conf.h"
 
@@ -63,8 +64,8 @@
 
 #define DAC_CH DAC_CHANNEL_1 // GPIO25
 
-void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask,
-                gpio_pulldown_t pull_down_en, gpio_pullup_t pull_up_en);
+void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en,
+                gpio_pullup_t pull_up_en);
 void gpioInit(void);
 void configLedC(void);
 

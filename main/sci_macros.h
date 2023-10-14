@@ -17,6 +17,18 @@
 
 #include "esp_log.h"
 
+typedef enum
+{
+    COM_MODE_TCP_AP,
+    COM_MODE_TCP_STA,
+    COM_MODE_UDP_STA,
+    COM_MODE_BT,
+    COM_MODE_SERIAL,
+    COM_MODE_WS_AP,
+    COM_MODE_BLE,
+    COM_MODE_SD_CARD,
+} com_mode_t;
+
 #define DEFAULT_TASK_STACK_SIZE 2048
 #define _DEBUG_ 1 ///< 0: No debug, 1: Warning and Error only, 2: Full Debug
 
@@ -36,14 +48,14 @@
 #define DEBUG_PRINT_E(...)
 #endif
 
-#define CHECK_NOT_NULL(ptr)                                                                                  \
-    do                                                                                                       \
-    {                                                                                                        \
-        if ((ptr) == NULL)                                                                                   \
-        {                                                                                                    \
-            DEBUG_PRINT_E("Memory allocation failed.");                                                      \
-            abort();                                                                                         \
-        }                                                                                                    \
+#define CHECK_NOT_NULL(ptr)                                                                                                 \
+    do                                                                                                                      \
+    {                                                                                                                       \
+        if ((ptr) == NULL)                                                                                                  \
+        {                                                                                                                   \
+            DEBUG_PRINT_E("Memory allocation failed.");                                                                     \
+            abort();                                                                                                        \
+        }                                                                                                                   \
     } while (0)
 
 #endif

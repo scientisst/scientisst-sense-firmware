@@ -30,10 +30,6 @@
 #define DO_NOT_FORMAT_SDCARD false
 #define FORMAT_SDCARD true
 
-// Timestamp possible options
-#define TIMESTAMP_DISABLED 1
-#define TIMESTAMP_ENABLED 2
-
 // IMU possible options
 #define IMU_DISABLED 1
 #define IMU_ENABLED 2

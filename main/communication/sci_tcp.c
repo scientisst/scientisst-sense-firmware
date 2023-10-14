@@ -11,6 +11,7 @@
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
+
 #include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"

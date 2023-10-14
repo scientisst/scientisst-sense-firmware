@@ -10,6 +10,7 @@
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
+
 #include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
@@ -59,8 +60,8 @@ int initUdpClient(char *ip, char *port)
     }
 
     // Perform handshake, so that the server has our address
-    if (sendto(server_fd, "handshake", strlen("handshake") + 1, 0, udp_server_addr->ai_addr,
-               udp_server_addr->ai_addrlen) < 0)
+    if (sendto(server_fd, "handshake", strlen("handshake") + 1, 0, udp_server_addr->ai_addr, udp_server_addr->ai_addrlen) <
+        0)
     {
         DEBUG_PRINT_E("initUdpClient", "ERROR: sendto FAILED");
         freeaddrinfo(udp_server_addr);
@@ -93,8 +94,7 @@ esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, uint8_t *buff)
     int sent_bytes;
     if ((sent_bytes = sendto(fd, buff, len, 0, udp_server_addr->ai_addr, udp_server_addr->ai_addrlen)) != len)
     {
-        DEBUG_PRINT_E("udpSend", "ERROR: WRITE FAILED, sent %dbytes of %d bytes, errno:%d\n", sent_bytes, len,
-                      errno);
+        DEBUG_PRINT_E("udpSend", "ERROR: WRITE FAILED, sent %dbytes of %d bytes, errno:%d\n", sent_bytes, len, errno);
         ESP_ERROR_CHECK(errno);
         return ESP_FAIL;
     }
