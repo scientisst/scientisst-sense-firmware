@@ -1,4 +1,9 @@
-set(srcs "scientisst.c" "bt.c" "timer.c" "adc.c" "gpio.c" "com.c" "spi.c" "wifi.c" "wifi_rest_server.c" "tcp.c" "udp.c" "uart.c" "ws.c" "ble.c" "sd_card.c" "bno055.c" "imu.c")
+file(GLOB_RECURSE COMMUNICATION_SOURCES "communication/*.c")
+file(GLOB_RECURSE SENSORS_SOURCES "sensors/*.c")
+file(GLOB_RECURSE DRIVERS_SOURCES "drivers/*.c")
+file(GLOB_RECURSE TASKS_SOURCES "tasks/*.c")
+set(srcs "sci_scientisst.c" ${COMMUNICATION_SOURCES} ${DRIVERS_SOURCES} ${TASKS_SOURCES} ${SENSORS_SOURCES})
+
 set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs esp_https_server driver sdmmc)
 
 set(SRCS_PATH "scientisst-sense-firmware/main")
@@ -11,7 +16,7 @@ else ()
 endif ()
 
 idf_component_register(SRCS ${srcs}
-        INCLUDE_DIRS "." "../"
+        INCLUDE_DIRS "." ".." "communication/include" "communication/wifi_rest_server" "drivers/include" "sensors/include" "tasks/include"
         REQUIRES ${requires}
         EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/certs/cacert.pem" "${CMAKE_CURRENT_LIST_DIR}/certs/prvtkey.pem"
 )

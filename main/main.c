@@ -4,7 +4,7 @@
     This file contains the main function for the Scientisst project.
 */
 
-#include "scientisst.h"
+#include "sci_scientisst.h"
 
 /**
  *\brief Main function for the Scientisst project.
