@@ -77,7 +77,7 @@ _Noreturn void IRAM_ATTR task_acquisition(void *not_used)
             // Tell bt task that it has acq_curr_buff to send (but it will only send after the buffer is
             // filled above the threshold)
             xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
-            scientisst_buffers.frame_buffer_ready_to_send[acq_curr_buff] = 1;
+            scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] = 1;
             xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
             // If send task is idle, wake it up

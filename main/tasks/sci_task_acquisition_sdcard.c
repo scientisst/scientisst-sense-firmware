@@ -226,12 +226,13 @@ void startAcquisitionSDCard(uint8_t num_active_channels_external_adc)
         // Store the activated channels
         if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) || i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2))
         {
-            scientisst_device_settings.active_ext_chs[num_extern_active_chs] = channel_number - 1;
+            scientisst_device_settings.active_ext_chs[scientisst_device_settings.num_extern_active_chs] = channel_number - 1;
             scientisst_device_settings.num_extern_active_chs++;
         }
         else
         {
-            scientisst_device_settings.active_internal_chs[num_intern_active_chs] = channel_number - 1;
+            scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
+                channel_number - 1;
             scientisst_device_settings.num_intern_active_chs++;
         }
 

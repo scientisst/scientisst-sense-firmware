@@ -7,15 +7,12 @@
 
 #include "sci_gpio.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "sci_adc_internal.h"
 #include "sci_config.h"
 #include "sci_macros.h"
 #include "sci_macros_conf.h"
-#include "sci_scientisst.h"
 
 /**
  * \brief Configure LED Controller

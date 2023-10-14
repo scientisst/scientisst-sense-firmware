@@ -28,12 +28,6 @@
 #define NUM_BUFFERS 50
 #define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) // If changed, change in API
 
-typedef struct
-{
-    uint8_t api_mode;
-    void (*select_ch_mask_func)();
-} api_config_t;
-
 extern int send_fd;
 
 void processRcv(uint8_t *buff, int buff_size);

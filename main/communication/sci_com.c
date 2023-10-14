@@ -255,7 +255,7 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
     {
         if (scientisst_buffers.json != NULL)
         {
-            cJSON_Delete(json);
+            cJSON_Delete(scientisst_buffers.json);
             scientisst_buffers.json = NULL;
         }
         scientisst_buffers.json = cJSON_CreateObject();
@@ -338,7 +338,7 @@ void setSampleRate(uint8_t *buff)
 
     scientisst_device_settings.sample_rate = aux;
 
-    DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", sample_rate);
+    DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
 }
 
 /**

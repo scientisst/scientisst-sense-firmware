@@ -35,20 +35,26 @@
 
 typedef struct
 {
-    char device_name[17];                              //
-    uint16_t battery_threshold;                        //
-    uint8_t num_intern_active_chs;                     //
-    uint8_t num_extern_active_chs;                     //
-    uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS]; ///< If all channels are active: = {5, 4, 3, 2, 1, 0}
-    uint8_t active_ext_chs[EXT_ADC_CHANNELS];          ///< If all channels are active: = {7, 6}
-    const uint8_t analog_channels[DEFAULT_ADC_CHANNELS];
-    esp_adc_cal_characteristics_t adc_chars[2]; ///< Internal ADC characteristics
-    uint8_t gpio_out_state[2];                  ///< Output of 01 & O2 (O0 & O1)
-    api_config_t api_config;                    //
-    op_settings_info_t op_settings;             ///< Holds settings that should be saved on flash between reboots
-    uint8_t op_mode;                            ///< Flag that indicastes if op mode is on (idle, live or config)
-    uint32_t sample_rate;                       ///< Sample rate of the acquisition
-    uint8_t is_op_settings_valid;               ///< Indicates if op_settings has been loaded from flash
+    uint8_t api_mode;
+    void (*select_ch_mask_func)();
+} api_config_t;
+
+typedef struct
+{
+    char device_name[17];                                //
+    uint16_t battery_threshold;                          //
+    uint8_t num_intern_active_chs;                       //
+    uint8_t num_extern_active_chs;                       //
+    uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS];   ///< If all channels are active: = {5, 4, 3, 2, 1, 0}
+    uint8_t active_ext_chs[EXT_ADC_CHANNELS];            ///< If all channels are active: = {7, 6}
+    const uint8_t analog_channels[DEFAULT_ADC_CHANNELS]; //
+    esp_adc_cal_characteristics_t adc_chars[2];          ///< Internal ADC characteristics
+    uint8_t gpio_out_state[2];                           ///< Output of 01 & O2 (O0 & O1)
+    api_config_t api_config;                             //
+    op_settings_info_t op_settings;                      ///< Holds settings that should be saved on flash between reboots
+    uint8_t op_mode;                                     ///< Flag that indicastes if op mode is on (idle, live or config)
+    uint32_t sample_rate;                                ///< Sample rate of the acquisition
+    uint8_t is_op_settings_valid;                        ///< Indicates if op_settings has been loaded from flash
 } scientisst_device_t;
 
 typedef struct

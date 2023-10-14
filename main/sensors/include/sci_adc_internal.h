@@ -40,6 +40,6 @@ typedef enum
 
 void configAdc(int adc_index, int adc_resolution, int adc_channel);
 void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en);
-uint16_t IRAM_ATTR get_adc_internal_value(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag;
+uint16_t get_adc_internal_value(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag);
 
 #endif
