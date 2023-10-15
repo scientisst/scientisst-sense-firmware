@@ -47,8 +47,8 @@ static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_int
  */
 _Noreturn void IRAM_ATTR task_acquisition(void *not_used)
 {
-    uint16_t adc_internal_res[6] = {0, 0, 0, 0, 0, 0};
-    uint32_t adc_external_res[2] = {0, 0};
+    uint16_t adc_internal_res[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
+    uint32_t adc_external_res[EXT_ADC_CHANNELS] = {0, 0};
     uint8_t io_state = 0;
 
     uint8_t acq_next_buff;
@@ -98,7 +98,8 @@ _Noreturn void IRAM_ATTR task_acquisition(void *not_used)
     }
 }
 
-static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t *adc_external_res)
+static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_res,
+                                      uint32_t adc_external_res[EXT_ADC_CHANNELS])
 {
     // Get the IO states
     *io_state = (uint8_t)(gpio_get_level(I0_IO) << 7);
@@ -125,23 +126,16 @@ static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_
     if (scientisst_device_settings.num_extern_active_chs > 0)
     {
         // Get raw values from AX1 & AX2
-        mcpReadADCValues(REG_ADCDATA, 4 * scientisst_device_settings.num_extern_active_chs);
+        esp_err_t res = ESP_OK;
+        uint8_t channel_mask = 0;
 
-        // Store values of external channels into frame
-        for (int i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
-        {
-            adc_external_res[i] = 1; // If the raw value is not found, it stays 1. Usefull for debugging
-            for (int j = 0; j < 3; ++j)
-            {
-                if ((ext_adc_raw_data[j] >> 28) ==
-                    (scientisst_device_settings.active_ext_chs[i] - 6)) // Check if the channel is the one we want
-                {
-                    // If the value is negative, round it to 0
-                    adc_external_res[i] = ((ext_adc_raw_data[j] >> 24) & 0x01) ? 0 : (ext_adc_raw_data[j] & 0x00FFFFFF);
-                    break;
-                }
-            }
-        }
+        if (scientisst_device_settings.active_ext_chs[0] == 6 || scientisst_device_settings.active_ext_chs[1] == 6)
+            channel_mask |= 0b01;
+        if (scientisst_device_settings.active_ext_chs[0] == 7 || scientisst_device_settings.active_ext_chs[1] == 7)
+            channel_mask |= 0b10;
+
+        res = get_adc_ext_values_raw(channel_mask, adc_external_res);
+        ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
     if (num_extern_active_chs == 2)

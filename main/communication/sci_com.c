@@ -357,10 +357,10 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 {
 
     // Clear send buffs, because of potential previous live mode
-    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.acq_curr_buff = 0;
     // Clean send buff, because of send status and send firmware string
-    send_busy = 0;
+    scientisst_device_settings.send_busy = 0;
 
     crc_seq = 0;
 
@@ -464,9 +464,9 @@ void stopAcquisition(void)
         scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
 
-    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.acq_curr_buff = 0;
-    send_busy = 0;
+    scientisst_device_settings.send_busy = 0;
 
     // Reset previous active chs
     scientisst_device_settings.num_intern_active_chs = 0;
@@ -510,14 +510,14 @@ void sendStatusPacket(void)
 
     scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += STATUS_PACKET_SIZE;
 
-    scientisst_buffers.bt_curr_buff = NUM_BUFFERS - 1;
+    scientisst_buffers.tx_curr_buff = NUM_BUFFERS - 1;
 
     // send new data
     xTaskNotifyGive(send_task);
     // Wait for send task to send data, TODO: find a better way to do this
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.send_threshold = true_send_threshold;
 }
 
@@ -558,13 +558,13 @@ void sendFirmwareVersionPacket(void)
         scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_BITALINO_VERSION);
     }
 
-    scientisst_buffers.bt_curr_buff = NUM_BUFFERS - 1;
+    scientisst_buffers.tx_curr_buff = NUM_BUFFERS - 1;
 
     xTaskNotifyGive(send_task);
     // Wait for send task to send data, TODO: find a better way to do this
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    scientisst_buffers.bt_curr_buff = 0;
+    scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.send_threshold = true_send_threshold;
 
     DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");

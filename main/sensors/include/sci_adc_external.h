@@ -14,6 +14,7 @@
 #include "driver/spi_master.h"
 #include "driver/spi_slave.h"
 
+#include "sci_com.h"
 #include "sci_config.h"
 #include "sci_macros_conf.h"
 
@@ -46,10 +47,10 @@
 #define REG_LOCK 0x0D      // R/W
 #define REG_CRCCFG 0X0F    // R
 
-void adcExtInit(sdmmc_host_t *spi_host);
+void adcExtInit(const sdmmc_host_t *spi_host);
 void adcExtStart(void);
 void adcExtStop(void);
 void mcpSetupRoutine(uint8_t channel_mask);
-void mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes);
+esp_err_t get_adc_ext_values_raw(uint8_t channels_mask, uint32_t values[EXT_ADC_CHANNELS]);
 
 #endif

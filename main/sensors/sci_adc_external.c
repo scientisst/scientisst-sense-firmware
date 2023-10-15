@@ -47,7 +47,7 @@ spi_device_interface_config_t devcfg = {
     .mode = SPI_MODE,   // SPI mode 1: (CPOL) = 0 and the clock phase (CPHA) = 1.
     .spics_io_num = -1, // CS pin not used here, since ESP driver makes CS pin does not behave in the
                         // correct way for MCP to understand
-    .queue_size = 1,    // We want to be able to queue 1 transactions at a time
+    .queue_size = 1,    // We want to be able to queue 1 transaction at a time
     .command_bits = 0,
     .address_bits = 0,
     .dummy_bits = 0,
@@ -62,33 +62,38 @@ spi_device_interface_config_t devcfg = {
 DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
 
 // Preallocated and fill SPI transactions for reading ADC values. This allows higher aquisition frequencies
-spi_transaction_t read_transaction1 = {
-    .flags = SPI_TRANS_USE_TXDATA,
-    .cmd = 0,
-    .addr = 0,
-    .length = 32, // length is MAX(in_bits, out_bits)
-    .rxlength = 32,
+// We need 2 transactions to aquire 1 channel and 4 to acquire 2 channels because sometimes the same channel is sent twice.
+// mcp_transactions[0] is always the command transaction, the others are used to read the data.
+DMA_ATTR spi_transaction_t mcp_transactions[4] = {
+    {
+        .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
+        .length = 8,
+        .rxlength = 8,
+    },
+    {
+        .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
+        .cmd = 0,
+        .addr = 0,
+        .length = 32, // length is MAX(in_bits, out_bits)
+        .rxlength = 32,
+    },
+    {
+        .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
+        .cmd = 0,
+        .addr = 0,
+        .length = 32, // length is MAX(in_bits, out_bits)
+        .rxlength = 32,
+    },
+    {
+        .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
+        .cmd = 0,
+        .addr = 0,
+        .length = 32, // length is MAX(in_bits, out_bits)
+        .rxlength = 32,
+    },
 };
-spi_transaction_t read_transaction2 = {
-    .flags = SPI_TRANS_USE_TXDATA,
-    .cmd = 0,
-    .addr = 0,
-    .length = 32, // length is MAX(in_bits, out_bits)
-    .rxlength = 32,
-};
-spi_transaction_t read_transaction3 = {
-    .flags = SPI_TRANS_USE_TXDATA,
-    .cmd = 0,
-    .addr = 0,
-    .length = 32, // length is MAX(in_bits, out_bits)
-    .rxlength = 32,
-};
-spi_transaction_t cmd_transaction = {
-    .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
-    .length = 8,
-    .rxlength = 8,
-};
-uint8_t gpio_already_init_flag = 0;
+
+void mcpReadADCValues(uint8_t rx_data_bytes);
 
 /**
  * \brief Initializes SPI bus and SPI interface with the ext adc.
@@ -97,7 +102,7 @@ uint8_t gpio_already_init_flag = 0;
  * transmission.
  *
  */
-void adcExtInit(sdmmc_host_t *spi_host)
+void adcExtInit(const sdmmc_host_t *spi_host)
 {
     esp_err_t ret;
 
@@ -121,10 +126,42 @@ void adcExtInit(sdmmc_host_t *spi_host)
     }
 
     adcExtDrdyGpio(MCP_DRDY_IO);
+}
 
-    read_transaction1.rx_buffer = ext_adc_raw_data;
-    read_transaction2.rx_buffer = (ext_adc_raw_data + 1);
-    read_transaction3.rx_buffer = (ext_adc_raw_data + 2);
+esp_err_t IRAM_ATTR get_adc_ext_values_raw(uint8_t channels_mask, uint32_t values[EXT_ADC_CHANNELS])
+{
+    uint8_t pop_count = 0;
+    while (channels_mask)
+    {
+        pop_count += channels_mask & 1;
+        channels_mask >>= 1;
+    }
+    if (pop_count > 2)
+    {
+        DEBUG_PRINT_E("Get_ADC_Ext_Values", "Channel mask is not valid: %hhu", channels_mask);
+        return ESP_FAIL;
+    }
+
+    mcpReadADCValues(4 * pop_count);
+
+    for (int i = 0; i < pop_count; ++i)
+    {
+        values[i] = 1; // If the raw value is not found, it stays 1. Useful for debugging
+        for (int j = 0; j < 3; ++j)
+        {
+            if ((*(uint32_t *)&(mcp_transactions[j].rx_data) >> 28) ==
+                (scientisst_device_settings.active_ext_chs[i] - 6)) // Check if the channel is the one we want
+            {
+                // If the value is negative, round it to 0
+                values[i] = ((*(uint32_t *)&(mcp_transactions[j].rx_data) >> 24) & 0x01)
+                                ? 0
+                                : (*(uint32_t *)&(mcp_transactions[j].rx_data) & 0x00FFFFFF);
+                break;
+            }
+        }
+    }
+
+    return ESP_OK;
 }
 
 static inline uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd)
@@ -200,28 +237,28 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
  * \param address Address of the register to be read. Always REG_ADCDATA (0x00).
  * \param rx_data_bytes Amount of bytes to be read.
  */
-void IRAM_ATTR mcpReadADCValues(uint8_t address, uint8_t rx_data_bytes)
+void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
 {
     gpio_intr_disable(MCP_DRDY_IO);
 
-    cmd_transaction.tx_data[0] = 0b01000001;
+    mcp_transactions[0].tx_data[0] = 0b01000001;
 
     gpio_set_level(SPI3_CS0_IO, 0);
 
-    spi_device_polling_transmit(adc_ext_spi_handler, &cmd_transaction);
-    spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction1);
+    spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[0]);
+    spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[1]);
 
     if (rx_data_bytes > 4)
     {
-        spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction2);
-        spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction3);
-        ext_adc_raw_data[1] = SPI_SWAP_DATA_RX(ext_adc_raw_data[1], (32));
-        ext_adc_raw_data[2] = SPI_SWAP_DATA_RX(ext_adc_raw_data[2], (32));
+        spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[2]);
+        spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[3]);
+        *(uint32_t *)&(mcp_transactions[2].rx_data) = SPI_SWAP_DATA_RX(*(uint32_t *)&(mcp_transactions[2].rx_data), (32));
+        *(uint32_t *)&(mcp_transactions[3].rx_data) = SPI_SWAP_DATA_RX(*(uint32_t *)&(mcp_transactions[3].rx_data), (32));
     }
 
     gpio_set_level(SPI3_CS0_IO, 1);
 
-    ext_adc_raw_data[0] = SPI_SWAP_DATA_RX(ext_adc_raw_data[0], (32));
+    *(uint32_t *)&(mcp_transactions[1].rx_data) = SPI_SWAP_DATA_RX(*(uint32_t *)&(mcp_transactions[1].rx_data), (32));
 
     gpio_intr_enable(MCP_DRDY_IO);
 }

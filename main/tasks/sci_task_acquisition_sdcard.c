@@ -11,23 +11,16 @@
 #include "sci_scientisst.h"
 #include "sci_timer.h"
 
-#define BUFFER_SIZE (1024 * 7)
-#define NUM_ACQ_BUF (16)
-
 TaskHandle_t file_sync_task;
 
-DMA_ATTR uint8_t *buffer[NUM_ACQ_BUF]; ///< Array buffers to store the data to be written to the SD card
-/// Array to store the number of bytes ready to be written to the SD card
-uint16_t buf_ready[NUM_ACQ_BUF] = {0};
-SemaphoreHandle_t buf_ready_mutex[NUM_ACQ_BUF]; ///< Mutex to protect the buffer ready array, one for each
-                                                ///< buffer for faster access times
+SemaphoreHandle_t buf_ready_mutex[NUM_BUFFERS_SDCARD]; ///< Mutex to protect the buffer ready array, one for each
+                                                       ///< buffer for faster access times
 
-uint8_t *buffer_ptr = NULL; ///< Pointer to the current buffer to write to
-uint8_t buf_num_acq = 0;    ///< Number of the buffer where the data is being written to on acquisition
-uint8_t buf_num_write = 0;  ///< Number of the buffer that is being written to the SD card
+uint8_t acq_curr_buff = 0; ///< Number of the buffer where the data is being written to on acquisition
+uint8_t tx_curr_buff = 0;  ///< Number of the buffer that is being written to the SD card
 
-void acquireChannelsSDCard(void);
-void startAcquisitionSDCard(uint8_t num_active_channels_external_adc);
+uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
+void startAcquisitionSDCard(void);
 
 /**
  * \brief Acquisition task of the data from the ADC and save it to the SD
@@ -38,33 +31,23 @@ void startAcquisitionSDCard(uint8_t num_active_channels_external_adc);
  * send task is not active.
  *
  */
-_Noreturn void IRAM_ATTR acquisitionSDCard(void *num_active_channels_external_adc)
+_Noreturn void IRAM_ATTR acquisitionSDCard(void)
 {
-
+    uint8_t *buffer_ptr = scientisst_buffers.frame_buffer[0];
     // Create mutexes for the buffer ready array
-    for (int i = 0; i < NUM_ACQ_BUF; i++)
+    for (int i = 0; i < NUM_BUFFERS_SDCARD; i++)
     {
         buf_ready_mutex[i] = xSemaphoreCreateMutex();
         CHECK_NOT_NULL(buf_ready_mutex[i]);
     }
 
-    // Allocate memory for the buffers
-    for (int i = 0; i < NUM_ACQ_BUF; i++)
-    {
-        buffer[i] = (uint8_t *)malloc(BUFFER_SIZE * sizeof(uint8_t));
-        CHECK_NOT_NULL(buffer[i]);
-        memset(buffer[i], 0, BUFFER_SIZE);
-    }
-
-    buffer_ptr = buffer[0];
-
-    startAcquisitionSDCard(*(uint8_t *)num_active_channels_external_adc);
+    startAcquisitionSDCard();
 
     while (1)
     {
         if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
             continue;
-        acquireChannelsSDCard();
+        buffer_ptr = acquireChannelsSDCard(buffer_ptr);
     }
 }
 
@@ -76,7 +59,7 @@ _Noreturn void IRAM_ATTR acquisitionSDCard(void *num_active_channels_external_ad
  * is written directly to the SD card. This is done because the SDCard and EXT ADC use the same SPI lines.
  *
  */
-void IRAM_ATTR acquireChannelsSDCard(void)
+uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 {
     static uint16_t crc_seq = 0; // Static variable that counts the number of packets sent
 
@@ -100,20 +83,16 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 
 #if _ADC_EXT_ == EXT_ADC_ENABLED
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
-    mcpReadADCValues(REG_ADCDATA, 4 * scientisst_device_settings.num_extern_active_chs);
-    for (int i = 1; i >= 0; --i) // Always both ext channels active
-    {
-        uint32_t ch_value = scientisst_device_settings.active_ext_chs[i] - 6;
-        for (int j = 0; j < 3; j++)
-        {
-            if ((ext_adc_raw_data[j] >> 28) == ch_value)
-            {
-                *(uint32_t *)buffer_ptr = ((ext_adc_raw_data[j] >> 24) & 0x01) ? 0 : (ext_adc_raw_data[j] & 0x00FFFFFF);
-                buffer_ptr += 3;
-                break;
-            }
-        }
-    }
+    esp_err_t res = ESP_OK;
+    uint8_t channel_mask = 0;
+
+    if (scientisst_device_settings.active_ext_chs[0] == 6 || scientisst_device_settings.active_ext_chs[1] == 6)
+        channel_mask |= 0b01;
+    if (scientisst_device_settings.active_ext_chs[0] == 7 || scientisst_device_settings.active_ext_chs[1] == 7)
+        channel_mask |= 0b10;
+
+    res = get_adc_ext_values_raw(channel_mask, (uint32_t *)buffer_ptr);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(res);
 #endif
 
     *(uint64_t *)buffer_ptr = esp_timer_get_time();
@@ -122,8 +101,9 @@ void IRAM_ATTR acquireChannelsSDCard(void)
 #if _ADC_EXT_ == EXT_ADC_ENABLED
     if ((crc_seq & 127) == 0)
     {
-        write(fileno(scientisst_buffers.sd_card_save_file), buffer[0], (buffer_ptr - (buffer[0])));
-        buffer_ptr = buffer[0];
+        write(fileno(scientisst_buffers.sd_card_save_file), scientisst_buffers.frame_buffer[0],
+              (buffer_ptr - (scientisst_buffers.frame_buffer[0])));
+        buffer_ptr = scientisst_buffers.frame_buffer[0];
     }
 
     if ((crc_seq % 3000) == 0) // Every ~30 seconds force a sync so data is really stored on the SD card
@@ -132,22 +112,26 @@ void IRAM_ATTR acquireChannelsSDCard(void)
     }
 #else
     // If the buffer is full, save it to the SD card
-    if (buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]) >= BUFFER_SIZE - 22) // 28 is max size, 22 when no adc ext
+    if (buffer_ptr - (scientisst_buffers.frame_buffer[buf_num_acq % NUM_BUFFERS_SDCARD]) >=
+        MAX_BUFFER_SIZE_SDCARD - 22) // 28 is max size, 22 when no adc ext
     {
-        xSemaphoreTake(buf_ready_mutex[buf_num_acq % NUM_ACQ_BUF], portMAX_DELAY);
-        buf_ready[buf_num_acq % NUM_ACQ_BUF] = buffer_ptr - (buffer[buf_num_acq % NUM_ACQ_BUF]);
-        xSemaphoreGive(buf_ready_mutex[buf_num_acq % NUM_ACQ_BUF]);
+        xSemaphoreTake(buf_ready_mutex[buf_num_acq % NUM_BUFFERS_SDCARD], portMAX_DELAY);
+        scientisst_buffers.frame_buffer_ready_to_send[buf_num_acq % NUM_BUFFERS_SDCARD] =
+            buffer_ptr - (scientisst_buffers.frame_buffer[buf_num_acq % NUM_BUFFERS_SDCARD]);
+        xSemaphoreGive(buf_ready_mutex[buf_num_acq % NUM_BUFFERS_SDCARD]);
         xTaskNotifyGive(file_sync_task);
-        while (buf_ready[(buf_num_acq + 1) % NUM_ACQ_BUF])
+        while (scientisst_buffers.frame_buffer_ready_to_send[(buf_num_acq + 1) % NUM_BUFFERS_SDCARD])
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        buffer_ptr = (buffer[(++buf_num_acq) % NUM_ACQ_BUF]);
+        buffer_ptr = (scientisst_buffers.frame_buffer[(++buf_num_acq) % NUM_BUFFERS_SDCARD]);
     }
 #endif
+
+    return buffer_ptr;
 }
-_Noreturn void IRAM_ATTR fileSyncTask(void *not_used)
+_Noreturn void IRAM_ATTR fileSyncTask(void)
 {
     while (1)
     {
@@ -155,20 +139,21 @@ _Noreturn void IRAM_ATTR fileSyncTask(void *not_used)
             continue;
         while (1)
         {
-            xSemaphoreTake(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF], portMAX_DELAY);
-            if (buf_ready[buf_num_write % NUM_ACQ_BUF])
+            xSemaphoreTake(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD], portMAX_DELAY);
+            if (scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD])
             {
-                write(fileno(scientisst_buffers.sd_card_save_file), (buffer[buf_num_write % NUM_ACQ_BUF]),
-                      buf_ready[buf_num_write % NUM_ACQ_BUF]);
-                buf_ready[buf_num_write % NUM_ACQ_BUF] = 0;
-                xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF]);
+                write(fileno(scientisst_buffers.sd_card_save_file),
+                      (scientisst_buffers.frame_buffer[tx_curr_buff % NUM_BUFFERS_SDCARD]),
+                      scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD]);
+                scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD] = 0;
+                xSemaphoreGive(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD]);
                 fflush(scientisst_buffers.sd_card_save_file);
                 fsync(fileno(scientisst_buffers.sd_card_save_file));
-                buf_num_write++;
+                tx_curr_buff++;
             }
             else
             {
-                xSemaphoreGive(buf_ready_mutex[buf_num_write % NUM_ACQ_BUF]);
+                xSemaphoreGive(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD]);
                 break;
             }
         }
@@ -184,14 +169,14 @@ _Noreturn void IRAM_ATTR fileSyncTask(void *not_used)
  * saves the data to a CSV file on the SD card.
  *
  */
-void startAcquisitionSDCard(uint8_t num_active_channels_external_adc)
+void startAcquisitionSDCard(void)
 {
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
     int active_channels_sd; // All internal channels are always active
 
-    DEBUG_PRINT_E("acqAdc1", "NUMBER ACTIVE CHANNELS: %d", num_active_channels_external_adc);
+    DEBUG_PRINT_E("acqAdc1", "NUMBER ACTIVE CHANNELS: %d", scientisst_device_settings.num_extern_active_chs);
 
-    switch (num_active_channels_external_adc)
+    switch (scientisst_device_settings.num_extern_active_chs)
     {
     case 1:
         active_channels_sd = 0b01111111;
@@ -205,7 +190,7 @@ void startAcquisitionSDCard(uint8_t num_active_channels_external_adc)
         active_channels_sd = 0b00111111;
         scientisst_device_settings.sample_rate = 1000;
         // If external ADC is not used, start the secondary task that writes the data to the SD card
-        xTaskCreatePinnedToCore(&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20, &file_sync_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20, &file_sync_task, 0);
         break;
     }
 

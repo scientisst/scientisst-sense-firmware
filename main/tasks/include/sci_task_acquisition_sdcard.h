@@ -7,6 +7,6 @@
 
 #include <sys/cdefs.h>
 
-_Noreturn void acquisitionSDCard(void *num_active_channels_external_adc);
+_Noreturn void acquisitionSDCard(void);
 
 #endif // SCIENTISST_SENSE_SCI_TASK_ACQUISITION_SDCARD_H

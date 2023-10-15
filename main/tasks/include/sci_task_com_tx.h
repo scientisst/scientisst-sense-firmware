@@ -8,6 +8,6 @@
 
 #include <sys/cdefs.h>
 
-_Noreturn void sendTask(const void *not_used);
+_Noreturn void sendTask(void);
 
 #endif // SCIENTISST_SENSE_TASK_COM_TX_H

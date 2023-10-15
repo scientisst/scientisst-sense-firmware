@@ -26,6 +26,10 @@
 #include "sci_sd_card.h"
 #include "sci_serial.h"
 #include "sci_task_acquisition_sdcard.h"
+#include "sci_task_aquisition.h"
+#include "sci_task_battery_monitor.h"
+#include "sci_task_com_rx.h"
+#include "sci_task_com_tx.h"
 #include "sci_task_imu.h"
 #include "sci_tcp.h"
 #include "sci_timer.h"
@@ -39,11 +43,6 @@
 #define WIFI_RCV_PRIORITY 1
 #define ACQ_ADC1_PRIORITY 10
 
-// Functions have to be declared with void* as argument even though it is not used to avoid compiler warnings
-void sendTask(void *not_used);
-_Noreturn void rcvTask(void *not_used);
-void task_battery_monitor(void *not_used);
-_Noreturn void task_acquisition(void *not_used);
 _Noreturn void opModeConfig(void);
 
 TaskHandle_t send_task;
@@ -65,6 +64,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .active_ext_chs = {0, 0},
     .api_config = {.api_mode = API_MODE_BITALINO, .select_ch_mask_func = &selectChsFromMask},
     .is_op_settings_valid = 0,
+    .send_busy = 0,
     .op_settings =
         {
 #if _SD_CARD_ == SD_CARD_ENABLED
@@ -80,14 +80,13 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
         },
 };
 
-DRAM_ATTR scientisst_buffers_t scientisst_buffers = {
+// We use DMA_ATTR because some of the functions require that the buffers are word aligned
+DMA_ATTR scientisst_buffers_t scientisst_buffers = {
     .frame_buffer = {0},
     .frame_buffer_length_bytes = 0,
-    .frame_buffer_write_idx = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    .frame_buffer_ready_to_send = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    .bt_curr_buff = 0,
+    .frame_buffer_write_idx = {0},
+    .frame_buffer_ready_to_send = {0},
+    .tx_curr_buff = 0,
     .acq_curr_buff = 0,
     .packet_size = 0,
     .send_threshold = MAX_BUFFER_SIZE,
@@ -95,18 +94,32 @@ DRAM_ATTR scientisst_buffers_t scientisst_buffers = {
     .json = NULL,
 };
 
-uint8_t send_busy = 0;
-DRAM_ATTR uint32_t ext_adc_raw_data[3]; ///< Raw data from external adc
+static void allocate_frame_buffers(void)
+{
+    // Allocate memory for send buffers+1 for firmware version and status packet
+    for (int i = 0; i < NUM_BUFFERS; i++)
+    {
+        scientisst_buffers.frame_buffer[i] =
+            (uint8_t *)malloc(scientisst_buffers.frame_buffer_length_bytes * sizeof(uint8_t));
+        CHECK_NOT_NULL(scientisst_buffers.frame_buffer[i]);
+        memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
+    }
+}
 
 /**
- * \brief scientisst-firmware main function
+ * \brief Initializes the Scientisst device.
  *
- * Creates Mutex, initializes nvs, loads op_settings from flash, initializes
- * wifi, bluetooth, adc, i2c etc. If pin 1 is enabled, enters config mode. If
- * wifi mode, tries to connect to wifi network. If connection is unsuccessful,
- * enter config mode. Either start web server (config mode), TCP server (wifi
- * mode) or bluetooth. Starts send data task, adc task and adcExt task. If wifi
- * start rcv task; else, start battery task (adc2) task.
+ * This function initializes various components and settings of the Scientisst device,
+ * including the mutex, NVS, device name, GPIOs, LED control, DAC, Wi-Fi, timers, ADCs,
+ * SD card (if enabled), IMU (if enabled), communication modes, and memory allocation
+ * for send buffers.
+ *
+ * \note This function is only called during device startup.
+ *
+ * \return None.
+ *
+ * \par [in] None.
+ * \par [out] None.
  */
 void initScientisst(void)
 {
@@ -153,27 +166,19 @@ void initScientisst(void)
     // Initialize acquisition timer
     timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, &timerGrp0Isr);
 
-    if (scientisst_device_settings.op_settings.com_mode == COM_MODE_BLE)
-    {
-        scientisst_buffers.frame_buffer_length_bytes = GATTS_NOTIFY_LEN;
-    }
-    else
-    {
-        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
-    }
-
     // Init internal ADC
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
+
 #if _SD_CARD_ == SD_CARD_ENABLED
     sd_card_spi_host = init_sd_card_spi_bus();
 #endif
     // Init external ADC
     adcExtInit(sd_card_spi_host);
 
-#if _SD_CARD_ == SD_CARD_ENABLED
-    num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
+#if _SD_CARD_ != SD_CARD_ENABLED
+    scientisst_device_settings.num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
     // Init SD card
-    ret = initSDCard(num_extern_active_chs, &sd_card_save_file);
+    ret = initSDCard(scientisst_device_settings.num_extern_active_chs, &(scientisst_buffers.sd_card_save_file));
     if (ret != ESP_OK)
     {
         DEBUG_PRINT_E("SD", "SD card initialization failed. Changing to BT mode.");
@@ -183,7 +188,7 @@ void initScientisst(void)
 
 #if _IMU_ == IMU_ENABLED
     // Init and start in new task the IMU
-    xTaskCreatePinnedToCore(&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 0);
+    xTaskCreatePinnedToCore((TaskFunction_t)&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 0);
 #endif
 
     // If it's a Wi-Fi com mode, let's first try to set up the Wi-Fi and (if it's station) try to connect to the
@@ -198,59 +203,65 @@ void initScientisst(void)
     switch (scientisst_device_settings.op_settings.com_mode)
     {
     case COM_MODE_BT:
+        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
+        allocate_frame_buffers();
         initBt();
-        xTaskCreatePinnedToCore(&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY,
-                                &abat_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
+                                ABAT_PRIORITY, &abat_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
+                                &acq_adc1_task, 1);
         break;
     case COM_MODE_BLE:
+        scientisst_buffers.frame_buffer_length_bytes = GATTS_NOTIFY_LEN;
+        allocate_frame_buffers();
         initBle();
-        xTaskCreatePinnedToCore(&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL, ABAT_PRIORITY,
-                                &abat_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
+                                ABAT_PRIORITY, &abat_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
+                                &acq_adc1_task, 1);
         break;
     case COM_MODE_UDP_STA:
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
-        break;
     case COM_MODE_TCP_STA:
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
-        break;
     case COM_MODE_TCP_AP:
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
+    case COM_MODE_SERIAL:
+        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
+        allocate_frame_buffers();
+        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
+                                &acq_adc1_task, 1);
         break;
     case COM_MODE_WS_AP:
+        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
+        allocate_frame_buffers();
         start_webserver();
+        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
+                                &acq_adc1_task, 1);
         break;
-    case COM_MODE_SERIAL:
-        xTaskCreatePinnedToCore(&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
-        break;
-#if _SD_CARD_ == SD_CARD_ENABLED
+#if _SD_CARD_ != SD_CARD_ENABLED
     case COM_MODE_SD_CARD:
-        xTaskCreatePinnedToCore(&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE,
-                                (void *)&num_extern_active_chs, ABAT_PRIORITY, &abat_task, 0);
-        xTaskCreatePinnedToCore(&acquisitionSDCard, "acqSDCard", 4096 * 2, &num_extern_active_chs, 24, &acq_adc1_task, 1);
-        return;
+        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
+        allocate_frame_buffers();
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
+                                ABAT_PRIORITY, &abat_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24, &acq_adc1_task, 1);
+        break;
 #endif
     default:
         DEBUG_PRINT_E("COM", "Invalid communication mode.");
         abort();
     }
-
-    // Allocate memory for send buffers+1 for firmware version and status packet
-    for (int i = 0; i < NUM_BUFFERS; i++)
-    {
-        scientisst_buffers.frame_buffer[i] =
-            (uint8_t *)malloc(scientisst_buffers.frame_buffer_length_bytes * sizeof(uint8_t));
-        CHECK_NOT_NULL(scientisst_buffers.frame_buffer[i]);
-    }
-
-    xTaskCreatePinnedToCore(&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
-    xTaskCreatePinnedToCore(&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
 }
 
 /**
  * \brief Puts the device in config mode.
  *
  * This function puts the device in config mode. It initializes the rest server
- * and turns on the state led (white).
+ * and sets the state led to fixed white.
  */
 _Noreturn void opModeConfig(void)
 {
@@ -260,7 +271,7 @@ _Noreturn void opModeConfig(void)
     gpio_set_level(STATE_LED_G_IO, 1);
     gpio_set_level(STATE_LED_B_IO, 1);
 
-    // Hang here until user successfully submites a new config in the web page
+    // Hang here until user successfully submits a new config in the web page
     while (1)
     {
         vTaskDelay(portMAX_DELAY);

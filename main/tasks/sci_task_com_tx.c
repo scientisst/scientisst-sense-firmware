@@ -26,7 +26,7 @@ static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
  * This task can be removed and task_acquisition can do the sendData() when
  * not send_busy. But, atm task_acquisition is the bottleneck
  */
-_Noreturn void IRAM_ATTR sendTask(const void *not_used)
+_Noreturn void IRAM_ATTR sendTask(void)
 {
     esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *); ///< Send function pointer
     void (*send_data_func)(esp_err_t (*send_func)(uint32_t, int, uint8_t *)) = &sendData;
@@ -84,38 +84,38 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t
         // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
         // their own execution and do not interfere with the other task.
         xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
-        buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff];
+        buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
         xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
         if (!buf_ready)
         {
-            send_busy = 0;
+            scientisst_device_settings.send_busy = 0;
             return;
         }
 
-        if (scientisst_device_settings.op_mode != OP_MODE_LIVE && scientisst_buffers.bt_curr_buff != (NUM_BUFFERS - 1))
+        if (scientisst_device_settings.op_mode != OP_MODE_LIVE && scientisst_buffers.tx_curr_buff != (NUM_BUFFERS - 1))
         {
-            send_busy = 0;
+            scientisst_device_settings.send_busy = 0;
             return;
         }
 
-        send_busy = 1;
-        ret = tx_write_func(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff],
-                            scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff]);
+        scientisst_device_settings.send_busy = 1;
+        ret = tx_write_func(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff],
+                            scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
 
         if (ret == ESP_FAIL) // If the send function failed, stop sending data. Connection was possibly lost
             break;
 
         xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
-        scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff] = 0;
+        scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
         xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
         // Clear recently sent buffer
-        memset(scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff], 0,
-               scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff]);
-        scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff] = 0;
+        memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
+               scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff]);
+        scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff] = 0;
 
         // Change send buffer
-        scientisst_buffers.bt_curr_buff = (scientisst_buffers.bt_curr_buff + 1) % (NUM_BUFFERS - 1);
+        scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
     }
 }

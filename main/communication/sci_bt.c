@@ -50,24 +50,24 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8
     // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
     // their own execution and do not interfere with the other task.
     xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
-    buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff];
+    buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
     xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
     if (!buf_ready)
     {
-        send_busy = 0;
+        scientisst_device_settings.send_busy = 0;
         return;
     }
 
-    if (scientisst_device_settings.op_mode != OP_MODE_LIVE && scientisst_buffers.bt_curr_buff != (NUM_BUFFERS - 1))
+    if (scientisst_device_settings.op_mode != OP_MODE_LIVE && scientisst_buffers.tx_curr_buff != (NUM_BUFFERS - 1))
     {
-        send_busy = 0;
+        scientisst_device_settings.send_busy = 0;
         return;
     }
 
-    send_busy = 1;
-    esp_spp_write(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff],
-                  scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff]);
+    scientisst_device_settings.send_busy = 1;
+    esp_spp_write(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff],
+                  scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
 }
 
 /**
@@ -78,16 +78,16 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8
 void IRAM_ATTR finalizeSend(void)
 {
     xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
-    scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.bt_curr_buff] = 0;
+    scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
     xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
     // Clear recently sent buffer
-    memset(scientisst_buffers.frame_buffer[scientisst_buffers.bt_curr_buff], 0,
-           scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff]);
-    scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.bt_curr_buff] = 0;
+    memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
+           scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff]);
+    scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff] = 0;
 
     // Change send buffer
-    scientisst_buffers.bt_curr_buff = (scientisst_buffers.bt_curr_buff + 1) % (NUM_BUFFERS - 1);
+    scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
 }
 
 /**
@@ -148,7 +148,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         processRcv(param->data_ind.data, param->data_ind.len);
         break;
     case ESP_SPP_CONG_EVT: // connection congestion status changed
-        if (param->cong.cong == 0 && send_busy == SEND_AFTER_C0NG)
+        if (param->cong.cong == 0 && scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
         {
             sendDataBluetooth(&esp_spp_write); // bt write is free
         }
@@ -168,7 +168,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
             }
             else
             {
-                send_busy = SEND_AFTER_C0NG;
+                scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
             }
             // write failed because congestion, so wait event 'ESP_SPP_CONG_EVT' and 'param->cong.cong == 0'
             // to resend the failed writing data.
@@ -177,7 +177,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         {
             // To resend the same buffer (note that because the write was unsuccessful, bt_curr_buff wasn't
             // updated)
-            send_busy = SEND_AFTER_C0NG;
+            scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
         }
         break;
     default:
