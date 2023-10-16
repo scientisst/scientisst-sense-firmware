@@ -20,7 +20,7 @@
 //   - HW_VERSION_CORE (Core) [Default]
 //   - HW_VERSION_NANO (Nano)
 //   - HW_VERSION_CARDIO (Cardio)
-#define _HW_VERSION_ HW_VERSION_CORE
+#define _HW_VERSION_ HW_VERSION_CARDIO
 
 #define DEFAULT_COM_MODE COM_MODE_BT
 

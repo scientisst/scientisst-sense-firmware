@@ -131,7 +131,7 @@ void IRAM_ATTR gpioDrdyIsrHandler(void *not_used)
 void adcExtDrdyGpio(int io_num)
 {
     // Config DRDY gpio
-    gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, ((1ULL << io_num)), 0, 0);
+    gpioConfig(GPIO_MODE_INPUT, GPIO_INTR_NEGEDGE, (1ULL << io_num), 0, 0);
 
     // install gpio isr service
     gpio_install_isr_service(0); // TODO: Test ESP_INTR_FLAG_IRAM
