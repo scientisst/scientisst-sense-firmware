@@ -124,11 +124,6 @@ static void allocate_frame_buffers(void)
 void initScientisst(void)
 {
     esp_err_t ret = ESP_OK;
-    sdmmc_host_t *sd_card_spi_host = NULL;
-
-    // Create a mutex type semaphore
-    scientisst_buffers.mutex_buffers_ready_to_send = xSemaphoreCreateMutex();
-    CHECK_NOT_NULL(scientisst_buffers.mutex_buffers_ready_to_send);
 
     // Init nvs (Non volatile storage)
     ret = nvs_flash_init();
@@ -156,6 +151,7 @@ void initScientisst(void)
     // Enable DAC
     dac_output_enable(DAC_CH);
 
+    DEBUG_PRINT_E("CONFIG BUTTON VALUE", "%d", gpio_get_level(CONFIG_BTN_IO));
     // Check if CONFIG pin is 1 on startup
     if (gpio_get_level(CONFIG_BTN_IO))
     {
@@ -170,12 +166,10 @@ void initScientisst(void)
     initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
 
 #if _SD_CARD_ == SD_CARD_ENABLED
+    // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
+    sdmmc_host_t *sd_card_spi_host = NULL;
     sd_card_spi_host = init_sd_card_spi_bus();
-#endif
-    // Init external ADC
     adcExtInit(sd_card_spi_host);
-
-#if _SD_CARD_ == SD_CARD_ENABLED
     scientisst_device_settings.num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
     // Init SD card
     ret = initSDCard(scientisst_device_settings.num_extern_active_chs, &(scientisst_buffers.sd_card_save_file));

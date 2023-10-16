@@ -40,6 +40,7 @@ spi_bus_config_t buscfg = {
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
     .max_transfer_sz = 4,
+    .flags = 0,
 };
 
 spi_device_interface_config_t devcfg = {
@@ -59,7 +60,7 @@ spi_device_interface_config_t devcfg = {
 };
 
 // SPI
-DRAM_ATTR spi_device_handle_t adc_ext_spi_handler;
+DRAM_ATTR spi_device_handle_t adc_ext_spi_handle;
 
 // Preallocated and fill SPI transactions for reading ADC values. This allows higher aquisition frequencies
 // We need 2 transactions to aquire 1 channel and 4 to acquire 2 channels because sometimes the same channel is sent twice.
@@ -105,6 +106,7 @@ void mcpReadADCValues(uint8_t rx_data_bytes);
 void adcExtInit(const sdmmc_host_t *spi_host)
 {
     esp_err_t ret;
+    static uint8_t flag_gpio_already_initialized = 0;
 
     devcfg.clock_speed_hz =
         (scientisst_device_settings.num_extern_active_chs == 1) ? ADC_EXT_SLCK_HZ_1_EXT_CH : ADC_EXT_SLCK_HZ_2_EXT_CH;
@@ -112,20 +114,25 @@ void adcExtInit(const sdmmc_host_t *spi_host)
     if (spi_host != NULL)
     { // If SD card is using the SPI bus
         // Attach to SD card SPI bus
-        ret = spi_bus_add_device(spi_host->slot, &devcfg, &adc_ext_spi_handler);
+        ret = spi_bus_add_device(spi_host->slot, &devcfg, &adc_ext_spi_handle);
         ESP_ERROR_CHECK(ret);
     }
     else
     {
+        // gpio_set_level(GPIO_NUM_4, 1);
         // Initialize the SPI bus
         ret = spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_DISABLED);
         ESP_ERROR_CHECK(ret);
         // Attach the device to the SPI bus
-        ret = spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handler);
+        ret = spi_bus_add_device(SPI3_HOST, &devcfg, &adc_ext_spi_handle);
         ESP_ERROR_CHECK(ret);
     }
 
-    adcExtDrdyGpio(MCP_DRDY_IO);
+    if (!flag_gpio_already_initialized)
+    {
+        flag_gpio_already_initialized = 1;
+        adcExtDrdyGpio(MCP_DRDY_IO);
+    }
 }
 
 esp_err_t IRAM_ATTR get_adc_ext_values_raw(uint8_t channels_mask, uint32_t values[EXT_ADC_CHANNELS])
@@ -147,7 +154,7 @@ esp_err_t IRAM_ATTR get_adc_ext_values_raw(uint8_t channels_mask, uint32_t value
     for (int i = 0; i < pop_count; ++i)
     {
         values[i] = 1; // If the raw value is not found, it stays 1. Useful for debugging
-        for (int j = 0; j < 3; ++j)
+        for (int j = 1; j < 4; ++j)
         {
             if ((*(uint32_t *)&(mcp_transactions[j].rx_data) >> 28) ==
                 (scientisst_device_settings.active_ext_chs[i] - 6)) // Check if the channel is the one we want
@@ -198,7 +205,7 @@ void mcpSendCmd(uint8_t cmd)
     transaction.tx_data[0] = cmd_byte;
 
     gpio_set_level(SPI3_CS0_IO, 0); // manually set CS\ active low -> begin comm
-    spi_device_polling_transmit(adc_ext_spi_handler, &transaction);
+    spi_device_polling_transmit(adc_ext_spi_handle, &transaction);
     gpio_set_level(SPI3_CS0_IO, 1); // manually set CS\ idle
 }
 
@@ -227,7 +234,7 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
     *(uint32_t *)(transaction.tx_data) |= tx_data << 8;
 
     gpio_set_level(SPI3_CS0_IO, 0);
-    spi_device_polling_transmit(adc_ext_spi_handler, &transaction);
+    spi_device_polling_transmit(adc_ext_spi_handle, &transaction);
     gpio_set_level(SPI3_CS0_IO, 1);
 }
 
@@ -242,16 +249,19 @@ void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
     gpio_intr_disable(MCP_DRDY_IO);
 
     mcp_transactions[0].tx_data[0] = 0b01000001;
+    *(uint32_t *)&(mcp_transactions[1].rx_data) = 0;
+    *(uint32_t *)&(mcp_transactions[2].rx_data) = 0;
+    *(uint32_t *)&(mcp_transactions[3].rx_data) = 0;
 
     gpio_set_level(SPI3_CS0_IO, 0);
 
-    spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[0]);
-    spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[1]);
+    spi_device_polling_transmit(adc_ext_spi_handle, &mcp_transactions[0]);
+    spi_device_polling_transmit(adc_ext_spi_handle, &mcp_transactions[1]);
 
     if (rx_data_bytes > 4)
     {
-        spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[2]);
-        spi_device_polling_transmit(adc_ext_spi_handler, &mcp_transactions[3]);
+        spi_device_polling_transmit(adc_ext_spi_handle, &mcp_transactions[2]);
+        spi_device_polling_transmit(adc_ext_spi_handle, &mcp_transactions[3]);
         *(uint32_t *)&(mcp_transactions[2].rx_data) = SPI_SWAP_DATA_RX(*(uint32_t *)&(mcp_transactions[2].rx_data), (32));
         *(uint32_t *)&(mcp_transactions[3].rx_data) = SPI_SWAP_DATA_RX(*(uint32_t *)&(mcp_transactions[3].rx_data), (32));
     }
@@ -293,8 +303,8 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
     cmd_transaction.tx_data[0] = cmd_byte;
 
     gpio_set_level(SPI3_CS0_IO, 0);
-    spi_device_polling_transmit(adc_ext_spi_handler, &cmd_transaction);
-    spi_device_polling_transmit(adc_ext_spi_handler, &read_transaction);
+    spi_device_polling_transmit(adc_ext_spi_handle, &cmd_transaction);
+    spi_device_polling_transmit(adc_ext_spi_handle, &read_transaction);
     gpio_set_level(SPI3_CS0_IO, 1);
 
     if (rx_data_bytes > 1)
@@ -315,6 +325,9 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
  */
 void mcpSetupRoutine(uint8_t channel_mask)
 {
+#if _SD_CARD_ == SD_CARD_DISABLED
+    adcExtInit(NULL);
+#endif
     mcpSendCmd(RESET);
     mcpWriteRegister(REG_CONFIG0, VALUE_CONFIG0, 1);
     mcpWriteRegister(REG_CONFIG1, VALUE_CONFIG1, 1);
@@ -342,6 +355,7 @@ void adcExtStart(void)
 void adcExtStop(void)
 {
     mcpSendCmd(FSHUTDOWN);
-    spi_bus_remove_device(adc_ext_spi_handler);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    spi_bus_remove_device(adc_ext_spi_handle);
     spi_bus_free(SPI3_HOST);
 }

@@ -355,7 +355,6 @@ void setSampleRate(uint8_t *buff)
  */
 void startAcquisition(uint8_t *buff, uint8_t cmd)
 {
-
     // Clear send buffs, because of potential previous live mode
     scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.acq_curr_buff = 0;

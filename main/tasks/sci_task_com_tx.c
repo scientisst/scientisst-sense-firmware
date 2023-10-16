@@ -83,9 +83,7 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t
         // to send
         // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
         // their own execution and do not interfere with the other task.
-        xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
         buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
-        xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
         if (!buf_ready)
         {
@@ -106,9 +104,7 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t
         if (ret == ESP_FAIL) // If the send function failed, stop sending data. Connection was possibly lost
             break;
 
-        xSemaphoreTake(scientisst_buffers.mutex_buffers_ready_to_send, portMAX_DELAY);
         scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
-        xSemaphoreGive(scientisst_buffers.mutex_buffers_ready_to_send);
 
         // Clear recently sent buffer
         memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,

@@ -33,7 +33,7 @@ sdmmc_host_t sd_spi_host = {
     .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
     .slot = SDSPI_DEFAULT_HOST,
 #if _ADC_EXT_ == EXT_ADC_ENABLED
-    .max_freq_khz = (80 * 1000) / 64,
+    .max_freq_khz = ADC_EXT_SLCK_HZ_2_EXT_CH,
 #else
     .max_freq_khz = SDMMC_FREQ_DEFAULT,
 #endif

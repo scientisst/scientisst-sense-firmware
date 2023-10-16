@@ -67,11 +67,10 @@ typedef struct
     uint32_t frame_buffer_length_bytes;           ///< Length of each send buffer, set to optimal value depending on com mode
     uint16_t frame_buffer_write_idx[NUM_BUFFERS]; ///< The index of the first free element in for each buffer
     volatile uint8_t frame_buffer_ready_to_send[NUM_BUFFERS]; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
-    SemaphoreHandle_t mutex_buffers_ready_to_send;            ///< Mutex for buffers_ready_to_send
     uint8_t tx_curr_buff;                                     ///< Index of the buffer that tx task is currently sending
     uint8_t acq_curr_buff;   ///< Index of the buffer that acquisition task is currently using
     uint8_t packet_size;     ///< Current packet size (dependent on number of channels used)
-    uint16_t send_threshold; ///< Based on buffer and packet sizes, threshold that marks the buffer as ready to send and
+    uint32_t send_threshold; ///< Based on buffer and packet sizes, threshold that marks the buffer as ready to send and
                              ///< changes buffer used for acquisition
     FILE *sd_card_save_file; ///< File where data is saved in SD card mode
     cJSON *json;             ///< JSON object that is used in JSON api mode
