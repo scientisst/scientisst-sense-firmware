@@ -151,8 +151,12 @@ void initScientisst(void)
     // Enable DAC
     dac_output_enable(DAC_CH);
 
-    DEBUG_PRINT_E("CONFIG BUTTON VALUE", "%d", gpio_get_level(CONFIG_BTN_IO));
-    // Check if CONFIG pin is 1 on startup
+    // Wait for IO initializations to settle
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    // Working version 3.3.0-750b400
+
+    // Check if CONFIG pin is pressed on startup
     if (gpio_get_level(CONFIG_BTN_IO))
     {
         wifiInit(1);
