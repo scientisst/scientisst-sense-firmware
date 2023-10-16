@@ -175,7 +175,7 @@ void initScientisst(void)
     // Init external ADC
     adcExtInit(sd_card_spi_host);
 
-#if _SD_CARD_ != SD_CARD_ENABLED
+#if _SD_CARD_ == SD_CARD_ENABLED
     scientisst_device_settings.num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
     // Init SD card
     ret = initSDCard(scientisst_device_settings.num_extern_active_chs, &(scientisst_buffers.sd_card_save_file));

@@ -16,9 +16,6 @@ TaskHandle_t file_sync_task;
 SemaphoreHandle_t buf_ready_mutex[NUM_BUFFERS_SDCARD]; ///< Mutex to protect the buffer ready array, one for each
                                                        ///< buffer for faster access times
 
-uint8_t acq_curr_buff = 0; ///< Number of the buffer where the data is being written to on acquisition
-uint8_t tx_curr_buff = 0;  ///< Number of the buffer that is being written to the SD card
-
 uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
 void startAcquisitionSDCard(void);
 
@@ -112,20 +109,20 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     }
 #else
     // If the buffer is full, save it to the SD card
-    if (buffer_ptr - (scientisst_buffers.frame_buffer[buf_num_acq % NUM_BUFFERS_SDCARD]) >=
+    if (buffer_ptr - (scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff % NUM_BUFFERS_SDCARD]) >=
         MAX_BUFFER_SIZE_SDCARD - 22) // 28 is max size, 22 when no adc ext
     {
-        xSemaphoreTake(buf_ready_mutex[buf_num_acq % NUM_BUFFERS_SDCARD], portMAX_DELAY);
-        scientisst_buffers.frame_buffer_ready_to_send[buf_num_acq % NUM_BUFFERS_SDCARD] =
-            buffer_ptr - (scientisst_buffers.frame_buffer[buf_num_acq % NUM_BUFFERS_SDCARD]);
-        xSemaphoreGive(buf_ready_mutex[buf_num_acq % NUM_BUFFERS_SDCARD]);
+        xSemaphoreTake(buf_ready_mutex[scientisst_buffers.acq_curr_buff % NUM_BUFFERS_SDCARD], portMAX_DELAY);
+        scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff % NUM_BUFFERS_SDCARD] =
+            buffer_ptr - (scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff % NUM_BUFFERS_SDCARD]);
+        xSemaphoreGive(buf_ready_mutex[scientisst_buffers.acq_curr_buff % NUM_BUFFERS_SDCARD]);
         xTaskNotifyGive(file_sync_task);
-        while (scientisst_buffers.frame_buffer_ready_to_send[(buf_num_acq + 1) % NUM_BUFFERS_SDCARD])
+        while (scientisst_buffers.frame_buffer_ready_to_send[(scientisst_buffers.acq_curr_buff + 1) % NUM_BUFFERS_SDCARD])
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
-        buffer_ptr = (scientisst_buffers.frame_buffer[(++buf_num_acq) % NUM_BUFFERS_SDCARD]);
+        buffer_ptr = (scientisst_buffers.frame_buffer[(++scientisst_buffers.acq_curr_buff) % NUM_BUFFERS_SDCARD]);
     }
 #endif
 
@@ -139,21 +136,21 @@ _Noreturn void IRAM_ATTR fileSyncTask(void)
             continue;
         while (1)
         {
-            xSemaphoreTake(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD], portMAX_DELAY);
-            if (scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD])
+            xSemaphoreTake(buf_ready_mutex[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD], portMAX_DELAY);
+            if (scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD])
             {
                 write(fileno(scientisst_buffers.sd_card_save_file),
-                      (scientisst_buffers.frame_buffer[tx_curr_buff % NUM_BUFFERS_SDCARD]),
-                      scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD]);
-                scientisst_buffers.frame_buffer_ready_to_send[tx_curr_buff % NUM_BUFFERS_SDCARD] = 0;
-                xSemaphoreGive(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD]);
+                      (scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD]),
+                      scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD]);
+                scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD] = 0;
+                xSemaphoreGive(buf_ready_mutex[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD]);
                 fflush(scientisst_buffers.sd_card_save_file);
                 fsync(fileno(scientisst_buffers.sd_card_save_file));
-                tx_curr_buff++;
+                scientisst_buffers.tx_curr_buff++;
             }
             else
             {
-                xSemaphoreGive(buf_ready_mutex[tx_curr_buff % NUM_BUFFERS_SDCARD]);
+                xSemaphoreGive(buf_ready_mutex[scientisst_buffers.tx_curr_buff % NUM_BUFFERS_SDCARD]);
                 break;
             }
         }
