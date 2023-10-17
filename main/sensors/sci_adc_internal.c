@@ -127,15 +127,15 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
-            DEBUG_PRINT_W("ADC1 Calibration type: eFuse Vref");
+            DEBUG_PRINT_I("ADC1 Calibration type: eFuse Vref");
         }
         else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP)
         {
-            DEBUG_PRINT_W("ADC1 Calibration type: Two Point");
+            DEBUG_PRINT_I("ADC1 Calibration type: Two Point");
         }
         else
         {
-            DEBUG_PRINT_E("ADC1 Calibration type: Default");
+            DEBUG_PRINT_W("ADC1 Calibration type: Default");
         }
     }
 
@@ -150,15 +150,15 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
-            DEBUG_PRINT_W("ADC2 Calibration type: eFuse Vref");
+            DEBUG_PRINT_I("ADC2 Calibration type: eFuse Vref");
         }
         else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP)
         {
-            DEBUG_PRINT_W("ADC2 Calibration type: Two Point");
+            DEBUG_PRINT_I("ADC2 Calibration type: Two Point");
         }
         else
         {
-            DEBUG_PRINT_E("ADC2 Calibration type: Default");
+            DEBUG_PRINT_W("ADC2 Calibration type: Default");
         }
     }
 }

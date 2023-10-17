@@ -204,7 +204,7 @@ int wifi_init_sta(void)
     }
     else if (bits & WIFI_FAIL_BIT)
     {
-        DEBUG_PRINT_W("wifi station", "Failed to connect to SSID:%s, password:%s", (char *)wifi_config.sta.ssid,
+        DEBUG_PRINT_E("wifi station", "Failed to connect to SSID:%s, password:%s", (char *)wifi_config.sta.ssid,
                       (char *)wifi_config.sta.password);
         ret = ESP_FAIL;
     }

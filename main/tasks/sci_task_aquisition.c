@@ -47,7 +47,7 @@ static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_int
  * timerGrp0Isr when to acquire data. It notifies the sendTask when there is
  * data to send. It is also the main task of CPU1 (APP CPU)
  */
-_Noreturn void IRAM_ATTR task_acquisition(void *not_used)
+_Noreturn void IRAM_ATTR task_acquisition(void)
 {
     uint16_t adc_internal_res[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[EXT_ADC_CHANNELS] = {0, 0};
@@ -89,7 +89,7 @@ _Noreturn void IRAM_ATTR task_acquisition(void *not_used)
             // can't handle this sending throughput
             while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] == 1)
             {
-                DEBUG_PRINT_W("task_acquisition", "Sending buffer is full, cannot acquire");
+                DEBUG_PRINT_E("task_acquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
                 vTaskDelay(10 / portTICK_PERIOD_MS); // TODO: test with 1 MS
             }

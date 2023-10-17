@@ -212,7 +212,7 @@ void startAcquisitionSDCard(void)
             scientisst_device_settings.num_intern_active_chs++;
         }
 
-        DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number);
+        DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number);
         channel_number--;
     }
 

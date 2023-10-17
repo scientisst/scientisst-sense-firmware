@@ -341,7 +341,7 @@ int getOpSettingsInfo(op_settings_info_t *_op_settings)
     err = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
     if (err != ESP_OK)
     {
-        DEBUG_PRINT_E("getOpSettingsInfo", "No op settings record found!");
+        DEBUG_PRINT_W("getOpSettingsInfo", "No op settings record found!");
         nvs_close(handle);
         return -1;
     }

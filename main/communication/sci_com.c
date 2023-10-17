@@ -90,7 +90,7 @@ void processRcv(uint8_t *buff, int len)
             }
             else if (((buff[0] >> 2) & 0b000011) == 0b01) // Send firmware version string
             {
-                DEBUG_PRINT_W("processRcv", "sendFirmwareVersion");
+                DEBUG_PRINT_I("processRcv", "sendFirmwareVersion");
                 sendFirmwareVersionPacket();
             }
             else if (buff[0] & 0b00110000) // Change API mode
@@ -121,7 +121,7 @@ void triggerGpio(uint8_t *buff)
     gpio_set_level(O1_IO, o2_lvl);
     scientisst_device_settings.gpio_out_state[1] = o2_lvl;
 
-    DEBUG_PRINT_W("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
+    DEBUG_PRINT_I("triggerGpio", "O1 = %d, O2 = %d", o1_lvl, o2_lvl);
 }
 
 /**
@@ -161,7 +161,7 @@ void changeAPI(uint8_t mode)
         scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
     }
 
-    DEBUG_PRINT_W("changeAPI", "API changed to %d", mode);
+    DEBUG_PRINT_I("changeAPI", "API changed to %d", mode);
 }
 
 /**
@@ -249,7 +249,7 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
                 scientisst_device_settings.num_intern_active_chs++;
             }
 
-            DEBUG_PRINT_W("selectChsFromMask", "Channel A%d added", channel_number);
+            DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number);
         }
         channel_number--;
     }
@@ -341,7 +341,7 @@ void setSampleRate(uint8_t *buff)
 
     scientisst_device_settings.sample_rate = aux;
 
-    DEBUG_PRINT_W("processRcv", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
+    DEBUG_PRINT_I("processRcv", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
 }
 
 /**

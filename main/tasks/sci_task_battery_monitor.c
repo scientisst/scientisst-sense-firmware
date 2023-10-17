@@ -1,6 +1,7 @@
 #include "include/sci_task_battery_monitor.h"
 
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 #include "esp_attr.h"
 #include "sdkconfig.h"
@@ -18,7 +19,7 @@
  * notified by the timerGrp1Isr when to acquire data. It notifies the sendTask
  * when there is data to send. It is also the main task of CPU0 (PRO CPU)
  */
-void IRAM_ATTR task_battery_monitor(void *not_used)
+_Noreturn void IRAM_ATTR task_battery_monitor(void)
 {
     uint16_t battery; // Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;
@@ -36,36 +37,31 @@ void IRAM_ATTR task_battery_monitor(void *not_used)
 
     while (1)
     {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
+        if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
+            continue;
+        battery = get_adc_internal_value(ADC_INTERNAL_2, BATTERY_ADC_CH, 1);
+
+        turn_led_on = battery <= scientisst_device_settings.battery_threshold;
+
+        if (!bat_led_status_gpio && turn_led_on)
         {
-            battery = get_adc_internal_value(ADC_INTERNAL_2, BATTERY_ADC_CH, 1);
-
-            turn_led_on = battery <= scientisst_device_settings.battery_threshold;
-
-            if (!bat_led_status_gpio && turn_led_on)
-            {
-                // Inflate threshold so that it doesn't blink due to battery oscilations in the edge of the
-                // threshold
-                scientisst_device_settings.battery_threshold += 50;
-                scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
-                saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
-            }
-            else if (bat_led_status_gpio && !turn_led_on)
-            {
-                // It already charged passed the real threshold, so update the battery_threshold to its real
-                // value
-                scientisst_device_settings.battery_threshold -= 50;
-                scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
-                saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
-            }
-
-            bat_led_status_gpio = turn_led_on;
-
-            gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
+            // Inflate threshold so that it doesn't blink due to battery oscilations in the edge of the
+            // threshold
+            scientisst_device_settings.battery_threshold += 50;
+            scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
+            saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
         }
-        else
+        else if (bat_led_status_gpio && !turn_led_on)
         {
-            DEBUG_PRINT_W("task_battery_monitor", "ulTaskNotifyTake timed out!");
+            // It already charged passed the real threshold, so update the battery_threshold to its real
+            // value
+            scientisst_device_settings.battery_threshold -= 50;
+            scientisst_device_settings.op_settings.is_battery_threshold_inflated = 0;
+            saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
         }
+
+        bat_led_status_gpio = turn_led_on;
+
+        gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
     }
 }

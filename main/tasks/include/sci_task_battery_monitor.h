@@ -1,3 +1,4 @@
+#include <sys/cdefs.h>
 //
 // Created by kiko on 10/10/23.
 //
@@ -6,4 +7,4 @@
 
 #include "sci_scientisst.h"
 
-void task_battery_monitor(void *not_used);
+_Noreturn void task_battery_monitor(void);

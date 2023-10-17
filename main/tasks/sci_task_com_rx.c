@@ -21,7 +21,7 @@ static void wifiSerialRcv(void);
  *
  * This task is responsible for receiving data from the client.
  */
-_Noreturn void rcvTask(const void *not_used)
+_Noreturn void rcvTask(void)
 {
     while (1)
     {
@@ -107,13 +107,13 @@ static void wifiSerialRcv(void)
     {
         if ((read_bytes = read(send_fd, buff, CMD_MAX_BYTES)) == 0)
         {
-            DEBUG_PRINT_W("wifiSerialRcv", "Connection closed gracefully");
+            DEBUG_PRINT_I("wifiSerialRcv", "Connection closed gracefully");
             buff[0] = 0;
             len = 1;
         }
         else if (read_bytes < 0)
         {
-            DEBUG_PRINT_W("wifiSerialRcv", "Connection closed with error: %d", errno);
+            DEBUG_PRINT_E("wifiSerialRcv", "Connection closed with error: %d", errno);
             buff[0] = 0;
             len = 1;
         }

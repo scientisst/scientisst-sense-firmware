@@ -12,4 +12,4 @@
 extern const uint8_t crc_table[16];
 extern uint16_t crc_seq;
 
-_Noreturn void task_acquisition(void *not_used);
+_Noreturn void task_acquisition(void);
