@@ -150,7 +150,6 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
             /* Send the buffer contents as HTTP response chunk */
             if ((ret = httpd_resp_send_chunk(req, chunk, read_bytes)) != ESP_OK)
             {
-                printf("ret = %d\n", ret);
                 close(fd);
                 DEBUG_PRINT_E("esp-rest", "File %s sending failed!", filepath);
                 /* Abort sending file */
@@ -261,7 +260,6 @@ static esp_err_t op_settings_post_handler(httpd_req_t *req)
     buf[total_len] = '\0';
 
     // Save op_settings in flash
-    printf("%s \n", buf);
     parseHttpForm(buf);
     saveOpSettingsInfo(&(scientisst_device_settings.op_settings));
 

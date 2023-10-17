@@ -93,7 +93,7 @@ esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, uint8_t *buff)
     int sent_bytes;
     if ((sent_bytes = sendto(fd, buff, len, 0, udp_server_addr->ai_addr, udp_server_addr->ai_addrlen)) != len)
     {
-        DEBUG_PRINT_E("udpSend", "ERROR: WRITE FAILED, sent %dbytes of %d bytes, errno:%d\n", sent_bytes, len, errno);
+        DEBUG_PRINT_E("udpSend", "ERROR: WRITE FAILED, sent %dbytes of %d bytes, errno:%d", sent_bytes, len, errno);
         ESP_ERROR_CHECK(errno);
         return ESP_FAIL;
     }

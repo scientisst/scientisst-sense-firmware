@@ -153,7 +153,7 @@ esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
 
     if (fd <= 0)
     {
-        DEBUG_PRINT_E("tcpSerialSend", "ERROR: INVALID FD\n");
+        DEBUG_PRINT_E("tcpSerialSend", "ERROR: INVALID FD");
         return ESP_FAIL;
     }
 
@@ -162,7 +162,7 @@ esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
         n_written = write(fd, ptr, n_left);
         if (n_written == -1)
         {
-            DEBUG_PRINT_E("tcpSerialSend", "ERROR: WRITE FAILED\n");
+            DEBUG_PRINT_E("tcpSerialSend", "ERROR: WRITE FAILED");
             return ESP_FAIL;
         }
         n_left -= n_written;

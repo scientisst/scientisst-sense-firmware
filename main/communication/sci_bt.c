@@ -135,14 +135,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_CL_INIT_EVT");
         break;
     case ESP_SPP_DATA_IND_EVT: // connection received data
-#if (SCI_DEBUG_LEVEL == 1 || SCI_DEBUG_LEVEL == 2)
-        printf("BT data recieved\n length:%d  data:", param->data_ind.len);
-        for (int i = 0; i < param->data_ind.len; i++)
-        {
-            printf("%d ", param->data_ind.data[i]);
-        }
-        printf("\n");
-#endif
+        DEBUG_PRINT_I("BT Event", "BT data recieved length:%d  data:", param->data_ind.len);
         processRcv(param->data_ind.data, param->data_ind.len);
         break;
     case ESP_SPP_CONG_EVT: // connection congestion status changed
@@ -257,43 +250,43 @@ void initBt(void)
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s initialize controller failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s initialize controller failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_bt_controller_enable(ESP_BT_MODE_BTDM)) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s enable controller failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_bluedroid_init()) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s initialize bluedroid failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_bluedroid_enable()) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s enable bluedroid failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s enable bluedroid failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_bt_gap_register_callback(esp_bt_gap_cb)) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s gap register failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s gap register failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_spp_register_callback(esp_spp_cb)) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s spp register failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s spp register failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
     if ((ret = esp_spp_init(ESP_SPP_MODE_CB)) != ESP_OK)
     {
-        DEBUG_PRINT_E("init", "%s spp init failed: %s\n", __func__, esp_err_to_name(ret));
+        DEBUG_PRINT_E("init", "%s spp init failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
@@ -312,7 +305,7 @@ void initBt(void)
     esp_bt_pin_code_t pin_code;
     esp_bt_gap_set_pin(pin_type, 0, pin_code);
 
-    DEBUG_PRINT_I("initBt", "Init Bluetooth completed\n");
+    DEBUG_PRINT_I("initBt", "Init Bluetooth completed");
 }
 
 /**
@@ -335,7 +328,7 @@ void getDeviceName(void)
     // for all the interfaces
     if (esp_efuse_mac_get_default(mac) != ESP_OK)
     {
-        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
+        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse");
         return;
     }
 
@@ -361,7 +354,7 @@ void getDeviceName(void)
 
     if (res != ESP_OK || esp_read_mac(mac_bt, ESP_MAC_BT) != ESP_OK)
     {
-        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse\n");
+        DEBUG_PRINT_E("BtTask", "Couldn't read MAC address from Efuse");
         return;
     }
 

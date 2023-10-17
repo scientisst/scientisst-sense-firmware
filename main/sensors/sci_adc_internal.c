@@ -92,7 +92,7 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
     // Check if TP is burned into eFuse
     if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK)
     {
-        DEBUG_PRINT_I("eFuse Two Point: Supported\n");
+        DEBUG_PRINT_I("eFuse Two Point: Supported");
     }
     else
     {
@@ -102,11 +102,11 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
     // Check Vref is burned into eFuse
     if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF) == ESP_OK)
     {
-        DEBUG_PRINT_I("eFuse Vref: Supported\n");
+        DEBUG_PRINT_I("eFuse Vref: Supported");
     }
     else
     {
-        DEBUG_PRINT_W("eFuse Vref: NOT supported\n");
+        DEBUG_PRINT_W("eFuse Vref: NOT supported");
     }
 
     // If adc1 is enabled, configure it
