@@ -137,4 +137,11 @@ config SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
 
 endchoice
 
+config PREVENT_ACQUISTION_ON_LOW_BATTERY
+    bool "Prevent acquisition on low battery"
+    default n
+    help
+        When on low battery, the sensor data has an increased error margin. This option forces the device to stop the acquisition and restart when that happens.
+        It will become virtually unusable until it is charged above a certain threshold. Unfortunately, this only works for non-wifi modes.
+
 endmenu  # SCI Configuration

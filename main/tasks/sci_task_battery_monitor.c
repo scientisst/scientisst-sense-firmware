@@ -7,6 +7,7 @@
 #include "sdkconfig.h"
 
 #include "sci_adc_internal.h"
+#include "sci_com.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
@@ -61,6 +62,15 @@ _Noreturn void IRAM_ATTR task_battery_monitor(void)
         }
 
         bat_led_status_gpio = turn_led_on;
+
+#ifdef CONFIG_PREVENT_ACQUISTION_ON_LOW_BATTERY
+        if (turn_led_on)
+        {
+            DEBUG_PRINT_E("task_battery_monitor", "Battery level is too low and sensor values will have errors");
+            stopAcquisition();
+            esp_restart();
+        }
+#endif
 
         gpio_set_level(BAT_LED_STATUS_IO, bat_led_status_gpio);
     }
