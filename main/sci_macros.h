@@ -13,6 +13,7 @@
 
 #include "esp_log.h"
 #include "esp_spp_api.h"
+#include "sdkconfig.h"
 
 #define DEFAULT_TASK_STACK_SIZE_SMALL 2048
 #define DEFAULT_TASK_STACK_SIZE_MEDIUM 4096

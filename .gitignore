@@ -4,6 +4,7 @@ esp-idf-tools/
 .directory
 .cache
 .idea
+sdkconfig.old
 cmake-build-debug
 cmake-build-release
 includes_vscode.txt
