@@ -43,8 +43,9 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
 
     if (convert_to_mV_flag)
     {
-        value = (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
-                BATTERY_DIVIDER_FACTOR;
+        value =
+            (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index - 1])) *
+            BATTERY_DIVIDER_FACTOR;
     }
 
     return value;
