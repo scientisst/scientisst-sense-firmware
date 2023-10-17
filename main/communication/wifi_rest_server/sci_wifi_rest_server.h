@@ -2,9 +2,8 @@
     \brief Header file for wifi_rest_server.c
 */
 
-#ifndef _WIFI_REST_SERVER_H
-#define _WIFI_REST_SERVER_H
+#pragma once
+
+#include "sci_scientisst.h"
 
 void initRestServer(void);
-
-#endif

@@ -30,8 +30,10 @@
 
 #include "sci_com.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
+
+#define SEND_AFTER_C0NG 2
+#define SPP_SERVER_NAME "SPP_SERVER"
 
 // Send Data for Bluetooth mode. Given that the bluetooth connection has to wait for events to send data, this
 // function is called by the event handler. If others modes used the same approach, it created a recursive
@@ -133,7 +135,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_CL_INIT_EVT");
         break;
     case ESP_SPP_DATA_IND_EVT: // connection received data
-#if (_DEBUG_ == 1 || _DEBUG_ == 2)
+#if (SCI_DEBUG_LEVEL == 1 || SCI_DEBUG_LEVEL == 2)
         printf("BT data recieved\n length:%d  data:", param->data_ind.len);
         for (int i = 0; i < param->data_ind.len; i++)
         {

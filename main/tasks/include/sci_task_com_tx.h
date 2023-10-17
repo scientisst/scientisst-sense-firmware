@@ -1,13 +1,11 @@
-#include <sys/cdefs.h>
 //
 // Created by kiko on 10/10/23.
 //
 
-#ifndef SCIENTISST_SENSE_TASK_COM_TX_H
-#define SCIENTISST_SENSE_TASK_COM_TX_H
+#pragma once
 
 #include <sys/cdefs.h>
 
-_Noreturn void sendTask(void);
+#include "sci_scientisst.h"
 
-#endif // SCIENTISST_SENSE_TASK_COM_TX_H
+_Noreturn void sendTask(void);

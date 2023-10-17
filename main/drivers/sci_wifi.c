@@ -23,11 +23,8 @@
 #include "nvs_flash.h"
 
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
-#define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
-#define BOOTWIFI_NAMESPACE "bootwifi"      // namespace in NVS for bootwifi
 #define EXAMPLE_ESP_WIFI_SSID "ScientISST"
 #define EXAMPLE_ESP_WIFI_PASS "12345678"
 #define EXAMPLE_ESP_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1
@@ -221,63 +218,6 @@ int wifi_init_sta(void)
 }
 
 /**
- * \brief Read the operational settings from NVS
- *
- * \param _op_settings pointer to the operational settings structure
- *
- * \return:
- *     - 0 if successful
- *     - -1 if unsuccessful
- */
-int getOpSettingsInfo(op_settings_info_t *_op_settings)
-{
-    nvs_handle handle;
-    size_t size;
-    esp_err_t err;
-    op_settings_info_t pOpSettingsInfo;
-
-    err = nvs_open(BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle);
-    if (err != 0)
-    {
-        DEBUG_PRINT_E("getOpSettingsInfo", "ERROR: opening NVS");
-        return -1;
-    }
-
-    size = sizeof(op_settings_info_t);
-    err = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
-    if (err != ESP_OK)
-    {
-        DEBUG_PRINT_E("getOpSettingsInfo", "No op settings record found!");
-        nvs_close(handle);
-        return -1;
-    }
-
-    // cleanup
-    nvs_close(handle);
-
-    *_op_settings = pOpSettingsInfo;
-    return 0;
-}
-
-/**
- * \brief Save the operational settings to NVS
- *
- * \param pOpSettingsInfo pointer to the operational settings structure
- *
- * \return:
- *     - 0 if successful
- *     - -1 if unsuccessful
- */
-void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo)
-{
-    nvs_handle handle;
-    ESP_ERROR_CHECK(nvs_open(BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle));
-    ESP_ERROR_CHECK(nvs_set_blob(handle, KEY_SETTINGS_INFO, pOpSettingsInfo, sizeof(op_settings_info_t)));
-    ESP_ERROR_CHECK(nvs_commit(handle));
-    nvs_close(handle);
-}
-
-/**
  * \brief Wifi initialization
  *
  * \param force_ap force the ESP32 to start in AP mode
@@ -314,22 +254,4 @@ int wifiInit(uint8_t force_ap)
         // Return result of attempt connection to saved SSID
         return wifi_init_sta();
     }
-}
-
-/**
- *
- * \brief Check if the operational mode is wifi
- *
- * \return:
- *   - 1 if operational mode is wifi
- *   - 0 if operational mode is not wifi
- */
-
-// TODO: CHANGE THIS TO A MACRO
-uint8_t isComModeWifi(void)
-{
-    return ((scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP) ||
-            (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_STA) ||
-            (scientisst_device_settings.op_settings.com_mode == COM_MODE_UDP_STA) ||
-            (scientisst_device_settings.op_settings.com_mode == COM_MODE_WS_AP));
 }

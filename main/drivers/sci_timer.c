@@ -16,7 +16,6 @@
 
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
 /**
@@ -111,7 +110,7 @@ bool IRAM_ATTR timerGrp0Isr(void)
  */
 bool IRAM_ATTR timerGrp1Isr(void)
 {
-    vTaskNotifyGiveFromISR(abat_task, NULL);
+    vTaskNotifyGiveFromISR(battery_task, NULL);
     return 1;
 }
 
@@ -123,11 +122,10 @@ bool IRAM_ATTR timerGrp1Isr(void)
  * (CP0) may starve other tasks of CPU. Hence, sampling rate or number of
  * channels need to be decreased. When that starvation happens, the Task
  * Watchdog Timer (TWDT) will trigger and this handler will be called and
- * livemode will be stop on its own. The ESP32 will then restart.
+ * the ESP32 will then restart.
  *
  */
 void esp_task_wdt_isr_user_handler(void)
 {
-    stopAcquisition();
     esp_restart();
 }

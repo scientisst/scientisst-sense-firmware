@@ -12,6 +12,8 @@
 #include "sci_udp.h"
 #include "sci_ws.h"
 
+#define CMD_MAX_BYTES 4
+
 static void wifiSerialRcv(void);
 
 /**

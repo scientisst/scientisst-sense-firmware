@@ -14,7 +14,6 @@
 
 #include "sci_bt.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
 int listen_fd = 0; ///< Used to listen for connections when used as a TCP server

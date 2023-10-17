@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "esp_vfs_fat.h"
+#include "nvs.h"
 #include "sdkconfig.h"
 #include "sdmmc_cmd.h"
 
@@ -18,10 +19,8 @@
 #include "sci_ble.h"
 #include "sci_bt.h"
 #include "sci_com.h"
-#include "sci_config.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 #include "sci_sd_card.h"
 #include "sci_serial.h"
@@ -39,14 +38,17 @@
 #include "sci_ws.h"
 
 #define BT_SEND_PRIORITY 10 // MAX priority in ESP32 is 25
-#define ABAT_PRIORITY 1
+#define BATTERY_PRIORITY 1
 #define WIFI_RCV_PRIORITY 1
 #define ACQ_ADC1_PRIORITY 10
+
+#define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
+#define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settigns
 
 _Noreturn void opModeConfig(void);
 
 TaskHandle_t send_task;
-TaskHandle_t abat_task;
+TaskHandle_t battery_task;
 TaskHandle_t rcv_task;
 TaskHandle_t acq_adc1_task;
 TaskHandle_t imu_task;
@@ -67,10 +69,29 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .send_busy = 0,
     .op_settings =
         {
-#if _SD_CARD_ == SD_CARD_ENABLED
+#ifdef CONFIG_SD_CARD
             .com_mode = COM_MODE_SD_CARD,
-#else
-            .com_mode = DEFAULT_COM_MODE,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_BT
+            .com_mode = COM_MODE_BT,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_BLE
+            .com_mode = COM_MODE_BLE,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_TCP_AP
+            .com_mode = COM_MODE_TCP_AP,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_TCP_STA
+            .com_mode = COM_MODE_TCP_STA,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_UDP_STA
+            .com_mode = COM_MODE_UDP_STA,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_SERIAL
+            .com_mode = COM_MODE_SERIAL,
+#endif
+#ifdef CONFIG_DEFAULT_COM_MODE_WS_AP
+            .com_mode = COM_MODE_WS_AP,
 #endif
             .is_battery_threshold_inflated = 0,
             .host_ip = "192.168.1.100",
@@ -166,17 +187,23 @@ void initScientisst(void)
     }
 
     // Initialize acquisition timer
-    timerGrpInit(TIMER_GROUP_USED, TIMER_IDX_USED, &timerGrp0Isr);
+    timerGrpInit(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, &timerGrp0Isr);
 
     // Init internal ADC
-    initAdc(ADC_RESOLUTION, 1, !isComModeWifi());
+    initAdc(1, !IS_COM_TYPE_WIFI(scientisst_device_settings.op_settings.com_mode));
 
-#if _SD_CARD_ == SD_CARD_ENABLED
+#ifdef CONFIG_SD_CARD
     // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
     sdmmc_host_t *sd_card_spi_host = NULL;
     sd_card_spi_host = init_sd_card_spi_bus();
     adcExtInit(sd_card_spi_host);
-    scientisst_device_settings.num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
+
+#ifdef CONFIG_ADC_EXT
+    scientisst_device_settings.num_extern_active_chs = CONFIG_NUMBER_CHANNELS_EXT_ADC;
+#else
+    scientisst_device_settings.num_extern_active_chs = 0;
+#endif
+
     // Init SD card
     ret = initSDCard();
     if (ret != ESP_OK)
@@ -186,15 +213,16 @@ void initScientisst(void)
     }
 #endif
 
-#if _IMU_ == IMU_ENABLED
+#ifdef CONFIG_IMU
     // Init and start in new task the IMU
-    xTaskCreatePinnedToCore((TaskFunction_t)&bno055_task, "imu_task", 4096, NULL, ACQ_ADC1_PRIORITY, &imu_task, 0);
+    xTaskCreatePinnedToCore((TaskFunction_t)&bno055_task, "imu_task", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+                            ACQ_ADC1_PRIORITY, &imu_task, 0);
 #endif
 
     // If it's a Wi-Fi com mode, let's first try to set up the Wi-Fi and (if it's station) try to connect to the
     // access point. If it doesn't work, enter immediately to config mode in order for the user to update SSID
     // and password
-    if (isComModeWifi() && (wifiInit(0) == ESP_FAIL))
+    if (IS_COM_TYPE_WIFI(scientisst_device_settings.op_settings.com_mode) && (wifiInit(0) == ESP_FAIL))
     {
         wifi_init_softap();
         opModeConfig();
@@ -206,21 +234,23 @@ void initScientisst(void)
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
         initBt();
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
-                                ABAT_PRIORITY, &abat_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
-                                &acq_adc1_task, 1);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
+                                NULL, BATTERY_PRIORITY, &battery_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
+                                BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+                                ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_BLE:
         scientisst_buffers.frame_buffer_length_bytes = GATTS_NOTIFY_LEN;
         allocate_frame_buffers();
         initBle();
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
-                                ABAT_PRIORITY, &abat_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
-                                &acq_adc1_task, 1);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
+                                NULL, BATTERY_PRIORITY, &battery_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
+                                BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+                                ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_UDP_STA:
     case COM_MODE_TCP_STA:
@@ -228,27 +258,32 @@ void initScientisst(void)
     case COM_MODE_SERIAL:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
-        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
-                                &acq_adc1_task, 1);
+        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
+                                &rcv_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
+                                BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+                                ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_WS_AP:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
         start_webserver();
-        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", 4096, NULL, WIFI_RCV_PRIORITY, &rcv_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", 4096 * 4, NULL, BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
-                                &acq_adc1_task, 1);
+        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
+                                &rcv_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
+                                BT_SEND_PRIORITY, &send_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+                                ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
-#if _SD_CARD_ == SD_CARD_ENABLED
+#ifdef CONFIG_SD_CARD
     case COM_MODE_SD_CARD:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
         allocate_frame_buffers();
         xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
-                                ABAT_PRIORITY, &abat_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", 4096 * 2, NULL, 24, &acq_adc1_task, 1);
+                                BATTERY_PRIORITY, &battery_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", DEFAULT_TASK_STACK_SIZE_LARGE, NULL, 24,
+                                &acq_adc1_task, 1);
         break;
 #endif
     default:
@@ -276,4 +311,61 @@ _Noreturn void opModeConfig(void)
     {
         vTaskDelay(portMAX_DELAY);
     }
+}
+
+/**
+ * \brief Read the operational settings from NVS
+ *
+ * \param _op_settings pointer to the operational settings structure
+ *
+ * \return:
+ *     - 0 if successful
+ *     - -1 if unsuccessful
+ */
+int getOpSettingsInfo(op_settings_info_t *_op_settings)
+{
+    nvs_handle handle;
+    size_t size;
+    esp_err_t err;
+    op_settings_info_t pOpSettingsInfo;
+
+    err = nvs_open(SCI_BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle);
+    if (err != 0)
+    {
+        DEBUG_PRINT_E("getOpSettingsInfo", "ERROR: opening NVS");
+        return -1;
+    }
+
+    size = sizeof(op_settings_info_t);
+    err = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
+    if (err != ESP_OK)
+    {
+        DEBUG_PRINT_E("getOpSettingsInfo", "No op settings record found!");
+        nvs_close(handle);
+        return -1;
+    }
+
+    // cleanup
+    nvs_close(handle);
+
+    *_op_settings = pOpSettingsInfo;
+    return 0;
+}
+
+/**
+ * \brief Save the operational settings to NVS
+ *
+ * \param pOpSettingsInfo pointer to the operational settings structure
+ *
+ * \return:
+ *     - 0 if successful
+ *     - -1 if unsuccessful
+ */
+void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo)
+{
+    nvs_handle handle;
+    ESP_ERROR_CHECK(nvs_open(SCI_BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle));
+    ESP_ERROR_CHECK(nvs_set_blob(handle, KEY_SETTINGS_INFO, pOpSettingsInfo, sizeof(op_settings_info_t)));
+    ESP_ERROR_CHECK(nvs_commit(handle));
+    nvs_close(handle);
 }

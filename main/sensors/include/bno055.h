@@ -39,8 +39,7 @@
 /*! \file bno055.h
  * \brief BNO055 Sensor Driver Support Header File */
 
-#ifndef __BNO055_H__
-#define __BNO055_H__
+#pragma once
 
 /****************************************************************/
 /**\name    DATA TYPES INCLUDES     */
@@ -285,13 +284,11 @@ typedef unsigned long int u64;  /**< used for unsigned 64bit */
 /***************************************************************/
 #define BNO055_WR_FUNC_PTR s8 (*bus_write)(u8, u8, u8 *, u8)
 
-#define BNO055_BUS_WRITE_FUNC(dev_addr, reg_addr, reg_data, wr_len)                                          \
-    bus_write(dev_addr, reg_addr, reg_data, wr_len)
+#define BNO055_BUS_WRITE_FUNC(dev_addr, reg_addr, reg_data, wr_len) bus_write(dev_addr, reg_addr, reg_data, wr_len)
 
 #define BNO055_RD_FUNC_PTR s8 (*bus_read)(u8, u8, u8 *, u8)
 
-#define BNO055_BUS_READ_FUNC(dev_addr, reg_addr, reg_data, r_len)                                            \
-    bus_read(dev_addr, reg_addr, reg_data, r_len)
+#define BNO055_BUS_READ_FUNC(dev_addr, reg_addr, reg_data, r_len) bus_read(dev_addr, reg_addr, reg_data, r_len)
 
 #define BNO055_DELAY_RETURN_TYPE void
 
@@ -2166,8 +2163,7 @@ struct bno055_sic_matrix_t
 /*************************************************/
 #define BNO055_GET_BITSLICE(regvar, bitname) ((regvar & bitname##_MSK) >> bitname##_POS)
 
-#define BNO055_SET_BITSLICE(regvar, bitname, val)                                                            \
-    ((regvar & ~bitname##_MSK) | ((val << bitname##_POS) & bitname##_MSK))
+#define BNO055_SET_BITSLICE(regvar, bitname, val) ((regvar & ~bitname##_MSK) | ((val << bitname##_POS) & bitname##_MSK))
 
 /*************************************************/
 /**\name FUNCTION DECLARATION    */
@@ -3433,8 +3429,7 @@ BNO055_RETURN_FUNCTION_TYPE bno055_convert_float_linear_accel_z_msq(float *linea
  *
  *
  */
-BNO055_RETURN_FUNCTION_TYPE bno055_convert_float_linear_accel_xyz_msq(
-    struct bno055_linear_accel_float_t *linear_accel_xyz);
+BNO055_RETURN_FUNCTION_TYPE bno055_convert_float_linear_accel_xyz_msq(struct bno055_linear_accel_float_t *linear_accel_xyz);
 
 /********************************************************************/
 /**\name FUNCTIONS FOR READING GRAVITY DATA OUTPUT AS FLOAT PRECISION */
@@ -4154,8 +4149,7 @@ BNO055_RETURN_FUNCTION_TYPE bno055_convert_gravity_double_z_msq(double *gravity_
  *  @retval 1 -> BNO055_ERROR
  *
  */
-BNO055_RETURN_FUNCTION_TYPE bno055_convert_double_gravity_xyz_msq(
-    struct bno055_gravity_double_t *gravity_xyz);
+BNO055_RETURN_FUNCTION_TYPE bno055_convert_double_gravity_xyz_msq(struct bno055_gravity_double_t *gravity_xyz);
 
 /**************************************************************************/
 /**\name FUNCTIONS FOR READING TEMPERATURE DATA OUTPUT AS DOUBLE PRECISION*/
@@ -8102,5 +8096,3 @@ BNO055_RETURN_FUNCTION_TYPE bno055_get_gyro_any_motion_awake_durn(u8 *gyro_awake
  *
  */
 BNO055_RETURN_FUNCTION_TYPE bno055_set_gyro_any_motion_awake_durn(u8 gyro_awake_durn_u8);
-
-#endif

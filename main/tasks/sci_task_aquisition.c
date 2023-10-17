@@ -1,5 +1,7 @@
 #include "include/sci_task_aquisition.h"
 
+#include <string.h>
+
 #include "esp_attr.h"
 #include "sdkconfig.h"
 
@@ -105,7 +107,7 @@ static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_
     *io_state |= (scientisst_device_settings.gpio_out_state[0] & 0b1) << 5;
     *io_state |= (scientisst_device_settings.gpio_out_state[1] & 0b1) << 4;
 
-#if _IMU_ == IMU_ENABLED
+#ifdef CONFIG_IMU
     // Store values of IMU data into frame
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
@@ -120,7 +122,7 @@ static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_
     }
 #endif
 
-#if _ADC_EXT_ == EXT_ADC_ENABLED
+#ifdef CONFIG_ADC_EXT
     if (scientisst_device_settings.num_extern_active_chs > 0)
     {
         // Get raw values from AX1 & AX2

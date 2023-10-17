@@ -2,11 +2,10 @@
 // Created by kiko on 10/10/23.
 //
 
-#ifndef SCIENTISST_SENSE_SCI_TASK_COM_RX_H
-#define SCIENTISST_SENSE_SCI_TASK_COM_RX_H
+#pragma once
 
 #include <sys/cdefs.h>
 
-_Noreturn void rcvTask(const void *not_used);
+#include "sci_scientisst.h"
 
-#endif // SCIENTISST_SENSE_SCI_TASK_COM_RX_H
+_Noreturn void rcvTask(const void *not_used);

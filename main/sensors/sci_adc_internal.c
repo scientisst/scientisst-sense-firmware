@@ -8,23 +8,15 @@
 
 #include <stdio.h>
 
-#include "cJSON.h"
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
 #include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
 
-#include "sci_adc_external.h"
-#include "sci_com.h"
-#include "sci_config.h"
-#include "sci_gpio.h"
-#include "sci_macros.h"
-#include "sci_macros_conf.h"
-#include "sci_scientisst.h"
-#include "sci_task_imu.h"
-
+#define ADC_RESOLUTION ADC_WIDTH_BIT_12
+#define ADC1_ATTENUATION ADC_ATTEN_DB_0
+#define ADC2_ATTENUATION ADC_ATTEN_DB_11
 #define DEFAULT_VREF 1100
-#define ABAT_DIVIDER_FACTOR 2
+#define BATTERY_DIVIDER_FACTOR 2
 
 // ADC
 DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
@@ -52,7 +44,7 @@ uint16_t IRAM_ATTR get_adc_internal_value(adc_internal_id_t adc_index, uint8_t a
     if (convert_to_mV_flag)
     {
         value = (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
-                ABAT_DIVIDER_FACTOR;
+                BATTERY_DIVIDER_FACTOR;
     }
 
     return value;
@@ -65,7 +57,7 @@ uint16_t IRAM_ATTR get_adc_internal_value(adc_internal_id_t adc_index, uint8_t a
  * \param adc_resolution resolution of the adc
  * \param adc_channel channel to be configured
  */
-void configAdc(int adc_index, int adc_resolution, int adc_channel)
+void configAdc(adc_internal_id_t adc_index, int adc_channel)
 {
     int dummy;
     esp_err_t ret;
@@ -93,7 +85,7 @@ void configAdc(int adc_index, int adc_resolution, int adc_channel)
  * \param adc1_en enable adc1
  * \param adc2_en enable adc2
  */
-void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
+void initAdc(uint8_t adc1_en, uint8_t adc2_en)
 {
     esp_adc_cal_value_t val_type;
 
@@ -126,7 +118,7 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
         // Configure each adc channel
         for (int i = 0; i < DEFAULT_ADC_CHANNELS; ++i)
         {
-            configAdc(1, adc_resolution, analog_channels[i]);
+            configAdc(ADC_INTERNAL_1, analog_channels[i]);
         }
 
         // Characterize ADC
@@ -151,7 +143,7 @@ void initAdc(uint8_t adc_resolution, uint8_t adc1_en, uint8_t adc2_en)
     if (adc2_en)
     {
         // Config ADC2 resolution
-        configAdc(2, adc_resolution, ABAT_ADC_CH);
+        configAdc(ADC_INTERNAL_2, BATTERY_ADC_CH);
 
         val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF,
                                             &(scientisst_device_settings.adc_chars[1]));

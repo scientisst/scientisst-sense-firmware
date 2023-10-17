@@ -4,12 +4,9 @@
     //TODO: add details aboout implementation
 */
 
-#ifndef VERSION_H
-#define VERSION_H
+#pragma once
 
 #define FIRMWARE_BITALINO_VERSION "BITalino_v5.1\n"
 
 #define VERSION_CAN_INCREMENT_FLAG 0
-#define FIRMWARE_VERSION "4.0.0-8e0006d"
-
-#endif
+#define FIRMWARE_VERSION "4.0.0-9562c64"

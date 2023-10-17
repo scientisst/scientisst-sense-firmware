@@ -6,20 +6,40 @@
 
 #include "sci_adc_external.h"
 
-#include <math.h>
+#include <string.h>
 
 #include "driver/gpio.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "sci_adc_internal.h"
-#include "sci_com.h"
-#include "sci_config.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
+
+#define MCP_ADDR 0b01
+
+// Commands
+#define RREG 0b01
+#define WREG 0b10
+#define RESET 0b111000
+#define START 0b101000
+#define FSHUTDOWN 0b110100 // Full Shutdown; the internal config registers keep the values
+
+// Register Addresses
+#define REG_ADCDATA 0x00   // R
+#define REG_CONFIG0 0x01   // R/W
+#define REG_CONFIG1 0x02   // R/W
+#define REG_CONFIG2 0x03   // R/W
+#define REG_CONFIG3 0x04   // R/W
+#define REG_IRQ 0x05       // R/W
+#define REG_MUX 0x06       // R/W
+#define REG_SCAN 0x07      // R/W
+#define REG_TIMER 0x08     // R/W
+#define REG_OFFSETCAL 0x09 // R/W
+#define REG_GAINCAL 0x0A   // R/W
+#define REG_LOCK 0x0D      // R/W
+#define REG_CRCCFG 0X0F    // R
 
 // Refer to MCP3564 Datasheet for configuration options
 #define VALUE_CONFIG0 (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b00)
@@ -32,6 +52,8 @@
 #define VALUE_TIMER 0
 #define VALUE_OFFSETCAL 0
 #define VALUE_GAINCAL (0x800000)
+
+#define SPI_MODE 0 // 0 or 3, MCP Only supports these two modes
 
 spi_bus_config_t buscfg = {
     .miso_io_num = SPI3_MISO_IO,
@@ -325,7 +347,7 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
  */
 void mcpSetupRoutine(uint8_t channel_mask)
 {
-#if _SD_CARD_ == SD_CARD_DISABLED
+#ifdef CONFIG_SD_CARD
     adcExtInit(NULL);
 #endif
     mcpSendCmd(RESET);

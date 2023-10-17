@@ -1,6 +1,8 @@
 #include "include/sci_task_acquisition_sdcard.h"
 
+#include <string.h>
 #include <sys/cdefs.h>
+#include <unistd.h>
 
 #include "esp_attr.h"
 
@@ -70,7 +72,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
         buffer_ptr += 2;
     }
 
-#if _ADC_EXT_ == EXT_ADC_ENABLED
+#ifdef CONFIG_ADC_EXT
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     esp_err_t res = ESP_OK;
     uint8_t channel_mask = 0;
@@ -87,7 +89,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     *(uint64_t *)buffer_ptr = esp_timer_get_time();
     buffer_ptr += 8;
 
-#if _ADC_EXT_ == EXT_ADC_ENABLED
+#ifdef CONFIG_ADC_EXT
     if ((crc_seq & 127) == 0)
     {
         write(fileno(scientisst_buffers.sd_card_save_file), scientisst_buffers.frame_buffer[0],
@@ -176,7 +178,8 @@ void startAcquisitionSDCard(void)
         active_channels_sd = 0b00111111;
         scientisst_device_settings.sample_rate = 1000;
         // If external ADC is not used, start the secondary task that writes the data to the SD card
-        xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", 4096 * 4, NULL, 20, &file_sync_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL, 20,
+                                &file_sync_task, 0);
         break;
     }
 
@@ -228,14 +231,14 @@ void startAcquisitionSDCard(void)
     write_file_header();
 
     // Init timer for adc task top start
-    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, scientisst_device_settings.sample_rate);
+    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate);
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
 
     // Set live mode duty cycle for state led
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#if _HW_VERSION_ != HW_VERSION_CARDIO
+#ifndef CONFIG_HARDWARE_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);

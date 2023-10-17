@@ -29,9 +29,14 @@ DRAM_ATTR static struct bno055_t BNO_handle = {.dev_addr = BNO055_I2C_ADDR1,
                                                .bus_read = &bno055_I2C_bus_read,
                                                .delay_msec = &bno055_delay_msek};
 DRAM_ATTR uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
+#ifdef CONFIG_EULER_ANGLES_AND_LINEAR_ACCELERATION
 DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {EULER_ANGLES, LINEAR_ACCELERATION};
+#endif
+#ifdef CONFIG_ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCITY, LINEAR_ACCELERATION};
+#endif
 
-_Noreturn void IRAM_ATTR task_bno055(void *not_used)
+_Noreturn void IRAM_ATTR task_bno055(void)
 {
     struct bno055_euler_t euler_hrp;
     struct bno055_gyro_t gyro_xyz;
@@ -116,7 +121,7 @@ esp_err_t init_IMU(void)
     DEBUG_PRINT_W("IMU_TASK", "Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status, mag_calib_status,
                   sys_calib_status);
 
-#if _IMU_CALIBRATION_ == LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
+#ifdef CONFIG_LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
     while (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)
     {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -127,7 +132,8 @@ esp_err_t init_IMU(void)
         DEBUG_PRINT_W("IMU_TASK", "IMU not ready. Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
                       mag_calib_status, sys_calib_status);
     }
-#elif _IMU_CALIBRATION_ == ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+#endif
+#ifdef CONFIG_ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
     if (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)
     {
         DEBUG_PRINT_W("IMU_TASK", "IMU not fully calibrated, using it anyway according to config");

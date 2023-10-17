@@ -4,14 +4,15 @@
     This file implements the SD card driver.
 */
 
-#ifndef SCIENTISST_SENSE_FIRMWARE_SD_CARD_H
-#define SCIENTISST_SENSE_FIRMWARE_SD_CARD_H
+#pragma once
 
 #include <stdio.h>
 
 #include "driver/sdmmc_types.h"
 #include "esp_attr.h"
 #include "esp_err.h"
+
+#include "sci_scientisst.h"
 
 #define PIN_NUM_MISO GPIO_NUM_19
 #define PIN_NUM_MOSI GPIO_NUM_23
@@ -21,5 +22,3 @@
 sdmmc_host_t *init_sd_card_spi_bus(void);
 esp_err_t initSDCard(void);
 void write_file_header(void);
-
-#endif // SCIENTISST_SENSE_FIRMWARE_SD_CARD_H

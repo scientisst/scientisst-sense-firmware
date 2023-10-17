@@ -29,7 +29,6 @@
 #include "sci_bt.h"
 #include "sci_com.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
 #define GATTS_SERVICE_UUID_TEST_A 0x00FF
@@ -420,7 +419,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         break;
     }
     case ESP_GATTS_WRITE_EVT:
-#if (_DEBUG_ == 1 || _DEBUG_ == 2)
+#if (SCI_DEBUG_LEVEL == 1 || SCI_DEBUG_LEVEL == 2)
         printf("BT data recieved\n length:%d  data:", param->write.len);
         for (int i = 0; i < param->write.len; i++)
         {

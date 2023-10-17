@@ -3,30 +3,13 @@
    the received data.
 */
 
-#ifndef _COM_H
-#define _COM_H
+#pragma once
 
 #include <stdio.h>
 
 #include "sdkconfig.h"
 
-#define DEFAULT_ADC_CHANNELS 6        // Default number of active adc channels
-#define EXT_ADC_CHANNELS 2            // Num of external adc channels
-#define NUM_UNUSED_BITS_FOR_CH_MASK 2 // It's the number explained below
-
-#define STATUS_PACKET_SIZE 16
-
-#define API_MODE_BITALINO 1
-#define API_MODE_SCIENTISST 2
-#define API_MODE_JSON 3
-
-#define OP_MODE_IDLE 0
-#define OP_MODE_LIVE 1
-#define OP_MODE_CONFIG 2
-
-#define CMD_MAX_BYTES 4
-#define NUM_BUFFERS 50
-#define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) // If changed, change in API
+#include "sci_scientisst.h"
 
 extern int send_fd;
 
@@ -42,5 +25,3 @@ void triggerGpio(uint8_t *buff);
 void triggerDAC(uint8_t *buff);
 void startAcquisition(uint8_t *buff, uint8_t cmd);
 uint8_t getPacketSize(void);
-
-#endif

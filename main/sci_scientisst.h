@@ -2,45 +2,39 @@
     \brief Main header file for the Scientisst firmware.
 */
 
-#ifndef SCIENTISST_H
-#define SCIENTISST_H
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#pragma once
 
 #include "cJSON.h"
-#include "driver/spi_master.h"
-#include "driver/timer.h"
-#include "drivers/include/sci_wifi.h"
 #include "esp_adc_cal.h"
-#include "esp_bt_device.h"
-#include "esp_bt_main.h"
-#include "esp_gap_bt_api.h"
-#include "esp_log.h"
-#include "esp_netif.h"
-#include "esp_spp_api.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include "freertos/task.h"
-#include "nvs.h"
-#include "nvs_flash.h"
-#include "sdmmc_cmd.h"
-#include "sys/time.h"
-#include "time.h"
+#include "sdkconfig.h"
 
-#include "sci_com.h"
+#include "sci_macros.h"
 #include "sci_version.h"
-
-#define MAX_BUFFER_SIZE_SDCARD (1024 * 7)
-#define NUM_BUFFERS_SDCARD (16)
 
 typedef struct
 {
     uint8_t api_mode;
     void (*select_ch_mask_func)();
 } api_config_t;
+
+typedef struct
+{
+    char ssid[32];
+    char password[64];
+    com_mode_t com_mode;
+    char host_ip[16];
+    char port_number[6];
+    char bit_when[9];
+    char sampling_rate[5];
+    char no_channels[2];
+    char channels[23];
+    char bit_mode[10];
+    char port_o1[5];
+    char port_o2[5];
+    uint8_t is_battery_threshold_inflated;
+} op_settings_info_t;
 
 typedef struct
 {
@@ -81,7 +75,7 @@ typedef struct
  * GLOBAL VARIABLES
  ********************************************************/
 extern TaskHandle_t send_task;
-extern TaskHandle_t abat_task;
+extern TaskHandle_t battery_task;
 extern TaskHandle_t rcv_task;
 extern TaskHandle_t acq_adc1_task;
 
@@ -89,5 +83,5 @@ extern scientisst_device_t scientisst_device_settings;
 extern scientisst_buffers_t scientisst_buffers;
 
 void initScientisst(void);
-
-#endif
+int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
+void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);

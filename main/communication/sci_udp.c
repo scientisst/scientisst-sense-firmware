@@ -13,7 +13,6 @@
 
 #include "sci_bt.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
 struct addrinfo *udp_server_addr;

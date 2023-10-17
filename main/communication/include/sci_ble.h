@@ -5,15 +5,12 @@
    also contains the maximum length of the buffer in BLE mode.
 */
 
-#ifndef BLE_H
-#define BLE_H
+#pragma once
 
 #include "esp_attr.h"
 #include "esp_err.h"
 
-#define GATTS_NOTIFY_LEN 517 //< Maximum length of the buffer to send in BLE mode
+#include "sci_scientisst.h"
 
 void initBle(void);
 esp_err_t sendBle(uint32_t fd, int len, uint8_t *buff);
-
-#endif

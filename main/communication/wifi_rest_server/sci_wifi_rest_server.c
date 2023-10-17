@@ -34,7 +34,6 @@
 
 #include "sci_bt.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 
 #define WEB_MOUNT_POINT "/www" // Specify the mount point in VFS.

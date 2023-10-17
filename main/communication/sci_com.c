@@ -8,6 +8,8 @@
 
 #include "sci_com.h"
 
+#include <string.h>
+
 #include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -15,17 +17,18 @@
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_bt.h"
-#include "sci_config.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 #include "sci_sd_card.h"
 #include "sci_task_aquisition.h"
 #include "sci_timer.h"
 
-// COM
-int send_fd = 0;
+#define NUM_UNUSED_BITS_FOR_CH_MASK 2
+#define STATUS_PACKET_SIZE 16
+
+int send_fd = 0; ///< File descriptor to send data to client, only part of comunication so it is the only global variable not
+                 ///< declared in sci_scintisst.h
 
 /**
  * \brief Processes the command received from the client
@@ -176,7 +179,7 @@ uint8_t getPacketSize(void)
     if (scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO)
     {
         // Table that has the packet size in function of the number of channels
-        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, MAX_LIVE_MODE_PACKET_SIZE};
+        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
 
         _packet_size = packet_size_num_chs[scientisst_device_settings.num_intern_active_chs];
     }
@@ -386,7 +389,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
     }
 
     // Start external
-#if _ADC_EXT_ == EXT_ADC_ENABLED
+#ifdef CONFIG_ADC_EXT
     if (scientisst_device_settings.num_extern_active_chs)
     {
         uint8_t channel_mask = 0;
@@ -400,7 +403,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
 #endif
 
     // Init timer for adc task top start
-    timerStart(TIMER_GROUP_USED, TIMER_IDX_USED, scientisst_device_settings.sample_rate);
+    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate);
 
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
@@ -408,7 +411,7 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
     // Set live mode duty cycle for state led
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#if _HW_VERSION_ != HW_VERSION_CARDIO
+#ifndef CONFIG_HARDWARE_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
@@ -427,13 +430,13 @@ void startAcquisition(uint8_t *buff, uint8_t cmd)
  */
 void stopAcquisition(void)
 {
-    timerPause(TIMER_GROUP_USED, TIMER_IDX_USED);
+    timerPause(TIMER_GROUP_MAIN, TIMER_IDX_MAIN);
 
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
 
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#if _HW_VERSION_ != HW_VERSION_CARDIO
+#ifndef CONFIG_HARDWARE_VERSION_CARDIO
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
     ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
     ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
@@ -441,7 +444,7 @@ void stopAcquisition(void)
 #endif
 
     // Stop external
-#if _ADC_EXT_ != EXT_ADC_DISABLED
+#ifdef CONFIG_ADC_EXT
     if (scientisst_device_settings.num_extern_active_chs)
     {
         adcExtStop();

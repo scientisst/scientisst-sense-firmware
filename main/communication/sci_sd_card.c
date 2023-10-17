@@ -20,10 +20,8 @@
 #include "sci_adc_internal.h"
 #include "sci_bt.h"
 #include "sci_com.h"
-#include "sci_config.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_macros_conf.h"
 #include "sci_scientisst.h"
 #include "sci_timer.h"
 
@@ -32,7 +30,7 @@
 sdmmc_host_t sd_spi_host = {
     .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
     .slot = SDSPI_DEFAULT_HOST,
-#if _ADC_EXT_ == EXT_ADC_ENABLED
+#ifdef CONFIG_ADC_EXT
     .max_freq_khz = ADC_EXT_SLCK_HZ_2_EXT_CH,
 #else
     .max_freq_khz = SDMMC_FREQ_DEFAULT,
@@ -51,7 +49,11 @@ sdmmc_host_t sd_spi_host = {
 };
 
 esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-    .format_if_mount_failed = _FORMAT_SDCARD_IF_MOUNT_FAILED_,
+#ifdef CONFIG_FORMAT_SDCARD_IF_MOUNT_FAILED
+    .format_if_mount_failed = true,
+#else
+    .format_if_mount_failed = false,
+#endif
     .max_files = 1,
     .allocation_unit_size = 16 * 1024,
 }; ///< SD card mount config
@@ -101,7 +103,7 @@ esp_err_t initSDCard(void)
         {
             DEBUG_PRINT_E("initSDCard", "Failed to mount filesystem. "
                                         "If you want the card to be formatted, set the "
-                                        "_FORMAT_SDCARD_IF_MOUNT_FAILED_  option accordingly.");
+                                        "FORMAT_SDCARD_IF_MOUNT_FAILED  option accordingly.");
         }
         else
         {

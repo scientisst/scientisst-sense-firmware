@@ -3,8 +3,8 @@
 
     //TODO: Add more details
 */
-#ifndef _GPIO_H
-#define _GPIO_H
+
+#pragma once
 
 #include <stdio.h>
 
@@ -12,18 +12,19 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 
-#include "sci_config.h"
-#include "sci_macros_conf.h"
+#include "sci_scientisst.h"
 
-#if _HW_VERSION_ == HW_VERSION_CORE
+#ifdef CONFIG_HARDWARE_VERSION_CORE
 #define STATE_LED_R_IO GPIO_NUM_22
 #define STATE_LED_B_IO GPIO_NUM_13
 #define STATE_LED_G_IO GPIO_NUM_17
-#elif _HW_VERSION_ == HW_VERSION_NANO
+#endif
+#ifdef CONFIG_HARDWARE_VERSION_NANO
 #define STATE_LED_R_IO GPIO_NUM_13
 #define STATE_LED_B_IO GPIO_NUM_22
 #define STATE_LED_G_IO GPIO_NUM_10
-#elif _HW_VERSION_ == HW_VERSION_CARDIO
+#endif
+#ifdef CONFIG_HARDWARE_VERSION_CARDIO
 #define STATE_LED_R_IO GPIO_NUM_22
 #define STATE_LED_B_IO GPIO_NUM_13
 #define STATE_LED_G_IO GPIO_NUM_17
@@ -41,11 +42,13 @@
 #define SPI3_SCLK_IO GPIO_NUM_18
 #define SPI3_CS0_IO GPIO_NUM_5
 #define SPI3_CS1_IO GPIO_NUM_4
-#if _HW_VERSION_ == HW_VERSION_CORE
+#ifdef CONFIG_HARDWARE_VERSION_CORE
 #define MCP_DRDY_IO GPIO_NUM_16
-#elif _HW_VERSION_ == HW_VERSION_CARDIO
+#endif
+#ifdef CONFIG_HARDWARE_VERSION_CARDIO
 #define MCP_DRDY_IO GPIO_NUM_16
-#elif _HW_VERSION_ == HW_VERSION_NANO
+#endif
+#ifdef CONFIG_HARDWARE_VERSION_NANO
 #define MCP_DRDY_IO GPIO_NUM_9
 #endif
 
@@ -72,5 +75,3 @@ void configLedC(void);
 // ADC EXT
 void gpioDrdyIsrHandler(void *not_used);
 void adcExtDrdyGpio(int io_num);
-
-#endif

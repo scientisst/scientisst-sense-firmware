@@ -1,9 +1,9 @@
 /** \file uart.h
     \brief Header file for uart.c
 */
-#ifndef _UART_H
-#define _UART_H
+
+#pragma once
+
+#include "sci_scientisst.h"
 
 int serialInit(void);
-
-#endif
