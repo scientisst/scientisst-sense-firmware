@@ -1,0 +1,140 @@
+
+menu "SCIENTISST Configuration"
+
+# General Configuration
+menu "General Configuration"
+
+choice
+    prompt "Hardware version"
+    default HARDWARE_VERSION_CORE
+
+config HARDWARE_VERSION_CORE
+    bool "Core version (default)"
+    
+config HARDWARE_VERSION_NANO
+    bool "Nano version"
+
+config HARDWARE_VERSION_CARDIO
+    bool "Cardio version"
+
+endchoice
+
+choice
+    prompt "Default communication mode"
+    default DEFAULT_COM_MODE_BT
+
+config DEFAULT_COM_MODE_BT
+    bool "Bluetooth (default)"
+    
+config DEFAULT_COM_MODE_BLE
+    bool "Bluetooth Low Energy"
+    
+config DEFAULT_COM_MODE_TCP_AP
+    bool "TCP Access Point"
+    
+config DEFAULT_COM_MODE_TCP_STA
+    bool "TCP Station"
+    
+config DEFAULT_COM_MODE_UDP_STA
+    bool "UDP Station"
+    
+config DEFAULT_COM_MODE_SERIAL
+    bool "USB"
+    
+config DEFAULT_COM_MODE_WS_AP
+    bool "WebSocket Access Point"
+
+endchoice
+
+config ADC_EXT
+    bool "Enable external ADC"
+    default n
+
+endmenu  # General Configuration
+
+# SD Card Configuration
+menu "SD Card Configuration"
+
+config SD_CARD
+    bool "Enable SD Card"
+    default n
+
+config FORMAT_SDCARD_IF_MOUNT_FAILED
+    bool "Format SD Card if mount failed"
+    default n
+
+config NUMBER_CHANNELS_EXT_ADC
+    int "Enter number of channels of external adc"
+    default 0
+    range 0 2
+    help
+      This option should only be diferent from 0 if an ext adc is present and working on the board.
+
+endmenu  # SD Card Configuration
+
+
+menu "IMU Configuration"
+
+# IMU enable/disable setting
+config IMU
+    bool "Enable IMU"
+    default n
+    help
+        Enable or disable the IMU (Inertial Measurement Unit).
+        If unsure, select 'n' to disable it.
+
+# IMU Data Acquisition Mode
+choice IMU_DATA_ACQUISITION
+    prompt "IMU Data Acquisition Mode"
+    default EULER_ANGLES_AND_LINEAR_ACCELERATION
+
+config EULER_ANGLES_AND_LINEAR_ACCELERATION
+    bool "Euler angles and linear acceleration"
+    help
+        Select this mode to acquire Euler angles and linear acceleration data from the IMU.
+
+config ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+    bool "Angular velocity and linear acceleration"
+    help
+        Select this mode to acquire angular velocity and linear acceleration data from the IMU.
+
+endchoice
+
+# IMU Calibration Behavior
+choice IMU_CALIBRATION
+    prompt "IMU Calibration Behavior"
+    default ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+
+config LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
+    bool "Lock IMU acquisition until calibrated"
+    help
+        Select this option to lock IMU data acquisition until the device is calibrated.
+
+config ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+    bool "Allow IMU acquisition while calibrating"
+    help
+        Select this option to allow IMU data acquisition even when the device is in the process of calibrating.
+
+endchoice
+
+endmenu  # IMU Configuration
+
+choice "Debug level"
+    prompt "Debug level/verbosity"
+    default SCI_DEBUG_WARNINGS_AND_ERRORS
+
+config SCI_DEBUG_NO_DEBUGGING
+    bool "0 - Nothing"
+
+config SCI_DEBUG_ERRORS
+    bool "1 - Print Errors"
+
+config SCI_DEBUG_WARNINGS_AND_ERRORS
+    bool "2 - Print Warnings and Errors (default)"
+
+config SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
+    bool "3 - Print Info, Warnings and Errors"
+
+endchoice
+
+endmenu  # SCI Configuration
