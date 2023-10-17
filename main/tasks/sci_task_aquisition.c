@@ -136,7 +136,7 @@ static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_
         ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
-    if (num_extern_active_chs == 2)
+    if (scientisst_device_settings.num_extern_active_chs == 2)
     {
         // Timestamp uses the frame space of external adc channels. It has to be trimmed down from 64 to
         // 48 bits. TODO: Verify the precision when lsr to get the 48 MSB of the timestamp

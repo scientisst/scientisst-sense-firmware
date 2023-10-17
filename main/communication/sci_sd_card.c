@@ -69,7 +69,7 @@ sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
 sdmmc_card_t *card;                   ///< SD card handle
 const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
 
-esp_err_t createFile(uint8_t num_active_channels_external_adc, FILE **save_file);
+esp_err_t createFile(void);
 
 sdmmc_host_t *init_sd_card_spi_bus(void)
 {
@@ -86,7 +86,7 @@ sdmmc_host_t *init_sd_card_spi_bus(void)
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t initSDCard(uint8_t num_active_channels_ext_adc, FILE **save_file)
+esp_err_t initSDCard(void)
 {
     esp_err_t ret = ESP_OK;
 
@@ -95,7 +95,6 @@ esp_err_t initSDCard(uint8_t num_active_channels_ext_adc, FILE **save_file)
     slot_config.host_id = sd_spi_host.slot; // Set the SPI host
 
     ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config, &mount_config, &card);
-    DEBUG_PRINT_E("initSDCard", "SD CARD MOUNT ERR: %s", esp_err_to_name(ret));
     if (ret != ESP_OK)
     {
         if (ret == ESP_FAIL)
@@ -114,7 +113,7 @@ esp_err_t initSDCard(uint8_t num_active_channels_ext_adc, FILE **save_file)
         return ESP_FAIL;
     }
 
-    ret = createFile(num_active_channels_ext_adc, save_file);
+    ret = createFile();
     if (ret != ESP_OK)
     {
         DEBUG_PRINT_E("initSDCard", "Failed to create file.");
@@ -124,33 +123,33 @@ esp_err_t initSDCard(uint8_t num_active_channels_ext_adc, FILE **save_file)
     return ESP_OK;
 }
 
-void write_file_header(uint8_t num_active_channels_external_adc, FILE **save_file)
+void write_file_header(void)
 {
     uint8_t file_header[25] = {0};
 
-    file_header[0] = 0x01;                             // File version
-    file_header[1] = 0x02;                             // # of Bytes of SeqNum
-    file_header[2] = 0x01;                             // Is seq num fused with DIO? (4 bits for DIO, 12 bits for seq num)
-    file_header[3] = 0x02;                             // # of digital inputs
-    file_header[4] = 0x00;                             // # of Bytes for each digital input
-    file_header[5] = 0x02;                             // # of digital outputs
-    file_header[6] = 0x00;                             // # of Bytes for each digital output
-    file_header[7] = 0x06;                             // # of internal ADC channels
-    file_header[8] = 0x02;                             // # of Bytes for each internal ADC channel
-    file_header[9] = num_active_channels_external_adc; // # of external ADC channels
-    file_header[10] = 0x03;                            // # of Bytes for each external ADC channel
-    file_header[11] = 0x01;                            // Internal ADC data type ID
-    file_header[12] = 0x01;                            // External ADC data type ID
-    file_header[13] = 0x01;                            // Timestamp enable?
-    file_header[14] = 0x08;                            // # of Bytes for timestamp
+    file_header[0] = 0x01; // File version
+    file_header[1] = 0x02; // # of Bytes of SeqNum
+    file_header[2] = 0x01; // Is seq num fused with DIO? (4 bits for DIO, 12 bits for seq num)
+    file_header[3] = 0x02; // # of digital inputs
+    file_header[4] = 0x00; // # of Bytes for each digital input
+    file_header[5] = 0x02; // # of digital outputs
+    file_header[6] = 0x00; // # of Bytes for each digital output
+    file_header[7] = 0x06; // # of internal ADC channels
+    file_header[8] = 0x02; // # of Bytes for each internal ADC channel
+    file_header[9] = scientisst_device_settings.num_extern_active_chs; // # of external ADC channels
+    file_header[10] = 0x03;                                            // # of Bytes for each external ADC channel
+    file_header[11] = 0x01;                                            // Internal ADC data type ID
+    file_header[12] = 0x01;                                            // External ADC data type ID
+    file_header[13] = 0x01;                                            // Timestamp enable?
+    file_header[14] = 0x08;                                            // # of Bytes for timestamp
     *(uint16_t *)&file_header[15] = (uint16_t)scientisst_device_settings.sample_rate;        // Sample rate
     *(int *)&file_header[17] = scientisst_device_settings.adc_chars[ADC_INTERNAL_1].coeff_a; // ADC1 coeff_a
     *(int *)&file_header[21] = scientisst_device_settings.adc_chars[ADC_INTERNAL_1].coeff_b; // ADC1 coeff_b
 
     // Write the file header
-    fwrite(file_header, sizeof(uint8_t), 25, *save_file);
-    fflush(*save_file);
-    fsync(fileno(*save_file));
+    fwrite(file_header, sizeof(uint8_t), 25, scientisst_buffers.sd_card_save_file);
+    fflush(scientisst_buffers.sd_card_save_file);
+    fsync(fileno(scientisst_buffers.sd_card_save_file));
 }
 
 /**
@@ -163,7 +162,7 @@ void write_file_header(uint8_t num_active_channels_external_adc, FILE **save_fil
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t createFile(uint8_t num_active_channels_external_adc, FILE **save_file)
+esp_err_t createFile(void)
 {
     char full_file_name[100];
     char int_str[15];
@@ -180,12 +179,12 @@ esp_err_t createFile(uint8_t num_active_channels_external_adc, FILE **save_file)
         strcat(full_file_name, ".bin");
         if (stat(full_file_name, &st) != 0) // If the file does not exist
         {
-            *save_file = fopen(full_file_name, "wb"); // Create new file
+            scientisst_buffers.sd_card_save_file = fopen(full_file_name, "wb"); // Create new file
             break;
         }
     }
 
-    if (*save_file == NULL)
+    if (scientisst_buffers.sd_card_save_file == NULL)
     {
         DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
         return ESP_FAIL;
@@ -193,17 +192,14 @@ esp_err_t createFile(uint8_t num_active_channels_external_adc, FILE **save_file)
 
     // When using the external ADC and because it uses the same SPI lines as the SDCard, the data has to be
     // written directly to the SD card for concurrency reasons. So we need to disable buffering
-    if (num_active_channels_external_adc)
+    if (scientisst_device_settings.num_extern_active_chs)
     {
         DEBUG_PRINT_I("initSDCard", "Buffering disabled");
-        if (setvbuf(*save_file, NULL, _IONBF, 0) != 0)
+        if (setvbuf(scientisst_buffers.sd_card_save_file, NULL, _IONBF, 0) != 0)
         {
             DEBUG_PRINT_E("initSDCard", "Failed to open file for writing");
         }
     }
-
-    // Write the header to the file
-    write_file_header(num_active_channels_external_adc, save_file);
 
     return ESP_OK;
 }
@@ -216,10 +212,9 @@ esp_err_t createFile(uint8_t num_active_channels_external_adc, FILE **save_file)
  * stop until device turned of or battery runs out.
  *
  */
-void unmountSDCard(FILE *save_file)
+void unmountSDCard(void)
 {
-    const char mount_point[] = "/sdcard";
-    fclose(save_file);
+    fclose(scientisst_buffers.sd_card_save_file);
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     spi_bus_free(sd_spi_host.slot);
 }

@@ -96,8 +96,10 @@ DMA_ATTR scientisst_buffers_t scientisst_buffers = {
 
 static void allocate_frame_buffers(void)
 {
+    uint8_t num_buffers =
+        scientisst_device_settings.op_settings.com_mode == COM_MODE_SD_CARD ? NUM_BUFFERS_SDCARD : NUM_BUFFERS;
     // Allocate memory for send buffers+1 for firmware version and status packet
-    for (int i = 0; i < NUM_BUFFERS; i++)
+    for (int i = 0; i < num_buffers; i++)
     {
         scientisst_buffers.frame_buffer[i] =
             (uint8_t *)malloc(scientisst_buffers.frame_buffer_length_bytes * sizeof(uint8_t));
@@ -176,7 +178,7 @@ void initScientisst(void)
     adcExtInit(sd_card_spi_host);
     scientisst_device_settings.num_extern_active_chs = _ADC_EXT_ == EXT_ADC_ENABLED ? NUMBER_EXT_ADC_CHANNELS : 0;
     // Init SD card
-    ret = initSDCard(scientisst_device_settings.num_extern_active_chs, &(scientisst_buffers.sd_card_save_file));
+    ret = initSDCard();
     if (ret != ESP_OK)
     {
         DEBUG_PRINT_E("SD", "SD card initialization failed. Changing to BT mode.");
@@ -240,7 +242,7 @@ void initScientisst(void)
         xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", 4096, NULL, ACQ_ADC1_PRIORITY,
                                 &acq_adc1_task, 1);
         break;
-#if _SD_CARD_ != SD_CARD_ENABLED
+#if _SD_CARD_ == SD_CARD_ENABLED
     case COM_MODE_SD_CARD:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
         allocate_frame_buffers();

@@ -22,12 +22,20 @@
 //   - HW_VERSION_CARDIO (Cardio)
 #define _HW_VERSION_ HW_VERSION_CORE
 
+// Possible values for COM_MODE_:
+//   - COM_MODE_BT (Bluetooth) [Default]
+//   - COM_MODE_BLE (Bluetooth Low Energy)
+//   - COM_MODE_TCP_AP (TCP Access Point)
+//   - COM_MODE_TCP_STA (TCP Station)
+//   - COM_MODE_UDP_STA (UDP Station)
+//   - COM_MODE_SERIAL (USB)
+//   - COM_MODE_WS_AP (WebSocket Access Point)
 #define DEFAULT_COM_MODE COM_MODE_BT
 
 // Possible values for _ADC_EXT_:
 //   - EXT_ADC_DISABLED (No external adc) [Default]
 //   - EXT_ADC_ENABLED (Enable external adc)
-#define _ADC_EXT_ EXT_ADC_ENABLED
+#define _ADC_EXT_ EXT_ADC_DISABLED
 
 /************************
  * SDCARD CONFIGURATION *
@@ -35,7 +43,7 @@
 // Possible values for _SD_CARD_:
 //   - SD_CARD_DISABLED (Disable sd card) [Default]
 //   - SD_CARD_ENABLED (Enable sd card)
-#define _SD_CARD_ SD_CARD_DISABLED
+#define _SD_CARD_ SD_CARD_ENABLED
 
 // Possible values for _FORMAT_SDCARD_IF_MOUNT_FAILED_:
 //   - DO_NOT_FORMAT_SDCARD (Do not format sd card if mount failed) [Default]
