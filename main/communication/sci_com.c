@@ -39,7 +39,7 @@ int send_fd = 0; ///< File descriptor to send data to client, only part of comun
  * \param buff The buffer received
  * \param len The length of the buffer
  */
-void processRcv(uint8_t *buff, int len)
+void processPacket(uint8_t *buff, int len)
 {
     uint8_t cmd = buff[0] & 0b00000011;
 
@@ -72,7 +72,7 @@ void processRcv(uint8_t *buff, int len)
         {
             if (cmd == 0b10)
             {
-                DEBUG_PRINT_E("processRcv", "Simulation mode is no longer supported");
+                DEBUG_PRINT_E("processPacket", "Simulation mode is no longer supported");
             }
             // Get channels from mask
             scientisst_device_settings.api_config.select_ch_mask_func(buff);
@@ -90,7 +90,7 @@ void processRcv(uint8_t *buff, int len)
             }
             else if (((buff[0] >> 2) & 0b000011) == 0b01) // Send firmware version string
             {
-                DEBUG_PRINT_I("processRcv", "sendFirmwareVersion");
+                DEBUG_PRINT_I("processPacket", "sendFirmwareVersion");
                 sendFirmwareVersionPacket();
             }
             else if (buff[0] & 0b00110000) // Change API mode
@@ -108,8 +108,7 @@ void processRcv(uint8_t *buff, int len)
 /**
  * \brief Set output GPIO levels
  *
- * This function sets the output GPIO levels according to the received command.
- * //TODO: Confirm this
+ * This function sets the output channels to the requested value.
  */
 void triggerGpio(uint8_t *buff)
 {
@@ -148,17 +147,17 @@ void changeAPI(uint8_t mode)
     if (mode == API_MODE_BITALINO)
     {
         scientisst_device_settings.api_config.api_mode = API_MODE_BITALINO;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMask;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskBitalino;
     }
     else if (mode == API_MODE_SCIENTISST)
     {
         scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
     }
     else if (mode == API_MODE_JSON)
     {
         scientisst_device_settings.api_config.api_mode = API_MODE_JSON;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstJson;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
     }
 
     DEBUG_PRINT_I("changeAPI", "API changed to %d", mode);
@@ -219,7 +218,7 @@ uint8_t getPacketSize(void)
  *
  * \param buff The received command
  */
-void selectChsFromMaskScientisstJson(uint8_t *buff)
+void selectChsFromMaskScientisstAndJson(uint8_t *buff)
 {
     uint8_t i;
     char aux_str[10];
@@ -249,7 +248,7 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
                 scientisst_device_settings.num_intern_active_chs++;
             }
 
-            DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number);
+            DEBUG_PRINT_I("selectChsFromMaskBitalino", "Channel A%d added", channel_number);
         }
         channel_number--;
     }
@@ -293,7 +292,7 @@ void selectChsFromMaskScientisstJson(uint8_t *buff)
  *
  * \param buff The received command
  */
-void selectChsFromMask(uint8_t *buff)
+void selectChsFromMaskBitalino(uint8_t *buff)
 {
     int channel_number = DEFAULT_ADC_CHANNELS;
 
@@ -310,7 +309,7 @@ void selectChsFromMask(uint8_t *buff)
             scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
                 channel_number - 1;
             scientisst_device_settings.num_intern_active_chs++;
-            DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number - 1);
+            DEBUG_PRINT_I("selectChsFromMaskBitalino", "Channel A%d added", channel_number - 1);
         }
         channel_number--;
     }
@@ -341,7 +340,7 @@ void setSampleRate(uint8_t *buff)
 
     scientisst_device_settings.sample_rate = aux;
 
-    DEBUG_PRINT_I("processRcv", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
+    DEBUG_PRINT_I("processPacket", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
 }
 
 /**

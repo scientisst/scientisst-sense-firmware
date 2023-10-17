@@ -63,7 +63,7 @@ esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, uint8_t *buff)
  *      - ESP_OK if the server was started successfully
  *      - ESP_FAIL otherwise
  */
-esp_err_t rcv_handler(httpd_req_t *req)
+esp_err_t rxHandler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET)
     {
@@ -101,7 +101,7 @@ esp_err_t rcv_handler(httpd_req_t *req)
             free(buf);
             return ret;
         }
-        processRcv(ws_pkt.payload, ws_pkt.len);
+        processPacket(ws_pkt.payload, ws_pkt.len);
     }
     free(buf);
     return ret;
@@ -113,7 +113,7 @@ esp_err_t rcv_handler(httpd_req_t *req)
  * \return:
  *      - ESP_OK always
  */
-esp_err_t get_handler(httpd_req_t *req)
+esp_err_t getHandler(httpd_req_t *req)
 {
     const char resp[] = "<!DOCTYPE html><html><body><h1>Success!</h1><p>Authorized ScientISST "
                         "Sense self-signed "
@@ -123,9 +123,9 @@ esp_err_t get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-const httpd_uri_t ws = {.uri = "/", .method = HTTP_GET, .handler = rcv_handler, .user_ctx = NULL, .is_websocket = true};
+const httpd_uri_t ws = {.uri = "/", .method = HTTP_GET, .handler = rxHandler, .user_ctx = NULL, .is_websocket = true};
 
-const httpd_uri_t cert_get = {.uri = "/cert", .method = HTTP_GET, .handler = get_handler, .user_ctx = NULL};
+const httpd_uri_t cert_get = {.uri = "/cert", .method = HTTP_GET, .handler = getHandler, .user_ctx = NULL};
 
 /**
  * \brief Start the websocket server
@@ -134,7 +134,7 @@ const httpd_uri_t cert_get = {.uri = "/cert", .method = HTTP_GET, .handler = get
  *      - The handle of the server if it was started successfully
  *      - NULL otherwise
  */
-httpd_handle_t start_webserver(void)
+httpd_handle_t startWebserver(void)
 {
     httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
     conf.httpd.max_open_sockets = max_clients;

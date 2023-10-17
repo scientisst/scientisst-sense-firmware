@@ -13,13 +13,13 @@
 
 extern int send_fd;
 
-void processRcv(uint8_t *buff, int buff_size);
-void selectChsFromMask(uint8_t *buff);
+void processPacket(uint8_t *buff, int len);
+void selectChsFromMaskBitalino(uint8_t *buff);
 void stopAcquisition(void);
 void sendStatusPacket();
 void sendFirmwareVersionPacket();
 void changeAPI(uint8_t mode);
-void selectChsFromMaskScientisstJson(uint8_t *buff);
+void selectChsFromMaskScientisstAndJson(uint8_t *buff);
 void setSampleRate(uint8_t *buff);
 void triggerGpio(uint8_t *buff);
 void triggerDAC(uint8_t *buff);

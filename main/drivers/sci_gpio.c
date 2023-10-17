@@ -18,7 +18,7 @@
  * This function configures the LED Controller. It prepares and sets the
  * configuration of timers.
  */
-void configLedC(void)
+void configLedController(void)
 {
     ledc_timer_config_t ledc_timer = {
         .duty_resolution = LEDC_TIMER_10_BIT, // resolution of PWM duty
@@ -123,8 +123,7 @@ void IRAM_ATTR gpioDrdyIsrHandler(void *not_used)
 /**
  * \brief Configures DRDY GPIO
  *
- * This function configures the DRDY GPIO pin. //TODO: Add details and when it
- * is used.
+ * This function configures the DRDY GPIO pin.
  */
 void adcExtDrdyGpio(int io_num)
 {

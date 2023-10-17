@@ -23,7 +23,7 @@
     ({                                                                                                                      \
         if (_num_int_chan > 6 || _num_ext_chan > 2)                                                                         \
         {                                                                                                                   \
-            DEBUG_PRINT_E("task_acquisition", "Invalid number of channels, access out of bounds");                          \
+            DEBUG_PRINT_E("taskAcquisition", "Invalid number of channels, access out of bounds");                           \
             abort();                                                                                                        \
         }                                                                                                                   \
     })
@@ -31,14 +31,14 @@
 const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
 uint16_t crc_seq = 0; ///< Frame sequence number
 
-static void get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t *adc_external_res);
-static void write_frame_Scientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                   const uint8_t io_state);
-static void write_frame_Bitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
-static void write_frame_JSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                             const uint8_t io_state);
-static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                         const uint8_t io_state);
+static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2]);
+static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                                 const uint8_t io_state);
+static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
+static void writeFrameJSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                           const uint8_t io_state);
+static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                                        const uint8_t io_state);
 
 /**
  * \brief Task that acquires data from adc1.
@@ -47,7 +47,7 @@ static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_int
  * timerGrp0Isr when to acquire data. It notifies the sendTask when there is
  * data to send. It is also the main task of CPU1 (APP CPU)
  */
-_Noreturn void IRAM_ATTR task_acquisition(void)
+_Noreturn void IRAM_ATTR taskAcquisition(void)
 {
     uint16_t adc_internal_res[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[EXT_ADC_CHANNELS] = {0, 0};
@@ -62,12 +62,12 @@ _Noreturn void IRAM_ATTR task_acquisition(void)
 
         CHECK_NUM_CHANNELS_IS_VALID(scientisst_device_settings.num_intern_active_chs,
                                     scientisst_device_settings.num_extern_active_chs);
-        get_sensor_data(&io_state, adc_internal_res, adc_external_res);
+        getSensorData(&io_state, adc_internal_res, adc_external_res);
 
         // Store sensor data on current buffer with de adequate frame format
-        write_frame(scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff] +
-                        scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff],
-                    adc_internal_res, adc_external_res, io_state);
+        writeFrame(scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff] +
+                       scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff],
+                   adc_internal_res, adc_external_res, io_state);
         ++crc_seq; // Increment sequence number
         scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff] +=
             scientisst_buffers.packet_size; // Update write index
@@ -89,7 +89,7 @@ _Noreturn void IRAM_ATTR task_acquisition(void)
             // can't handle this sending throughput
             while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] == 1)
             {
-                DEBUG_PRINT_E("task_acquisition", "Sending buffer is full, cannot acquire");
+                DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
                 vTaskDelay(10 / portTICK_PERIOD_MS); // TODO: test with 1 MS
             }
@@ -98,8 +98,7 @@ _Noreturn void IRAM_ATTR task_acquisition(void)
     }
 }
 
-static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_res,
-                                      uint32_t adc_external_res[EXT_ADC_CHANNELS])
+static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2])
 {
     // Get the IO states
     *io_state = (uint8_t)(gpio_get_level(I0_IO) << 7);
@@ -147,20 +146,20 @@ static void IRAM_ATTR get_sensor_data(uint8_t *io_state, uint16_t *adc_internal_
 #endif
 }
 
-static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                         const uint8_t io_state)
+static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                                        const uint8_t io_state)
 {
     if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
     {
-        write_frame_Scientisst(frame, adc_internal_res, adc_external_res, io_state);
+        writeFrameScientisst(frame, adc_internal_res, adc_external_res, io_state);
     }
     else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
     {
-        write_frame_JSON(frame, adc_internal_res, adc_external_res, io_state);
+        writeFrameJSON(frame, adc_internal_res, adc_external_res, io_state);
     }
     else
     {
-        write_frame_Bitalino(frame, adc_internal_res, io_state);
+        writeFrameBitalino(frame, adc_internal_res, io_state);
     }
 }
 
@@ -172,8 +171,8 @@ static inline void IRAM_ATTR write_frame(uint8_t *frame, const uint16_t *adc_int
  *
  * \param frame pointer of frame position in memory to store the adc1 channels.
  */
-static void IRAM_ATTR write_frame_Scientisst(uint8_t *frame, const uint16_t *adc_internal_res,
-                                             const uint32_t *adc_external_res, const uint8_t io_state)
+static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res,
+                                           const uint32_t *adc_external_res, const uint8_t io_state)
 {
     uint8_t crc = 0;
     uint8_t frame_next_wr = 0;
@@ -233,7 +232,7 @@ static void IRAM_ATTR write_frame_Scientisst(uint8_t *frame, const uint16_t *adc
  *
  * \param frame pointer of frame position in memory to store the adc1 channels
  */
-static void write_frame_Bitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state)
+static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state)
 {
     uint16_t adc_res[6] = {0, 0, 0, 0, 0, 0};
     uint8_t crc = 0;
@@ -242,7 +241,7 @@ static void write_frame_Bitalino(uint8_t *frame, const uint16_t *adc_internal_re
     for (int i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
     {
         adc_res[i] = adc_internal_res[i] >> 2;
-        DEBUG_PRINT_I("write_frame_Bitalino", "(adc_res)A%d=%d", scientisst_device_settings.active_internal_chs[i],
+        DEBUG_PRINT_I("writeFrameBitalino", "(adc_res)A%d=%d", scientisst_device_settings.active_internal_chs[i],
                       adc_res[i]);
     }
 
@@ -300,8 +299,8 @@ static void write_frame_Bitalino(uint8_t *frame, const uint16_t *adc_internal_re
  *
  * \param frame pointer of frame position in memory to store the adc1 channels
  */
-static void write_frame_JSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                             const uint8_t io_state)
+static void writeFrameJSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                           const uint8_t io_state)
 {
     char ch_str[10];
     char value_str[10];

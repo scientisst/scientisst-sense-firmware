@@ -191,7 +191,7 @@ void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble
  * \param event ESP32 BLE GATT Server Event.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+static void gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     switch (event)
     {
@@ -264,7 +264,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
  * \param prepare_write_env Prepare Write Environment.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
+void writeEvent(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
 {
     esp_gatt_status_t status = ESP_GATT_OK;
     if (param->write.need_rsp)
@@ -327,7 +327,7 @@ void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare
  * \param prepare_write_env Prepare Write Environment.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
+void execWritEvent(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
 {
     if (param->exec_write.exec_write_flag == ESP_GATT_PREP_WRITE_EXEC)
     {
@@ -420,16 +420,16 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
     }
     case ESP_GATTS_WRITE_EVT:
         DEBUG_PRINT_I("BLE Event", "BT data received length:%d", param->write.len);
-        processRcv(param->write.value, param->write.len);
+        processPacket(param->write.value, param->write.len);
         // This function is used to handle write requeset of client. Because
         // server should send write response when receive write request.
-        example_write_event_env(gatts_if, &a_prepare_write_env, param);
+        writeEvent(gatts_if, &a_prepare_write_env, param);
         break;
 
     case ESP_GATTS_EXEC_WRITE_EVT:
         DEBUG_PRINT_I("GATTS", "ESP_GATTS_EXEC_WRITE_EVT");
         esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
-        example_exec_write_event_env(&a_prepare_write_env, param);
+        execWritEvent(&a_prepare_write_env, param);
         break;
     case ESP_GATTS_MTU_EVT:
         DEBUG_PRINT_I("GATTS", "ESP_GATTS_MTU_EVT, MTU %d", param->mtu.mtu);
@@ -552,7 +552,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
  * \param gatts_if GATT Server Interface.
  * \param param ESP32 BLE GATT Server Event Parameters.
  */
-static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
+static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
     /* If event is register event, store the gatts_if for each profile */
     if (event == ESP_GATTS_REG_EVT)
@@ -644,13 +644,13 @@ void initBle(void)
         exit(-1);
     }
 
-    ret = esp_ble_gatts_register_callback(gatts_event_handler);
+    ret = esp_ble_gatts_register_callback(gattsEventHandler);
     if (ret)
     {
         DEBUG_PRINT_E("GATTS", "gatts register error, error code = %x", ret);
         exit(-1);
     }
-    ret = esp_ble_gap_register_callback(gap_event_handler);
+    ret = esp_ble_gap_register_callback(gapEventHandler);
     if (ret)
     {
         DEBUG_PRINT_E("GATTS", "gap register error, error code = %x", ret);

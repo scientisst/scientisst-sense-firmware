@@ -89,23 +89,23 @@ void IRAM_ATTR finalizeSend(void)
 }
 
 /**
- * \brief esp_spp_cb gap register callback function.
+ * \brief espSppCb gap register callback function.
  *
  * //TODO: Add more comments with more precise information
  */
-static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
+static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
     switch (event)
     {
     case ESP_SPP_INIT_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_INIT_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_INIT_EVT");
         esp_bt_dev_set_device_name(scientisst_device_settings.device_name);
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         esp_spp_start_srv(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
         ESP_LOGI("Init Bluetooth", "Device online with the name: %s", scientisst_device_settings.device_name);
         break;
     case ESP_SPP_SRV_OPEN_EVT: // Server connection open (first client connection)
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_SRV_OPEN_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_SRV_OPEN_EVT");
         if (!send_fd)
         {
             send_fd = param->open.handle;
@@ -116,27 +116,27 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         }
         break;
     case ESP_SPP_DISCOVERY_COMP_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_DISCOVERY_COMP_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_DISCOVERY_COMP_EVT");
         break;
     case ESP_SPP_OPEN_EVT: // Client connection open
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_OPEN_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_OPEN_EVT");
         // We only want one client
         esp_spp_disconnect(param->open.handle);
         break;
     case ESP_SPP_CLOSE_EVT: // Client connection closed
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_CLOSE_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_CLOSE_EVT");
         send_fd = 0;
         stopAcquisition(); // Make sure that sendBtTask doesn't stay's stuck waiting for a sucessful write
         break;
     case ESP_SPP_START_EVT: // server started
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_START_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_START_EVT");
         break;
     case ESP_SPP_CL_INIT_EVT: // client initiated a connection
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_SPP_CL_INIT_EVT");
+        DEBUG_PRINT_I("espSppCb", "ESP_SPP_CL_INIT_EVT");
         break;
     case ESP_SPP_DATA_IND_EVT: // connection received data
         DEBUG_PRINT_I("BT Event", "BT data recieved length:%d  data:", param->data_ind.len);
-        processRcv(param->data_ind.data, param->data_ind.len);
+        processPacket(param->data_ind.data, param->data_ind.len);
         break;
     case ESP_SPP_CONG_EVT: // connection congestion status changed
         if (param->cong.cong == 0 && scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
@@ -145,7 +145,7 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
         }
         else if (param->cong.cong == 1)
         {
-            DEBUG_PRINT_W("esp_spp_cb", "ESP_SPP_CONG_EVT");
+            DEBUG_PRINT_W("espSppCb", "ESP_SPP_CONG_EVT");
         }
         break;
     case ESP_SPP_WRITE_EVT: // write operation status changed
@@ -179,33 +179,33 @@ static void IRAM_ATTR esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *p
 /**
  * \brief //TODO: Add more comments with more precise information
  */
-static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
+static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 {
     switch (event)
     {
     case ESP_BT_GAP_AUTH_CMPL_EVT: {
         if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS)
         {
-            DEBUG_PRINT_I("esp_spp_cb", "authentication success: %s", param->auth_cmpl.device_name);
+            DEBUG_PRINT_I("espSppCb", "authentication success: %s", param->auth_cmpl.device_name);
             esp_log_buffer_hex("SPP_ACCEPTOR", param->auth_cmpl.bda, ESP_BD_ADDR_LEN);
         }
         else
         {
-            DEBUG_PRINT_E("esp_spp_cb", "authentication failed, status:%d", param->auth_cmpl.stat);
+            DEBUG_PRINT_E("espSppCb", "authentication failed, status:%d", param->auth_cmpl.stat);
         }
         break;
     }
     case ESP_BT_GAP_PIN_REQ_EVT: {
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
+        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
         if (param->pin_req.min_16_digit)
         {
-            DEBUG_PRINT_I("esp_spp_cb", "Input pin code: 0000 0000 0000 0000");
+            DEBUG_PRINT_I("espSppCb", "Input pin code: 0000 0000 0000 0000");
             esp_bt_pin_code_t pin_code = {0};
             esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
         }
         else
         {
-            DEBUG_PRINT_I("esp_spp_cb", "Input pin code: 1234");
+            DEBUG_PRINT_I("espSppCb", "Input pin code: 1234");
             esp_bt_pin_code_t pin_code;
             pin_code[0] = '1';
             pin_code[1] = '2';
@@ -218,19 +218,19 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
 
 #if (CONFIG_BT_SSP_ENABLED == true)
     case ESP_BT_GAP_CFM_REQ_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
+        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
         esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
         break;
     case ESP_BT_GAP_KEY_NOTIF_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%d", param->key_notif.passkey);
+        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%d", param->key_notif.passkey);
         break;
     case ESP_BT_GAP_KEY_REQ_EVT:
-        DEBUG_PRINT_I("esp_spp_cb", "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
+        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
         break;
 #endif
 
     default: {
-        DEBUG_PRINT_I("esp_spp_cb", "event: %d", event);
+        DEBUG_PRINT_I("espSppCb", "event: %d", event);
         break;
     }
     }
@@ -272,13 +272,13 @@ void initBt(void)
         return;
     }
 
-    if ((ret = esp_bt_gap_register_callback(esp_bt_gap_cb)) != ESP_OK)
+    if ((ret = esp_bt_gap_register_callback(espBtGapCb)) != ESP_OK)
     {
         DEBUG_PRINT_E("init", "%s gap register failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
-    if ((ret = esp_spp_register_callback(esp_spp_cb)) != ESP_OK)
+    if ((ret = esp_spp_register_callback(espSppCb)) != ESP_OK)
     {
         DEBUG_PRINT_E("init", "%s spp register failed: %s", __func__, esp_err_to_name(ret));
         return;

@@ -212,7 +212,7 @@ void startAcquisitionSDCard(void)
             scientisst_device_settings.num_intern_active_chs++;
         }
 
-        DEBUG_PRINT_I("selectChsFromMask", "Channel A%d added", channel_number);
+        DEBUG_PRINT_I("selectChsFromMaskBitalino", "Channel A%d added", channel_number);
         channel_number--;
     }
 
@@ -228,7 +228,7 @@ void startAcquisitionSDCard(void)
     }
 
     // Write the header to the file
-    write_file_header();
+    writeFileHeader();
 
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate);

@@ -3,7 +3,6 @@
 
     This file contains the functions for the UART communication. Only has the
    init function for now.
-    //Todo: add details and what undesrtand what this is for
 */
 #include "sci_serial.h"
 

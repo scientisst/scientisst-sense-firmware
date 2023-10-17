@@ -9,5 +9,5 @@
 #include "sci_scientisst.h"
 
 int wifiInit(uint8_t force_ap);
-void wifi_init_softap(void);
-int wifi_init_sta(void);
+void wifiInitSoftap(void);
+int wifiInitSta(void);

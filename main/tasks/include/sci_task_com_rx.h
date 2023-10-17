@@ -8,4 +8,4 @@
 
 #include "sci_scientisst.h"
 
-_Noreturn void rcvTask(void);
+_Noreturn void rxTask(void);

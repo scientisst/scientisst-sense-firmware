@@ -73,7 +73,7 @@ const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
 
 esp_err_t createFile(void);
 
-sdmmc_host_t *init_sd_card_spi_bus(void)
+sdmmc_host_t *initSdCardSpiBus(void)
 {
     esp_err_t ret = ESP_OK;
 
@@ -125,7 +125,7 @@ esp_err_t initSDCard(void)
     return ESP_OK;
 }
 
-void write_file_header(void)
+void writeFileHeader(void)
 {
     uint8_t file_header[25] = {0};
 

@@ -45,7 +45,7 @@
  * \param event_id The event id
  * \param event_data The event data
  */
-static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+static void wifiEventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_id == WIFI_EVENT_AP_STACONNECTED)
     {
@@ -62,14 +62,14 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 /**
  * \brief Wifi softAP initialization
  */
-void wifi_init_softap(void)
+void wifiInitSoftap(void)
 {
     esp_netif_create_default_wifi_ap();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifiEventHandler, NULL, NULL));
 
     wifi_config_t wifi_config = {
         .ap = {.ssid_len = 0,
@@ -89,14 +89,12 @@ void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    DEBUG_PRINT_W("wifi softAP", "wifi_init_softap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid,
+    DEBUG_PRINT_W("wifi softAP", "wifiInitSoftap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid,
                   EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }
 
 // wifi
 // station--------------------------------------------------------------------------------------------------------------------
-
-#define EXAMPLE_ESP_MAXIMUM_RETRY 5 // Default is 5
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -118,7 +116,7 @@ static EventGroupHandle_t s_wifi_event_group;
  * \param event_id The event id
  * \param event_data The event data
  */
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+static void eventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
@@ -144,7 +142,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
  *      - 0 if connection to Wifi fails
  *      - ESP_FAIL if connection to Wifi succeeds
  */
-int wifi_init_sta(void)
+int wifiInitSta(void)
 {
     int ret = 0;
     s_wifi_event_group = xEventGroupCreate();
@@ -157,9 +155,9 @@ int wifi_init_sta(void)
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
     ESP_ERROR_CHECK(
-        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
+        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &eventHandler, NULL, &instance_any_id));
     ESP_ERROR_CHECK(
-        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
+        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &eventHandler, NULL, &instance_got_ip));
 
     wifi_config_t wifi_config = {
         .sta =
@@ -246,12 +244,12 @@ int wifiInit(uint8_t force_ap)
     if (force_ap || (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP) ||
         (scientisst_device_settings.op_settings.com_mode == COM_MODE_WS_AP))
     {
-        wifi_init_softap();
+        wifiInitSoftap();
         return ESP_OK;
     }
     else
     {
         // Return result of attempt connection to saved SSID
-        return wifi_init_sta();
+        return wifiInitSta();
     }
 }

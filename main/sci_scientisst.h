@@ -83,5 +83,4 @@ extern scientisst_device_t scientisst_device_settings;
 extern scientisst_buffers_t scientisst_buffers;
 
 void initScientisst(void);
-int getOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
-void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo);
+void saveOpSettingsInfo(const op_settings_info_t *pOpSettingsInfo);

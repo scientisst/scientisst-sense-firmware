@@ -20,14 +20,14 @@
 #define I2C_MASTER_NACK 1
 #define I2C_TIMEOUT_TICKS 40000
 
-s8 bno055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
-s8 bno055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
-void bno055_delay_msek(u32 msek);
+s8 bno055I2CBusWrite(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+s8 bno055I2CBusRead(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+void bno055DelayMSec(u32 msek);
 
 DRAM_ATTR static struct bno055_t BNO_handle = {.dev_addr = BNO055_I2C_ADDR1,
-                                               .bus_write = &bno055_I2C_bus_write,
-                                               .bus_read = &bno055_I2C_bus_read,
-                                               .delay_msec = &bno055_delay_msek};
+                                               .bus_write = &bno055I2CBusWrite,
+                                               .bus_read = &bno055I2CBusRead,
+                                               .delay_msec = &bno055DelayMSec};
 DRAM_ATTR uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
 #ifdef CONFIG_EULER_ANGLES_AND_LINEAR_ACCELERATION
 DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {EULER_ANGLES, LINEAR_ACCELERATION};
@@ -36,7 +36,7 @@ DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {EULER_ANGLES, LINEAR_
 DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCITY, LINEAR_ACCELERATION};
 #endif
 
-_Noreturn void IRAM_ATTR task_bno055(void)
+_Noreturn void IRAM_ATTR taskBno055(void)
 {
     struct bno055_euler_t euler_hrp;
     struct bno055_gyro_t gyro_xyz;
@@ -88,7 +88,7 @@ _Noreturn void IRAM_ATTR task_bno055(void)
     }
 }
 
-esp_err_t init_IMU(void)
+esp_err_t initIMU(void)
 {
     esp_err_t ret = ESP_OK;
     unsigned char accel_calib_status = 0;
@@ -142,7 +142,7 @@ esp_err_t init_IMU(void)
     return ret;
 }
 
-void bno055_set_data_to_acquire(bno055_data_types_t *data_to_acquire)
+void bno055SetDataToAcquire(bno055_data_types_t *data_to_acquire)
 {
     if (data_to_acquire[0] == data_to_acquire[1])
     {
@@ -153,14 +153,14 @@ void bno055_set_data_to_acquire(bno055_data_types_t *data_to_acquire)
     bno055_data_to_acquire[1] = data_to_acquire[1];
 }
 
-uint16_t IRAM_ATTR get_imu_value(uint8_t channel)
+uint16_t IRAM_ATTR getImuValue(uint8_t channel)
 {
     return imuValues[channel];
 }
 
-s8 IRAM_ATTR bno055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
+s8 IRAM_ATTR bno055I2CBusWrite(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 {
-    u8 iError = BNO055_INIT_VALUE;
+    u8 ret = BNO055_INIT_VALUE;
     esp_err_t espRc;
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
@@ -174,18 +174,18 @@ s8 IRAM_ATTR bno055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt
     espRc = i2c_master_cmd_begin(I2C_NUM_0, cmd, I2C_TIMEOUT_TICKS);
     if (espRc == ESP_OK)
     {
-        iError = BNO055_SUCCESS;
+        ret = BNO055_SUCCESS;
     }
     else
     {
-        iError = BNO055_ERROR;
+        ret = BNO055_ERROR;
     }
     i2c_cmd_link_delete(cmd);
 
-    return (s8)iError;
+    return (s8)ret;
 }
 
-s8 IRAM_ATTR bno055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
+s8 IRAM_ATTR bno055I2CBusRead(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 {
     u8 iError = BNO055_INIT_VALUE;
     esp_err_t espRc;
@@ -221,7 +221,7 @@ s8 IRAM_ATTR bno055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     return (s8)iError;
 }
 
-void IRAM_ATTR bno055_delay_msek(u32 msek)
+void IRAM_ATTR bno055DelayMSec(u32 msek)
 {
     vTaskDelay(msek / portTICK_PERIOD_MS);
 }

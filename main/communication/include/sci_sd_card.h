@@ -19,6 +19,6 @@
 #define PIN_NUM_CLK GPIO_NUM_18
 #define PIN_NUM_CS GPIO_NUM_4
 
-sdmmc_host_t *init_sd_card_spi_bus(void);
+sdmmc_host_t *initSdCardSpiBus(void);
 esp_err_t initSDCard(void);
-void write_file_header(void);
+void writeFileHeader(void);

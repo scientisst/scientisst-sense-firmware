@@ -20,7 +20,7 @@
  * notified by the timerGrp1Isr when to acquire data. It notifies the sendTask
  * when there is data to send. It is also the main task of CPU0 (PRO CPU)
  */
-_Noreturn void IRAM_ATTR task_battery_monitor(void)
+_Noreturn void IRAM_ATTR taskBatteryMonitor(void)
 {
     uint16_t battery; // Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;
@@ -40,7 +40,7 @@ _Noreturn void IRAM_ATTR task_battery_monitor(void)
     {
         if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
             continue;
-        battery = get_adc_internal_value(ADC_INTERNAL_2, BATTERY_ADC_CH, 1);
+        battery = getAdcInternalValue(ADC_INTERNAL_2, BATTERY_ADC_CH, 1);
 
         turn_led_on = battery <= scientisst_device_settings.battery_threshold;
 

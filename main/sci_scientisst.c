@@ -46,8 +46,6 @@
 #define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
 #define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settigns
 
-_Noreturn void opModeConfig(void);
-
 TaskHandle_t send_task;
 TaskHandle_t battery_task;
 TaskHandle_t rcv_task;
@@ -65,7 +63,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .active_internal_chs = {0, 0, 0, 0, 0, 0},
     .analog_channels = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4, ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7},
     .active_ext_chs = {0, 0},
-    .api_config = {.api_mode = API_MODE_BITALINO, .select_ch_mask_func = &selectChsFromMask},
+    .api_config = {.api_mode = API_MODE_BITALINO, .select_ch_mask_func = &selectChsFromMaskBitalino},
     .is_op_settings_valid = 0,
     .send_busy = 0,
     .op_settings =
@@ -130,6 +128,9 @@ static void allocate_frame_buffers(void)
     }
 }
 
+_Noreturn static void opModeConfig(void);
+static esp_err_t getOpSettingsInfo(op_settings_info_t *_op_settings);
+
 /**
  * \brief Initializes the Scientisst device.
  *
@@ -138,12 +139,8 @@ static void allocate_frame_buffers(void)
  * SD card (if enabled), IMU (if enabled), communication modes, and memory allocation
  * for send buffers.
  *
- * \note This function is only called during device startup.
  *
  * \return None.
- *
- * \par [in] None.
- * \par [out] None.
  */
 void initScientisst(void)
 {
@@ -158,7 +155,7 @@ void initScientisst(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    if (!getOpSettingsInfo(&(scientisst_device_settings.op_settings)))
+    if (getOpSettingsInfo(&(scientisst_device_settings.op_settings)) == ESP_OK)
     {
         scientisst_device_settings.is_op_settings_valid = 1;
     }
@@ -170,7 +167,7 @@ void initScientisst(void)
     gpioInit();
 
     // Config LED control core
-    configLedC();
+    configLedController();
 
     // Enable DAC
     dac_output_enable(DAC_CH);
@@ -225,7 +222,7 @@ void initScientisst(void)
     // and password
     if (IS_COM_TYPE_WIFI(scientisst_device_settings.op_settings.com_mode) && (wifiInit(0) == ESP_FAIL))
     {
-        wifi_init_softap();
+        wifiInitSoftap();
         opModeConfig();
     }
 
@@ -235,22 +232,22 @@ void initScientisst(void)
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
         initBt();
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "taskBatteryMonitor", DEFAULT_TASK_STACK_SIZE_SMALL,
                                 NULL, BATTERY_PRIORITY, &battery_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
                                 BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
                                 ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_BLE:
         scientisst_buffers.frame_buffer_length_bytes = GATTS_NOTIFY_LEN;
         allocate_frame_buffers();
         initBle();
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "taskBatteryMonitor", DEFAULT_TASK_STACK_SIZE_SMALL,
                                 NULL, BATTERY_PRIORITY, &battery_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
                                 BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
                                 ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_UDP_STA:
@@ -259,22 +256,22 @@ void initScientisst(void)
     case COM_MODE_SERIAL:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
-        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
+        xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
                                 &rcv_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
                                 BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
                                 ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
     case COM_MODE_WS_AP:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
         allocate_frame_buffers();
-        start_webserver();
-        xTaskCreatePinnedToCore((TaskFunction_t)&rcvTask, "rcvTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
+        startWebserver();
+        xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
                                 &rcv_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
                                 BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_acquisition, "task_acquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
                                 ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
 #ifdef CONFIG_SD_CARD
@@ -299,7 +296,7 @@ void initScientisst(void)
  * This function puts the device in config mode. It initializes the rest server
  * and sets the state led to fixed white.
  */
-_Noreturn void opModeConfig(void)
+_Noreturn static void opModeConfig(void)
 {
     scientisst_device_settings.op_mode = OP_MODE_CONFIG;
     initRestServer();
@@ -320,37 +317,37 @@ _Noreturn void opModeConfig(void)
  * \param _op_settings pointer to the operational settings structure
  *
  * \return:
- *     - 0 if successful
- *     - -1 if unsuccessful
+ *     - ESP_OK if successful
+ *     - ESP_FAIL if unsuccessful
  */
-int getOpSettingsInfo(op_settings_info_t *_op_settings)
+static esp_err_t getOpSettingsInfo(op_settings_info_t *_op_settings)
 {
     nvs_handle handle;
     size_t size;
-    esp_err_t err;
+    esp_err_t ret = ESP_OK;
     op_settings_info_t pOpSettingsInfo;
 
-    err = nvs_open(SCI_BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle);
-    if (err != 0)
+    ret = nvs_open(SCI_BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle);
+    if (ret != ESP_OK)
     {
         DEBUG_PRINT_E("getOpSettingsInfo", "ERROR: opening NVS");
-        return -1;
+        return ESP_FAIL;
     }
 
     size = sizeof(op_settings_info_t);
-    err = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
-    if (err != ESP_OK)
+    ret = nvs_get_blob(handle, KEY_SETTINGS_INFO, &pOpSettingsInfo, &size);
+    if (ret != ESP_OK)
     {
         DEBUG_PRINT_W("getOpSettingsInfo", "No op settings record found!");
         nvs_close(handle);
-        return -1;
+        return ESP_FAIL;
     }
 
     // cleanup
     nvs_close(handle);
 
     *_op_settings = pOpSettingsInfo;
-    return 0;
+    return ESP_OK;
 }
 
 /**
@@ -358,11 +355,8 @@ int getOpSettingsInfo(op_settings_info_t *_op_settings)
  *
  * \param pOpSettingsInfo pointer to the operational settings structure
  *
- * \return:
- *     - 0 if successful
- *     - -1 if unsuccessful
  */
-void saveOpSettingsInfo(op_settings_info_t *pOpSettingsInfo)
+void saveOpSettingsInfo(const op_settings_info_t *pOpSettingsInfo)
 {
     nvs_handle handle;
     ESP_ERROR_CHECK(nvs_open(SCI_BOOTWIFI_NAMESPACE, NVS_READWRITE, &handle));

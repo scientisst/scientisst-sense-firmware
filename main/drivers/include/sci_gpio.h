@@ -70,7 +70,7 @@
 void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en,
                 gpio_pullup_t pull_up_en);
 void gpioInit(void);
-void configLedC(void);
+void configLedController(void);
 
 // ADC EXT
 void gpioDrdyIsrHandler(void *not_used);

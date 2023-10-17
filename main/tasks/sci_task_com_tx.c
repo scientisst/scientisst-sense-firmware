@@ -18,11 +18,11 @@ static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
  * \brief Task that sends data to the client.
  *
  * This task is responsible for sending data to the client. It is notified by
- * the task_acquisition when there is data to send. If the client is BT or BLE it
+ * the taskAcquisition when there is data to send. If the client is BT or BLE it
  * initializes the respective component.
  *
- * This task can be removed and task_acquisition can do the sendData() when
- * not send_busy. But, atm task_acquisition is the bottleneck
+ * This task can be removed and taskAcquisition can do the sendData() when
+ * not send_busy. But, atm taskAcquisition is the bottleneck
  */
 _Noreturn void IRAM_ATTR sendTask(void)
 {

@@ -7,4 +7,4 @@
 
 #include "sci_scientisst.h"
 
-_Noreturn void task_battery_monitor(void);
+_Noreturn void taskBatteryMonitor(void);

@@ -14,14 +14,14 @@
 
 #define CMD_MAX_BYTES 4
 
-static void wifiSerialRcv(void);
+static void wifiSerialRxHandler(void);
 
 /**
  * \brief Task that receives data from the client.
  *
  * This task is responsible for receiving data from the client.
  */
-_Noreturn void rcvTask(void)
+_Noreturn void rxTask(void)
 {
     while (1)
     {
@@ -31,7 +31,7 @@ _Noreturn void rcvTask(void)
                                             scientisst_device_settings.op_settings.port_number)) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
-                DEBUG_PRINT_E("rcvTask",
+                DEBUG_PRINT_E("rxTask",
                               "Cannot connect to TCP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
                               scientisst_device_settings.op_settings.host_ip,
@@ -51,7 +51,7 @@ _Noreturn void rcvTask(void)
             while ((send_fd = initTcpConnection()) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
-                DEBUG_PRINT_E("rcvTask",
+                DEBUG_PRINT_E("rxTask",
                               "Cannot connect to TCP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
                               scientisst_device_settings.op_settings.host_ip,
@@ -64,7 +64,7 @@ _Noreturn void rcvTask(void)
                                             scientisst_device_settings.op_settings.port_number)) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
-                DEBUG_PRINT_E("rcvTask",
+                DEBUG_PRINT_E("rxTask",
                               "Cannot connect to UDP Server %s:%s specified in the "
                               "configuration. Redo the configuration. Trying again...",
                               scientisst_device_settings.op_settings.host_ip,
@@ -76,23 +76,23 @@ _Noreturn void rcvTask(void)
             while ((send_fd = serialInit()) < 0)
             {
                 vTaskDelay(2000 / portTICK_PERIOD_MS);
-                DEBUG_PRINT_E("rcvTask", "Cannot connect to host USB Serial port. Trying again...");
+                DEBUG_PRINT_E("rxTask", "Cannot connect to host USB Serial port. Trying again...");
             }
         }
-        wifiSerialRcv();
+        wifiSerialRxHandler();
     }
 }
 
 /**
- * \brief Receives data through a TCP connection and then call processRcv on the
+ * \brief Receives data through a TCP connection and then call processPacket on the
  * data.
  *
- * This function receives data through a TCP connection and then call processRcv
+ * This function receives data through a TCP connection and then call processPacket
  * on the data. If connection is closed unexpectedly, it will try to reconnect
  * in a loop. If connection is closed gracefully, it will stop acquiring data.
  *
  */
-static void wifiSerialRcv(void)
+static void wifiSerialRxHandler(void)
 {
     uint8_t buff[CMD_MAX_BYTES];
     int len;
@@ -107,13 +107,13 @@ static void wifiSerialRcv(void)
     {
         if ((read_bytes = read(send_fd, buff, CMD_MAX_BYTES)) == 0)
         {
-            DEBUG_PRINT_I("wifiSerialRcv", "Connection closed gracefully");
+            DEBUG_PRINT_I("wifiSerialRxHandler", "Connection closed gracefully");
             buff[0] = 0;
             len = 1;
         }
         else if (read_bytes < 0)
         {
-            DEBUG_PRINT_E("wifiSerialRcv", "Connection closed with error: %d", errno);
+            DEBUG_PRINT_E("wifiSerialRxHandler", "Connection closed with error: %d", errno);
             buff[0] = 0;
             len = 1;
         }
@@ -121,7 +121,7 @@ static void wifiSerialRcv(void)
         {
             if (read_bytes != CMD_MAX_BYTES)
             {
-                DEBUG_PRINT_E("wifiSerialRcv", "Received %d bytes and the acceptable amount is %d", read_bytes,
+                DEBUG_PRINT_E("wifiSerialRxHandler", "Received %d bytes and the acceptable amount is %d", read_bytes,
                               CMD_MAX_BYTES);
             }
             len = CMD_MAX_BYTES;
@@ -136,11 +136,11 @@ static void wifiSerialRcv(void)
 
             stopAcquisition();
 
-            DEBUG_PRINT_E("wifiSerialRcv", "Disconnected from Wifi or socket error");
+            DEBUG_PRINT_E("wifiSerialRxHandler", "Disconnected from Wifi or socket error");
 
             return;
         }
 
-        processRcv(buff, len);
+        processPacket(buff, len);
     }
 }

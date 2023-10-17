@@ -157,7 +157,7 @@ void adcExtInit(const sdmmc_host_t *spi_host)
     }
 }
 
-esp_err_t IRAM_ATTR get_adc_ext_values_raw(uint8_t channels_mask, uint32_t values[EXT_ADC_CHANNELS])
+esp_err_t IRAM_ATTR getAdcExtValuesRaw(uint8_t channels_mask, uint32_t values[2])
 {
     uint8_t pop_count = 0;
     while (channels_mask)

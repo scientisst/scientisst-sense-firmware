@@ -24,4 +24,4 @@ void adcExtInit(const sdmmc_host_t *spi_host);
 void adcExtStart(void);
 void adcExtStop(void);
 void mcpSetupRoutine(uint8_t channel_mask);
-esp_err_t get_adc_ext_values_raw(uint8_t channels_mask, uint32_t values[EXT_ADC_CHANNELS]);
+esp_err_t getAdcExtValuesRaw(uint8_t channels_mask, uint32_t values[2]);
