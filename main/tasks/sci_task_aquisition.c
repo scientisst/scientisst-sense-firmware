@@ -242,7 +242,8 @@ static void write_frame_Bitalino(uint8_t *frame, const uint16_t *adc_internal_re
     for (int i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
     {
         adc_res[i] = adc_internal_res[i] >> 2;
-        DEBUG_PRINT_I("write_frame_Bitalino", "(adc_res)A%d=%d", active_internal_chs[i], adc_res[i]);
+        DEBUG_PRINT_I("write_frame_Bitalino", "(adc_res)A%d=%d", scientisst_device_settings.active_internal_chs[i],
+                      adc_res[i]);
     }
 
     frame[scientisst_buffers.packet_size - 2] = io_state;
