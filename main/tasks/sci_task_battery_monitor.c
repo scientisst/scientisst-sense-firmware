@@ -64,7 +64,7 @@ _Noreturn void IRAM_ATTR task_battery_monitor(void)
         bat_led_status_gpio = turn_led_on;
 
 #ifdef CONFIG_PREVENT_ACQUISTION_ON_LOW_BATTERY
-        if (turn_led_on)
+        if (turn_led_on && battery < scientisst_device_settings.battery_threshold - 50)
         {
             DEBUG_PRINT_E("task_battery_monitor", "Battery level is too low and sensor values will have errors");
             stopAcquisition();
