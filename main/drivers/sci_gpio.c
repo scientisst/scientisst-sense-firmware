@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 
+#include "hal/gpio_types.h"
+
 #include "sci_adc_internal.h"
 #include "sci_macros.h"
 
@@ -103,19 +105,19 @@ void gpioInit(void)
         ((1ULL << STATE_LED_R_IO) | (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << SPI3_CS0_IO)),
         0, 0);
 #else
-    gpioConfig(GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE,
+    gpioConfig(GPIO_MODE_OUTPUT, (gpio_int_type_t)GPIO_PIN_INTR_DISABLE,
                ((1ULL << STATE_LED_R_IO) | (1ULL << STATE_LED_G_IO) | (1ULL << STATE_LED_B_IO) |
                 (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << SPI3_CS0_IO)),
                0, 0);
 #endif
 
-    gpioConfig(GPIO_MODE_INPUT, GPIO_PIN_INTR_DISABLE, ((1ULL << I0_IO) | (1ULL << I1_IO)), 1,
+    gpioConfig(GPIO_MODE_INPUT, (gpio_int_type_t)GPIO_PIN_INTR_DISABLE, ((1ULL << I0_IO) | (1ULL << I1_IO)), 1,
                0); // The 2 IO inputs
 }
 
 // Function has to be declared with void* as argument even though it is not
 // used to avoid compiler warnings
-void IRAM_ATTR gpioDrdyIsrHandler(void *not_used)
+void IRAM_ATTR gpioDrdyIsrHandler(void)
 {
     return;
 }

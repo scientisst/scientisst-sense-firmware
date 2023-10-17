@@ -10,12 +10,9 @@
 #include <sys/fcntl.h>
 
 #include "driver/uart.h"
-#include "esp_vfs.h"
 #include "esp_vfs_dev.h"
 #include "sys/select.h"
-#include "sys/unistd.h"
 
-#include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 

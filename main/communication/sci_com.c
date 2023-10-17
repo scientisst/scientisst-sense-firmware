@@ -10,25 +10,22 @@
 
 #include <string.h>
 
-#include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
-#include "sci_bt.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
-#include "sci_sd_card.h"
 #include "sci_task_aquisition.h"
 #include "sci_timer.h"
 
 #define NUM_UNUSED_BITS_FOR_CH_MASK 2
 #define STATUS_PACKET_SIZE 16
 
-int send_fd = 0; ///< File descriptor to send data to client, only part of comunication so it is the only global variable not
-                 ///< declared in sci_scintisst.h
+int send_fd = 0; ///< File descriptor to send data to client, only part of communication so it is the only global variable
+                 ///< not declared in sci_scientisst.h
 
 /**
  * \brief Processes the command received from the client
@@ -37,9 +34,8 @@ int send_fd = 0; ///< File descriptor to send data to client, only part of comun
  * mode and with all API's.
  *
  * \param buff The buffer received
- * \param len The length of the buffer
  */
-void processPacket(uint8_t *buff, int len)
+void processPacket(uint8_t *buff)
 {
     uint8_t cmd = buff[0] & 0b00000011;
 
@@ -50,7 +46,7 @@ void processPacket(uint8_t *buff, int len)
         return;
     }
 
-    // First check trigger command - it's regardeless of the current mode
+    // First check trigger command - it's regardless of the current mode
     if ((buff[0] & 0b10110011) == 0b10110011) // trigger command - Set output GPIO levels
     {
         triggerGpio(buff);
@@ -76,7 +72,7 @@ void processPacket(uint8_t *buff, int len)
             }
             // Get channels from mask
             scientisst_device_settings.api_config.select_ch_mask_func(buff);
-            startAcquisition(buff, cmd);
+            startAcquisition();
         }
         else if (cmd == 0b11) // Configuration command
         {
@@ -110,7 +106,7 @@ void processPacket(uint8_t *buff, int len)
  *
  * This function sets the output channels to the requested value.
  */
-void triggerGpio(uint8_t *buff)
+void triggerGpio(const uint8_t *buff)
 {
     uint8_t o2_lvl = (buff[0] & 0b00001000) >> 3;
     uint8_t o1_lvl = (buff[0] & 0b00000100) >> 2;
@@ -127,9 +123,8 @@ void triggerGpio(uint8_t *buff)
  * \brief Set output DAC level
  *
  * This function sets the output DAC level according to the received command.
- * //TODO: Confirm this
  */
-void triggerDAC(uint8_t *buff)
+void triggerDAC(const uint8_t *buff)
 {
     dac_output_voltage(DAC_CHANNEL_1, buff[1]);
     DEBUG_PRINT_I("triggerDAC", "DAC output to %d", buff[1]);
@@ -184,10 +179,10 @@ uint8_t getPacketSize(void)
     }
     else if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
     {
-        // Add 24bit channel's contributuion to packet size
+        // Add 24bit channel's contribution to packet size
         _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
 
-        // Add 12bit channel's contributuion to packet size
+        // Add 12bit channel's contribution to packet size
         if (!(scientisst_device_settings.num_intern_active_chs % 2))
         { // If it's an even number
             _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
@@ -201,8 +196,8 @@ uint8_t getPacketSize(void)
     }
     else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
     {
-        const char *json_str = cJSON_Print(scientisst_buffers.json);
-        _packet_size = strlen(json_str) + 1;
+        char *json_str = cJSON_Print(scientisst_buffers.json);
+        _packet_size = (uint8_t)strlen(json_str) + 1;
         free((void *)json_str);
     }
     DEBUG_PRINT_I("getPacketSize", "Packet size is %d bytes", _packet_size);
@@ -218,9 +213,8 @@ uint8_t getPacketSize(void)
  *
  * \param buff The received command
  */
-void selectChsFromMaskScientisstAndJson(uint8_t *buff)
+void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
 {
-    uint8_t i;
     char aux_str[10];
     char value_str[10];
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
@@ -230,7 +224,7 @@ void selectChsFromMaskScientisstAndJson(uint8_t *buff)
     scientisst_device_settings.num_extern_active_chs = 0;
 
     // Select the channels that are activated (with corresponding bit equal to 1)
-    for (i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
+    for (uint8_t i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
     {
         if (buff[1] & i)
         {
@@ -238,13 +232,13 @@ void selectChsFromMaskScientisstAndJson(uint8_t *buff)
             if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) || i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2))
             {
                 scientisst_device_settings.active_ext_chs[scientisst_device_settings.num_extern_active_chs] =
-                    channel_number - 1;
+                    (uint8_t)channel_number - 1;
                 scientisst_device_settings.num_extern_active_chs++;
             }
             else
             {
                 scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
-                    channel_number - 1;
+                    (uint8_t)channel_number - 1;
                 scientisst_device_settings.num_intern_active_chs++;
             }
 
@@ -292,7 +286,7 @@ void selectChsFromMaskScientisstAndJson(uint8_t *buff)
  *
  * \param buff The received command
  */
-void selectChsFromMaskBitalino(uint8_t *buff)
+void selectChsFromMaskBitalino(const uint8_t *buff)
 {
     int channel_number = DEFAULT_ADC_CHANNELS;
 
@@ -307,7 +301,7 @@ void selectChsFromMaskBitalino(uint8_t *buff)
         {
             // Store the activated channels into the respective acq_config.channels array
             scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
-                channel_number - 1;
+                (uint8_t)channel_number - 1;
             scientisst_device_settings.num_intern_active_chs++;
             DEBUG_PRINT_I("selectChsFromMaskBitalino", "Channel A%d added", channel_number - 1);
         }
@@ -340,7 +334,7 @@ void setSampleRate(uint8_t *buff)
 
     scientisst_device_settings.sample_rate = aux;
 
-    DEBUG_PRINT_I("processPacket", "Sampling rate recieved: %dHz", scientisst_device_settings.sample_rate);
+    DEBUG_PRINT_I("processPacket", "Sampling rate received: %dHz", scientisst_device_settings.sample_rate);
 }
 
 /**
@@ -350,12 +344,8 @@ void setSampleRate(uint8_t *buff)
  * starts the ADC and the timer. It also sets the acquisition mode (live or
  * simulated). It also changes the LED state.
  *
- * \param buff The received command
- * \param cmd The command (identifies if it is a live or a simulated
- * acquisition) \warning If changed, change same code in API (warning on
- * identified on code)
  */
-void startAcquisition(uint8_t *buff, uint8_t cmd)
+void startAcquisition(void)
 {
     // Clear send buffs, because of potential previous live mode
     scientisst_buffers.tx_curr_buff = 0;
@@ -485,7 +475,6 @@ void stopAcquisition(void)
 void sendStatusPacket(void)
 {
     uint8_t crc = 0;
-    uint8_t i;
     uint16_t true_send_threshold;
 
     memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1]);
@@ -495,7 +484,7 @@ void sendStatusPacket(void)
     scientisst_buffers.send_threshold = 0;
 
     // calculate CRC (except last byte (seq+CRC) )
-    for (i = 0; i < STATUS_PACKET_SIZE - 1; i++)
+    for (uint8_t i = 0; i < STATUS_PACKET_SIZE - 1; i++)
     {
         // calculate CRC nibble by nibble
         crc = crc_table[crc] ^ (scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][i] >> 4);
@@ -504,7 +493,7 @@ void sendStatusPacket(void)
 
     // calculate CRC for last byte (I1|I2|O1|O2|CRC)
     crc = crc_table[crc] ^ (crc_seq & 0x0F);
-    crc = (0) | crc_table[crc]; // TODO: Onde está 0, meter os valores de I1|I2|O1|O2
+    crc = 0 | crc_table[crc];
 
     // store CRC and Seq in the last byte of the packet
     scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][STATUS_PACKET_SIZE - 1] = crc;

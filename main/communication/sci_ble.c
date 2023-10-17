@@ -6,7 +6,6 @@
 
 #include "sci_ble.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,15 +17,9 @@
 #include "esp_gatts_api.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "esp_timer.h"
-#include "freertos/event_groups.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
-#include "freertos/task.h"
-#include "nvs_flash.h"
 #include "sdkconfig.h"
 
-#include "sci_bt.h"
 #include "sci_com.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
@@ -111,8 +104,8 @@ static esp_ble_adv_data_t adv_data = {
     .min_interval = 0x0006, // slave connection min interval, Time = min_interval * 1.25 msec
     .max_interval = 0x000C, // slave connection max interval, Time = max_interval * 1.25 msec
     .appearance = 0x00,
-    .manufacturer_len = 0,       // TEST_MANUFACTURER_DATA_LEN,
-    .p_manufacturer_data = NULL, //&test_manufacturer[0],
+    .manufacturer_len = 0, // TEST_MANUFACTURER_DATA_LEN,
+    .p_manufacturer_data = NULL,
     .service_data_len = 0,
     .p_service_data = NULL,
     .service_uuid_len = 32,
@@ -128,8 +121,8 @@ static esp_ble_adv_data_t scan_rsp_data = {
     .min_interval = 0x0006,
     .max_interval = 0x000C,
     .appearance = 0x00,
-    .manufacturer_len = 0,       // TEST_MANUFACTURER_DATA_LEN,
-    .p_manufacturer_data = NULL, //&test_manufacturer[0],
+    .manufacturer_len = 0, // TEST_MANUFACTURER_DATA_LEN,
+    .p_manufacturer_data = NULL,
     .service_data_len = 0,
     .p_service_data = NULL,
     .service_uuid_len = 32,
@@ -181,9 +174,6 @@ typedef struct
 } prepare_type_env_t;
 
 static prepare_type_env_t a_prepare_write_env;
-
-void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
-void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 
 /**
  * \brief ESP32 BLE GATT Server Event Handler.
@@ -281,16 +271,13 @@ void writeEvent(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, e
                     status = ESP_GATT_NO_RESOURCES;
                 }
             }
-            else
+            else if (param->write.offset > PREPARE_BUF_MAX_SIZE || prepare_write_env->prepare_len > param->write.offset)
             {
-                if (param->write.offset > PREPARE_BUF_MAX_SIZE || prepare_write_env->prepare_len > param->write.offset)
-                {
-                    status = ESP_GATT_INVALID_OFFSET;
-                }
-                else if ((param->write.offset + param->write.len) > PREPARE_BUF_MAX_SIZE)
-                {
-                    status = ESP_GATT_INVALID_ATTR_LEN;
-                }
+                status = ESP_GATT_INVALID_OFFSET;
+            }
+            else if ((param->write.offset + param->write.len) > PREPARE_BUF_MAX_SIZE)
+            {
+                status = ESP_GATT_INVALID_ATTR_LEN;
             }
 
             esp_gatt_rsp_t *gatt_rsp = (esp_gatt_rsp_t *)malloc(sizeof(esp_gatt_rsp_t));
@@ -420,7 +407,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
     }
     case ESP_GATTS_WRITE_EVT:
         DEBUG_PRINT_I("BLE Event", "BT data received length:%d", param->write.len);
-        processPacket(param->write.value, param->write.len);
+        processPacket(param->write.value);
         // This function is used to handle write requeset of client. Because
         // server should send write response when receive write request.
         writeEvent(gatts_if, &a_prepare_write_env, param);
@@ -574,12 +561,9 @@ static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if
     {
         /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call
          * every profile cb function */
-        if (gatts_if == ESP_GATT_IF_NONE || gatts_if == gl_profile_tab[idx].gatts_if)
+        if ((gatts_if == ESP_GATT_IF_NONE || gatts_if == gl_profile_tab[idx].gatts_if) && gl_profile_tab[idx].gatts_cb)
         {
-            if (gl_profile_tab[idx].gatts_cb)
-            {
-                gl_profile_tab[idx].gatts_cb(event, gatts_if, param);
-            }
+            gl_profile_tab[idx].gatts_cb(event, gatts_if, param);
         }
     }
 }
@@ -591,12 +575,13 @@ static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if
  * with other send functions). \param len Length of data. \param buff Data to
  * send.
  */
-esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, uint8_t *buff)
+esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, const uint8_t *buff)
 {
     esp_err_t res;
 
-    res = esp_ble_gatts_send_indicate(gl_profile_tab[PROFILE_A_APP_ID].gatts_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id,
-                                      gl_profile_tab[PROFILE_A_APP_ID].char_handle, len, buff, false);
+    res = esp_ble_gatts_send_indicate((esp_gatt_if_t)gl_profile_tab[PROFILE_A_APP_ID].gatts_if,
+                                      gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle,
+                                      (uint16_t)len, (uint8_t *)buff, false);
 
     if (res != ESP_OK)
     {

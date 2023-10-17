@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "driver/adc.h"
-#include "esp_adc_cal.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "sys/stat.h"
@@ -18,12 +17,8 @@
 
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
-#include "sci_bt.h"
-#include "sci_com.h"
-#include "sci_gpio.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
-#include "sci_timer.h"
 
 #define DEFAULT_SAVE_FILE_NAME "/sdcard/acquisition_datapoints"
 

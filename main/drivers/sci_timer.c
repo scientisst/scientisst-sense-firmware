@@ -7,14 +7,11 @@
 
 #include "sci_timer.h"
 
-#include "driver/periph_ctrl.h"
 #include "driver/timer.h"
 #include "esp_types.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
 #include "freertos/task.h"
 
-#include "sci_gpio.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
@@ -89,7 +86,7 @@ void timerPause(int timer_group, int timer_idx)
  * Note:
  * We don't call the timer API here because they are not declared with IRAM_ATTR
  * (This flag forces this function's text to reside in SRAM instead of Flash to
- * improve it's access speed). If we're okay with the timer irq not being
+ * improve its access speed). If we're okay with the timer irq not being
  * serviced while SPI flash cache is disabled, we can allocate this interrupt
  * without the ESP_INTR_FLAG_IRAM flag and use the normal API.
  *

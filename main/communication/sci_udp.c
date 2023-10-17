@@ -9,9 +9,7 @@
 #include "lwip/err.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
-#include "lwip/sys.h"
 
-#include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
@@ -30,7 +28,7 @@ struct addrinfo *udp_server_addr;
  *      - The file descriptor of the socket if successful
  *      - -1 if an error occurred
  */
-int initUdpClient(char *ip, char *port)
+int initUdpClient(const char *ip, const char *port)
 {
     struct addrinfo hints;
     int server_fd;
@@ -88,7 +86,7 @@ int initUdpClient(char *ip, char *port)
  *      - ESP_OK if successful
  *      - ESP_FAIL if an error occurred
  */
-esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, uint8_t *buff)
+esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, const uint8_t *buff)
 {
     int sent_bytes;
     if ((sent_bytes = sendto(fd, buff, len, 0, udp_server_addr->ai_addr, udp_server_addr->ai_addrlen)) != len)

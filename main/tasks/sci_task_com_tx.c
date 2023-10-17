@@ -1,6 +1,5 @@
 #include "include/sci_task_com_tx.h"
 
-#include "drivers/include/sci_wifi.h"
 #include "esp_attr.h"
 
 #include "sci_ble.h"
@@ -12,7 +11,7 @@
 #include "sci_udp.h"
 #include "sci_ws.h"
 
-static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
+static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *));
 
 /**
  * \brief Task that sends data to the client.
@@ -26,8 +25,8 @@ static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
  */
 _Noreturn void IRAM_ATTR sendTask(void)
 {
-    esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *); ///< Send function pointer
-    void (*send_data_func)(esp_err_t (*send_func)(uint32_t, int, uint8_t *)) = &sendData;
+    esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *) = NULL; ///< Send function pointer
+    void (*send_data_func)(esp_err_t (*send_func)(uint32_t, int, const uint8_t *)) = &sendData;
 
     switch (scientisst_device_settings.op_settings.com_mode)
     {
@@ -51,7 +50,6 @@ _Noreturn void IRAM_ATTR sendTask(void)
         break;
     case COM_MODE_BT:
     case COM_MODE_SD_CARD:
-        tx_write_func = &esp_spp_write;
         send_data_func = &sendDataBluetooth;
         break;
     default:
@@ -71,16 +69,16 @@ _Noreturn void IRAM_ATTR sendTask(void)
  * \brief Function to send data using the appropriate send function.
  *
  */
-static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *))
+static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *))
 {
+    CHECK_NOT_NULL(tx_write_func);
+
     while (1) // Loop to send all the available data
     {
         int buf_ready;
         esp_err_t ret;
         // Check if there's anything to send and if there is, check if it's enough
         // to send
-        // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
-        // their own execution and do not interfere with the other task.
         buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
 
         if (!buf_ready)

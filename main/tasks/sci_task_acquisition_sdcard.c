@@ -23,7 +23,7 @@ void startAcquisitionSDCard(void);
  * \brief Acquisition task of the data from the ADC and save it to the SD
  * card.
  *
- * This function is identic to aquire adc1 but instead of saving the data to
+ * This function is identical to the acquire task but instead of saving the data to
  * the buffers it saves it directly to the SD card. This also means that the
  * send task is not active.
  *
@@ -66,9 +66,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     // All intern channels are always active, acquire them
     for (int i = 5; i >= 0; --i)
     {
-        *(uint16_t *)buffer_ptr =
-            adc1_get_raw(scientisst_device_settings.analog_channels[scientisst_device_settings.active_internal_chs[i]]) &
-            0x0FFF;
+        *(uint16_t *)buffer_ptr = getAdcInternalValue(ADC_INTERNAL_1, (uint8_t)i, 0) & 0x0FFF;
         buffer_ptr += 2;
     }
 
@@ -107,7 +105,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
         MAX_BUFFER_SIZE_SDCARD - 22) // 28 is max size, 22 when no adc ext
     {
         scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] =
-            buffer_ptr - (scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff]);
+            (uint16_t)(buffer_ptr - scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff]);
 
         xTaskNotifyGive(file_sync_task);
 
@@ -191,7 +189,7 @@ void startAcquisitionSDCard(void)
     scientisst_buffers.tx_curr_buff = 0;
 
     // Select the channels that are activated (with corresponding bit equal to 1)
-    for (int i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
+    for (uint8_t i = 1 << (DEFAULT_ADC_CHANNELS + 2 - 1); i > 0; i >>= 1)
     {
         if (!(active_channels_sd & i))
         {
@@ -202,13 +200,14 @@ void startAcquisitionSDCard(void)
         // Store the activated channels
         if (i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 1) || i == 1 << (DEFAULT_ADC_CHANNELS + 2 - 2))
         {
-            scientisst_device_settings.active_ext_chs[scientisst_device_settings.num_extern_active_chs] = channel_number - 1;
+            scientisst_device_settings.active_ext_chs[scientisst_device_settings.num_extern_active_chs] =
+                (uint8_t)channel_number - 1;
             scientisst_device_settings.num_extern_active_chs++;
         }
         else
         {
             scientisst_device_settings.active_internal_chs[scientisst_device_settings.num_intern_active_chs] =
-                channel_number - 1;
+                (uint8_t)channel_number - 1;
             scientisst_device_settings.num_intern_active_chs++;
         }
 

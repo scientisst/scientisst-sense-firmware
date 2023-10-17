@@ -42,7 +42,6 @@
  **************************/
 // clang-format off
 #ifdef CONFIG_SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
-// This macros is only define if _DEBUG_ is defined
 #define DEBUG_PRINT_I(func, ...) do { ESP_LOGI((func), __VA_ARGS__); } while (0)
 #define DEBUG_PRINT_W(func, ...) do { ESP_LOGW((func), __VA_ARGS__); } while (0)
 #define DEBUG_PRINT_E(func, ...) do { ESP_LOGE((func), __VA_ARGS__); } while (0)

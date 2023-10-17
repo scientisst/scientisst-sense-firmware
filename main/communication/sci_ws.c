@@ -9,12 +9,9 @@
 
 #include "esp_https_server.h"
 #include "esp_log.h"
-#include "esp_netif.h"
 #include "esp_system.h"
-#include "nvs_flash.h"
 #include "sys/param.h"
 
-#include "sci_bt.h"
 #include "sci_com.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
@@ -38,11 +35,11 @@ int ws_fd;
  *      - ESP_OK if the data was sent successfully
  *      - ESP_FAIL otherwise
  */
-esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, uint8_t *buff)
+esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, const uint8_t *buff)
 {
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
-    ws_pkt.payload = buff;
+    ws_pkt.payload = (uint8_t *)buff;
     ws_pkt.len = len;
     ws_pkt.type = HTTPD_WS_TYPE_BINARY;
 
@@ -101,7 +98,7 @@ esp_err_t rxHandler(httpd_req_t *req)
             free(buf);
             return ret;
         }
-        processPacket(ws_pkt.payload, ws_pkt.len);
+        processPacket(ws_pkt.payload);
     }
     free(buf);
     return ret;

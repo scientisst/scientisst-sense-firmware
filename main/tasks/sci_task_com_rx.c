@@ -10,7 +10,6 @@
 #include "sci_serial.h"
 #include "sci_tcp.h"
 #include "sci_udp.h"
-#include "sci_ws.h"
 
 #define CMD_MAX_BYTES 4
 
@@ -95,7 +94,6 @@ _Noreturn void rxTask(void)
 static void wifiSerialRxHandler(void)
 {
     uint8_t buff[CMD_MAX_BYTES];
-    int len;
     int read_bytes;
 
     while (send_fd <= 0) // Wait until a connection is made
@@ -109,13 +107,11 @@ static void wifiSerialRxHandler(void)
         {
             DEBUG_PRINT_I("wifiSerialRxHandler", "Connection closed gracefully");
             buff[0] = 0;
-            len = 1;
         }
         else if (read_bytes < 0)
         {
             DEBUG_PRINT_E("wifiSerialRxHandler", "Connection closed with error: %d", errno);
             buff[0] = 0;
-            len = 1;
         }
         else
         {
@@ -124,7 +120,6 @@ static void wifiSerialRxHandler(void)
                 DEBUG_PRINT_E("wifiSerialRxHandler", "Received %d bytes and the acceptable amount is %d", read_bytes,
                               CMD_MAX_BYTES);
             }
-            len = CMD_MAX_BYTES;
         }
 
         // If connection was broken, close socket and return
@@ -141,6 +136,6 @@ static void wifiSerialRxHandler(void)
             return;
         }
 
-        processPacket(buff, len);
+        processPacket(buff);
     }
 }

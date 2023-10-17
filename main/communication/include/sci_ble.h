@@ -13,4 +13,4 @@
 #include "sci_scientisst.h"
 
 void initBle(void);
-esp_err_t sendBle(uint32_t fd, int len, uint8_t *buff);
+esp_err_t sendBle(uint32_t fd, int len, const uint8_t *buff);

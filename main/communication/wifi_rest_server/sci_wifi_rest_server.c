@@ -16,23 +16,14 @@
 #include <string.h>
 
 #include "cJSON.h"
-#include "drivers/include/sci_wifi.h"
-#include "esp_event.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
-#include "esp_netif.h"
 #include "esp_spiffs.h"
 #include "esp_system.h"
 #include "esp_vfs.h"
-#include "esp_vfs_fat.h"
-#include "esp_vfs_semihost.h"
 #include "lwip/apps/netbiosns.h"
-#include "mdns.h"
-#include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "sdmmc_cmd.h"
 
-#include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
@@ -60,7 +51,7 @@ typedef struct rest_server_context
 #define CHECK_FILE_EXTENSION(filename, ext) (strcasecmp(&filename[strlen(filename) - strlen(ext)], ext) == 0)
 
 static void parseHttpForm(char *buff);
-static void opSettingsSaveMember(char *member, char *value);
+static void opSettingsSaveMember(char *member, const char *value);
 
 /**
  * \brief Set HTTP response content type according to file extension
@@ -68,7 +59,6 @@ static void opSettingsSaveMember(char *member, char *value);
  * \param req HTTP request
  * \param filepath File path
  *
- * \return //TODO: add details about return value
  */
 static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filepath)
 {
@@ -146,7 +136,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
         }
         else if (read_bytes > 0)
         {
-            int ret;
+            esp_err_t ret;
             /* Send the buffer contents as HTTP response chunk */
             if ((ret = httpd_resp_send_chunk(req, chunk, read_bytes)) != ESP_OK)
             {
@@ -156,7 +146,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
                 httpd_resp_sendstr_chunk(req, NULL);
                 /* Respond with 500 Internal Server Error */
                 httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
-                return ESP_FAIL;
+                return ret;
             }
         }
     } while (read_bytes > 0);
@@ -186,14 +176,14 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
 static esp_err_t op_settings_get_handler(httpd_req_t *req)
 {
     cJSON *root;
-    cJSON *connectionInfo;
-    cJSON *bitalinoInfo;
+    cJSON *connectionInfo = cJSON_CreateObject();
+    cJSON *bitalinoInfo = cJSON_CreateObject();
 
     httpd_resp_set_type(req, "application/json");
 
     root = cJSON_CreateObject();
-    cJSON_AddItemToObject(root, "connectionInfo", connectionInfo = cJSON_CreateObject());
-    cJSON_AddItemToObject(root, "bitalinoInfo", bitalinoInfo = cJSON_CreateObject());
+    cJSON_AddItemToObject(root, "connectionInfo", connectionInfo);
+    cJSON_AddItemToObject(root, "bitalinoInfo", bitalinoInfo);
 
     // if no error
     if (scientisst_device_settings.is_op_settings_valid)
@@ -227,7 +217,7 @@ static esp_err_t op_settings_get_handler(httpd_req_t *req)
         cJSON_AddStringToObject(bitalinoInfo, "port_o2", "low");
     }
 
-    const char *renderedJSON = cJSON_Print(root);
+    char *renderedJSON = cJSON_Print(root);
     httpd_resp_sendstr(req, renderedJSON);
     free((void *)renderedJSON);
     cJSON_Delete(root);
@@ -239,7 +229,8 @@ static esp_err_t op_settings_post_handler(httpd_req_t *req)
     int total_len = req->content_len;
     int cur_len = 0;
     char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
-    int received = 0;
+    int received;
+
     if (total_len >= SCRATCH_BUFSIZE)
     {
         /* Respond with 500 Internal Server Error */
@@ -278,9 +269,9 @@ static esp_err_t op_settings_post_handler(httpd_req_t *req)
 static void parseHttpForm(char *buff)
 {
     const char s[2] = "&";
-    char *token;
-    char *element_seperator = NULL;
-    char *eostring = NULL;
+    const char *token;
+    const char *element_seperator = NULL;
+    const char *eostring = NULL;
     char key[64];
     char value[64];
 
@@ -313,7 +304,7 @@ static void parseHttpForm(char *buff)
  * \param member Member of op_settings
  * \param value Value of member
  */
-static void opSettingsSaveMember(char *member, char *value)
+static void opSettingsSaveMember(char *member, const char *value)
 {
     if (!strcmp(member, "ssid"))
     {
@@ -463,7 +454,8 @@ esp_err_t init_fs_www(void)
         return ESP_FAIL;
     }
 
-    size_t total = 0, used = 0;
+    size_t total = 0;
+    size_t used = 0;
     ret = esp_spiffs_info(NULL, &total, &used);
     if (ret != ESP_OK)
     {

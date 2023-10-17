@@ -16,7 +16,7 @@
 typedef struct
 {
     uint8_t api_mode;
-    void (*select_ch_mask_func)();
+    void (*select_ch_mask_func)(const uint8_t *buff);
 } api_config_t;
 
 typedef struct
@@ -49,7 +49,7 @@ typedef struct
     uint8_t gpio_out_state[2];                           ///< Output of 01 & O2 (O0 & O1)
     api_config_t api_config;                             //
     op_settings_info_t op_settings;                      ///< Holds settings that should be saved on flash between reboots
-    uint8_t op_mode;                                     ///< Flag that indicastes if op mode is on (idle, live or config)
+    uint8_t op_mode;                                     ///< Flag that indicates if op mode is on (idle, live or config)
     uint8_t send_busy;                                   ///< Flag that indicates if send task is busy
     uint32_t sample_rate;                                ///< Sample rate of the acquisition
     uint8_t is_op_settings_valid;                        ///< Indicates if op_settings has been loaded from flash
@@ -58,13 +58,13 @@ typedef struct
 typedef struct
 {
     uint8_t *frame_buffer[NUM_BUFFERS];           ///< Buffer that holds the frames to be sent
-    uint32_t frame_buffer_length_bytes;           ///< Length of each send buffer, set to optimal value depending on com mode
+    uint16_t frame_buffer_length_bytes;           ///< Length of each send buffer, set to optimal value depending on com mode
     uint16_t frame_buffer_write_idx[NUM_BUFFERS]; ///< The index of the first free element in for each buffer
     volatile uint16_t frame_buffer_ready_to_send[NUM_BUFFERS]; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
     uint8_t tx_curr_buff;                                      ///< Index of the buffer that tx task is currently sending
     uint8_t acq_curr_buff;   ///< Index of the buffer that acquisition task is currently using
     uint8_t packet_size;     ///< Current packet size (dependent on number of channels used)
-    uint32_t send_threshold; ///< Based on buffer and packet sizes, threshold that marks the buffer as ready to send and
+    uint16_t send_threshold; ///< Based on buffer and packet sizes, threshold that marks the buffer as ready to send and
                              ///< changes buffer used for acquisition
     FILE *sd_card_save_file; ///< File where data is saved in SD card mode
     cJSON *json;             ///< JSON object that is used in JSON api mode

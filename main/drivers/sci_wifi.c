@@ -15,17 +15,12 @@
 #include "esp_wifi.h"
 #include "freertos/event_groups.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "lwip/apps/netbiosns.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
 #include "mdns.h"
-#include "nvs_flash.h"
 
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
-#define EXAMPLE_ESP_WIFI_SSID "ScientISST"
 #define EXAMPLE_ESP_WIFI_PASS "12345678"
 #define EXAMPLE_ESP_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1
 #define EXAMPLE_MAX_STA_CONN 4     // Default: 4
@@ -139,12 +134,12 @@ static void eventHandler(void *arg, esp_event_base_t event_base, int32_t event_i
  * \brief Wifi station initialization
  *
  * \return:
- *      - 0 if connection to Wifi fails
- *      - ESP_FAIL if connection to Wifi succeeds
+ *      - ESP_FAIL if connection to Wifi fails
+ *      - ESP_OK if connection to Wifi succeeds
  */
 int wifiInitSta(void)
 {
-    int ret = 0;
+    int ret = ESP_OK;
     s_wifi_event_group = xEventGroupCreate();
 
     esp_netif_create_default_wifi_sta();

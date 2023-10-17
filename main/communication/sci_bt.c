@@ -7,9 +7,7 @@
 
 #include "sci_bt.h"
 
-#include <ctype.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "esp_attr.h"
@@ -22,11 +20,6 @@
 #include "esp_spp_api.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "nvs.h"
-#include "nvs_flash.h"
-#include "sys/time.h"
-#include "time.h"
 
 #include "sci_com.h"
 #include "sci_macros.h"
@@ -41,16 +34,14 @@
 /* This function is called by the send task and sends the data using the
  * appropriate send function. It first checks if there's anything to send. The
  * buffer changing and clearing tasks are done after in finalizeSend() the
- * ESP_SPP_WRITE_EVT event ocurred with writing completed successfully in
+ * ESP_SPP_WRITE_EVT event occurred with writing completed successfully in
  * esp_spp_cb().
  */
-void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *))
+void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *))
 {
-    int buf_ready = 0;
+    int buf_ready;
     // Check if there's anything to send and if there is, check if it's enough
     // to send
-    // TODO: Remove semaphores. Race condition exists but each task can only mark values that would stop
-    // their own execution and do not interfere with the other task.
     buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
 
     if (!buf_ready)
@@ -91,7 +82,6 @@ void IRAM_ATTR finalizeSend(void)
 /**
  * \brief espSppCb gap register callback function.
  *
- * //TODO: Add more comments with more precise information
  */
 static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -126,7 +116,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     case ESP_SPP_CLOSE_EVT: // Client connection closed
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_CLOSE_EVT");
         send_fd = 0;
-        stopAcquisition(); // Make sure that sendBtTask doesn't stay's stuck waiting for a sucessful write
+        stopAcquisition(); // Make sure that sendBtTask doesn't stay stuck waiting for a successful write
         break;
     case ESP_SPP_START_EVT: // server started
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_START_EVT");
@@ -135,13 +125,13 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_CL_INIT_EVT");
         break;
     case ESP_SPP_DATA_IND_EVT: // connection received data
-        DEBUG_PRINT_I("BT Event", "BT data recieved length:%d  data:", param->data_ind.len);
-        processPacket(param->data_ind.data, param->data_ind.len);
+        DEBUG_PRINT_I("BT Event", "BT data received length:%d  data:", param->data_ind.len);
+        processPacket(param->data_ind.data);
         break;
     case ESP_SPP_CONG_EVT: // connection congestion status changed
         if (param->cong.cong == 0 && scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
         {
-            sendDataBluetooth(&esp_spp_write); // bt write is free
+            sendDataBluetooth(NULL); // bt write is free
         }
         else if (param->cong.cong == 1)
         {
@@ -155,7 +145,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
             // Try to send next buff
             if (param->write.cong == 0) // bt write is free
             {
-                sendDataBluetooth(&esp_spp_write);
+                sendDataBluetooth(NULL);
             }
             else
             {
@@ -177,7 +167,6 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 }
 
 /**
- * \brief //TODO: Add more comments with more precise information
  */
 static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 {
@@ -316,7 +305,7 @@ void initBt(void)
 void getDeviceName(void)
 {
     uint8_t mac[6];
-    uint8_t mac_iterface[6];
+    uint8_t mac_interface[6];
     uint8_t mac_bt[6];
     char mac_interface_str[18];
     char mac_bt_str[18];
@@ -332,24 +321,24 @@ void getDeviceName(void)
         return;
     }
 
-    memcpy(mac_iterface, mac, 6);
+    memcpy(mac_interface, mac, 6);
     memcpy(mac_bt, mac, 6);
 
-    // Use esp_read_mac to infer the wifi station mac addr based in the base mac addr read from EFUSE
+    // Use esp_read_mac to infer the Wi-Fi station mac addr based in the base mac addr read from EFUSE
     if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_AP)
     {
-        res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_SOFTAP);
-        // Use esp_read_mac to infer the wifi softap mac addr based in the base mac addr read from EFUSE
+        res = esp_read_mac(mac_interface, ESP_MAC_WIFI_SOFTAP);
+        // Use esp_read_mac to infer the Wi-Fi softap mac addr based in the base mac addr read from EFUSE
     }
     else if (scientisst_device_settings.op_settings.com_mode == COM_MODE_TCP_STA ||
              scientisst_device_settings.op_settings.com_mode == COM_MODE_UDP_STA)
     {
-        res = esp_read_mac(mac_iterface, ESP_MAC_WIFI_STA);
+        res = esp_read_mac(mac_interface, ESP_MAC_WIFI_STA);
         // Use esp_read_mac to infer the bluetooth mac addr based in the base mac addr read from EFUSE
     }
     else
     {
-        res = esp_read_mac(mac_iterface, ESP_MAC_BT);
+        res = esp_read_mac(mac_interface, ESP_MAC_BT);
     }
 
     if (res != ESP_OK || esp_read_mac(mac_bt, ESP_MAC_BT) != ESP_OK)
@@ -358,9 +347,9 @@ void getDeviceName(void)
         return;
     }
 
-    // Make mac address human readable
-    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_iterface[0], mac_iterface[1], mac_iterface[2], mac_iterface[3],
-            mac_iterface[4], mac_iterface[5]);
+    // Make mac address human-readable
+    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_interface[0], mac_interface[1], mac_interface[2], mac_interface[3],
+            mac_interface[4], mac_interface[5]);
     sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
 
     // Turn all characters of both mac address strings from lower case to upper case
@@ -379,7 +368,7 @@ void getDeviceName(void)
             str[i] = c;
         }
     }
-    sprintf(scientisst_device_settings.device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (char *)(mac_bt_str + 12));
+    sprintf(scientisst_device_settings.device_name, "%s-%s", BT_DEFAULT_DEVICE_NAME, (mac_bt_str + 12));
 
     DEBUG_PRINT_W("getDeviceName",
                   "Device name is: %s, COM Mode MAC address is: %s, Bluetooth "

@@ -5,16 +5,13 @@
    functions.
 */
 
-#include "sci_tcp.h"
-
 #include "lwip/err.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
-#include "lwip/sys.h"
 
-#include "sci_bt.h"
 #include "sci_macros.h"
 #include "sci_scientisst.h"
+#include "sci_tcp.h"
 
 int listen_fd = 0; ///< Used to listen for connections when used as a TCP server
 
@@ -34,7 +31,7 @@ esp_err_t initTcpServer(const char *port_str)
 
     sscanf(port_str, "%d", &port); // Transform port string to int
 
-    // Verificar se não houve erro a criar a socket
+    // Check if socket creation was successful
     if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         DEBUG_PRINT_E("initTcpServer", "socket error");
@@ -46,13 +43,14 @@ esp_err_t initTcpServer(const char *port_str)
     listen_addr.sin_port = htons(port);
 
     bind_err = bind(listen_fd, (struct sockaddr *)&listen_addr, sizeof(listen_addr));
-    if (bind_err != 0) // Verificar se não houve erro a fazer bind
+
+    if (bind_err != 0) // Check if bind was successful
     {
         DEBUG_PRINT_E("initTcpServer", "bind error %d", bind_err);
         res = ESP_FAIL;
     }
 
-    if (listen(listen_fd, 2) == -1) // Verificar se não houve erro a fazer listen
+    if (listen(listen_fd, 2) == -1) // Check if listening was successful
     {
         DEBUG_PRINT_E("initTcpServer", "listen error");
         res = ESP_FAIL;
@@ -89,7 +87,7 @@ int initTcpConnection(void)
  *
  * \return The file descriptor of the TCP client.
  */
-int initTcpClient(char *ip, char *port)
+int initTcpClient(const char *ip, const char *port)
 {
     struct addrinfo hints;
     struct addrinfo *res;
@@ -143,9 +141,9 @@ int initTcpClient(char *ip, char *port)
  *      - ESP_OK if the data was sent successfully
  *      - ESP_FAIL otherwise
  */
-esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, uint8_t *buff)
+esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, const uint8_t *buff)
 {
-    uint8_t *ptr;
+    const uint8_t *ptr;
     ssize_t n_left = len;
     ssize_t n_written;
 

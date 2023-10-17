@@ -73,5 +73,5 @@ void gpioInit(void);
 void configLedController(void);
 
 // ADC EXT
-void gpioDrdyIsrHandler(void *not_used);
+void gpioDrdyIsrHandler(void);
 void adcExtDrdyGpio(int io_num);

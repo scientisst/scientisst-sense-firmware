@@ -19,15 +19,6 @@
         (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                                       \
     })
 
-#define CHECK_NUM_CHANNELS_IS_VALID(_num_int_chan, _num_ext_chan)                                                           \
-    ({                                                                                                                      \
-        if (_num_int_chan > 6 || _num_ext_chan > 2)                                                                         \
-        {                                                                                                                   \
-            DEBUG_PRINT_E("taskAcquisition", "Invalid number of channels, access out of bounds");                           \
-            abort();                                                                                                        \
-        }                                                                                                                   \
-    })
-
 const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
 uint16_t crc_seq = 0; ///< Frame sequence number
 
@@ -35,10 +26,10 @@ static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_
 static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                  const uint8_t io_state);
 static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
-static void writeFrameJSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                            const uint8_t io_state);
-static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                        const uint8_t io_state);
+static inline void writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                              const uint8_t io_state);
 
 /**
  * \brief Task that acquires data from adc1.
@@ -60,8 +51,6 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
         if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
             continue;
 
-        CHECK_NUM_CHANNELS_IS_VALID(scientisst_device_settings.num_intern_active_chs,
-                                    scientisst_device_settings.num_extern_active_chs);
         getSensorData(&io_state, adc_internal_res, adc_external_res);
 
         // Store sensor data on current buffer with de adequate frame format
@@ -91,7 +80,7 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
-                vTaskDelay(10 / portTICK_PERIOD_MS); // TODO: test with 1 MS
+                vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;
         }
@@ -114,10 +103,9 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
     }
 #else
     // Get raw values from A1 to A6 (A1 to A6)
-    for (int i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
+    for (uint8_t i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
     {
-        adc_internal_res[i] = (uint16_t)adc1_get_raw(
-            scientisst_device_settings.analog_channels[scientisst_device_settings.active_internal_chs[i]]);
+        adc_internal_res[i] = getAdcInternalValue(ADC_INTERNAL_1, i, 0);
     }
 #endif
 
@@ -133,14 +121,12 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
         if (scientisst_device_settings.active_ext_chs[0] == 7 || scientisst_device_settings.active_ext_chs[1] == 7)
             channel_mask |= 0b10;
 
-        res = get_adc_ext_values_raw(channel_mask, adc_external_res);
+        res = getAdcExtValuesRaw(channel_mask, adc_external_res);
         ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
     if (scientisst_device_settings.num_extern_active_chs == 2)
     {
-        // Timestamp uses the frame space of external adc channels. It has to be trimmed down from 64 to
-        // 48 bits. TODO: Verify the precision when lsr to get the 48 MSB of the timestamp
         *(uint64_t *)(adc_external_res) = (uint64_t)(esp_timer_get_time() & 0xFFFFFFFFFFFF);
     }
 #endif
@@ -178,7 +164,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
 
-    for (int i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
+    for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
     {
         *(uint32_t *)(frame + frame_next_wr) |= adc_external_res[i];
         frame_next_wr += 3;
@@ -299,7 +285,7 @@ static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res,
  *
  * \param frame pointer of frame position in memory to store the adc1 channels
  */
-static void writeFrameJSON(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                            const uint8_t io_state)
 {
     char ch_str[10];

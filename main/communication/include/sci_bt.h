@@ -14,5 +14,5 @@
 #include "sci_scientisst.h"
 
 void initBt(void);
-void sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, uint8_t *));
+void sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *));
 void getDeviceName(void);

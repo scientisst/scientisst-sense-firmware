@@ -19,6 +19,6 @@ typedef enum
 } bno055_data_types_t;
 
 esp_err_t initIMU(void);
-void bno055SetDataToAcquire(bno055_data_types_t *data_to_acquire); // TODO: Explain why this is not used yet
+void bno055SetDataToAcquire(const bno055_data_types_t *data_to_acquire);
 uint16_t getImuValue(uint8_t channel);
 _Noreturn void taskBno055(void);

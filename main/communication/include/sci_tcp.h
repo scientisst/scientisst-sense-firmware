@@ -13,5 +13,5 @@
 
 int initTcpServer(const char *port_str);
 int initTcpConnection(void);
-int initTcpClient(char *ip, char *port);
-esp_err_t tcpSerialSend(uint32_t fd, int len, uint8_t *buff);
+int initTcpClient(const char *ip, const char *port);
+esp_err_t tcpSerialSend(uint32_t fd, int len, const uint8_t *buff);

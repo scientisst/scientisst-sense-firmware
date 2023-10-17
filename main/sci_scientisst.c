@@ -1,5 +1,3 @@
-#include <sys/cdefs.h>
-#include <sys/queue.h>
 /** \file scientisst.c
     \brief Main file for the Scientisst firmware.
 
@@ -7,33 +5,30 @@
    initialization of the firmware and the creation of the tasks.
 */
 
-#include <math.h>
+#include "sci_scientisst.h"
 
-#include "esp_vfs_fat.h"
+#include <math.h>
+#include <sys/cdefs.h>
+
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "sdmmc_cmd.h"
 
-#include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_ble.h"
 #include "sci_bt.h"
 #include "sci_com.h"
 #include "sci_gpio.h"
 #include "sci_macros.h"
-#include "sci_scientisst.h"
 #include "sci_sd_card.h"
-#include "sci_serial.h"
 #include "sci_task_acquisition_sdcard.h"
 #include "sci_task_aquisition.h"
 #include "sci_task_battery_monitor.h"
 #include "sci_task_com_rx.h"
 #include "sci_task_com_tx.h"
 #include "sci_task_imu.h"
-#include "sci_tcp.h"
 #include "sci_timer.h"
-#include "sci_udp.h"
 #include "sci_wifi.h"
 #include "sci_wifi_rest_server.h"
 #include "sci_ws.h"
@@ -44,7 +39,7 @@
 #define ACQ_ADC1_PRIORITY 10
 
 #define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
-#define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settigns
+#define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settings
 
 TaskHandle_t send_task;
 TaskHandle_t battery_task;

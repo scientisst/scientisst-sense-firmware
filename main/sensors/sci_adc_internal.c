@@ -64,7 +64,7 @@ void configAdc(adc_internal_id_t adc_index, int adc_channel)
 
     if (adc_index == 1)
     {
-        adc1_config_channel_atten(adc_channel, ADC1_ATTENUATION); // Atennuation to get a input
+        adc1_config_channel_atten(adc_channel, ADC1_ATTENUATION);
     }
     else if (adc_index == 2)
     {

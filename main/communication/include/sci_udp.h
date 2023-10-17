@@ -12,5 +12,5 @@
 
 #include "sci_scientisst.h"
 
-int initUdpClient(char *ip, char *port);
-esp_err_t udpSend(uint32_t fd, int len, uint8_t *buff);
+int initUdpClient(const char *ip, const char *port);
+esp_err_t udpSend(uint32_t fd, int len, const uint8_t *buff);

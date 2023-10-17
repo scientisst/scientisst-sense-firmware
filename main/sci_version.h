@@ -1,7 +1,9 @@
 /** \file version.h
-    \brief Auto-generated file containing the firmware version number.
+    \brief File that contains the automatically generated version string for the firmware from the commit hash.
 
-    //TODO: add details aboout implementation
+   File that contains the automatically generated version string for the firmware from the commit hash. It can be updated by
+   running the update_version.sh script or using it as a git pre-commit hook.
+
 */
 
 #pragma once
@@ -9,4 +11,4 @@
 #define FIRMWARE_BITALINO_VERSION "BITalino_v5.1\n"
 
 #define VERSION_CAN_INCREMENT_FLAG 0
-#define FIRMWARE_VERSION "4.0.0-37094ea"
+#define FIRMWARE_VERSION "4.0.0-747da25"

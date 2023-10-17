@@ -1,9 +1,5 @@
 #include "sci_task_imu.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/cdefs.h>
-
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -142,7 +138,7 @@ esp_err_t initIMU(void)
     return ret;
 }
 
-void bno055SetDataToAcquire(bno055_data_types_t *data_to_acquire)
+void bno055SetDataToAcquire(const bno055_data_types_t *data_to_acquire)
 {
     if (data_to_acquire[0] == data_to_acquire[1])
     {
@@ -165,7 +161,7 @@ s8 IRAM_ATTR bno055I2CBusWrite(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_addr << 1) | I2C_MASTER_WRITE, 1);
+    i2c_master_write_byte(cmd, (uint8_t)((dev_addr << 1) | I2C_MASTER_WRITE), 1);
 
     i2c_master_write_byte(cmd, reg_addr, 1);
     i2c_master_write(cmd, reg_data, cnt, 1);
@@ -193,11 +189,11 @@ s8 IRAM_ATTR bno055I2CBusRead(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_addr << 1) | I2C_MASTER_WRITE, 1);
+    i2c_master_write_byte(cmd, (uint8_t)((dev_addr << 1) | I2C_MASTER_WRITE), 1);
     i2c_master_write_byte(cmd, reg_addr, 1);
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_addr << 1) | I2C_MASTER_READ, 1);
+    i2c_master_write_byte(cmd, (uint8_t)((dev_addr << 1) | I2C_MASTER_READ), 1);
 
     if (cnt > 1)
     {
