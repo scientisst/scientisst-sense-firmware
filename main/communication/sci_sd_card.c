@@ -43,7 +43,7 @@ sdmmc_host_t sd_spi_host = {
     .command_timeout_ms = 0,
 };
 
-esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+static esp_vfs_fat_sdmmc_mount_config_t mount_config = {
 #ifdef CONFIG_FORMAT_SDCARD_IF_MOUNT_FAILED
     .format_if_mount_failed = true,
 #else
@@ -62,9 +62,9 @@ spi_bus_config_t bus_cfg = {
     .flags = 0,
     .intr_flags = 0,
 }; ///< SPI bus config
-sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-sdmmc_card_t *card;                   ///< SD card handle
-const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
+static sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+static sdmmc_card_t *card;                   ///< SD card handle
+static const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
 
 esp_err_t createFile(void);
 

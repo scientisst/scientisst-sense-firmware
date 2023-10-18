@@ -55,7 +55,7 @@
 
 #define SPI_MODE 0 // 0 or 3, MCP Only supports these two modes
 
-spi_bus_config_t buscfg = {
+static spi_bus_config_t buscfg = {
     .miso_io_num = SPI3_MISO_IO,
     .mosi_io_num = SPI3_MOSI_IO,
     .sclk_io_num = SPI3_SCLK_IO,
@@ -65,7 +65,7 @@ spi_bus_config_t buscfg = {
     .flags = 0,
 };
 
-spi_device_interface_config_t devcfg = {
+static spi_device_interface_config_t devcfg = {
     .clock_speed_hz = ADC_EXT_SLCK_HZ_2_EXT_CH,
     .mode = SPI_MODE,   // SPI mode 1: (CPOL) = 0 and the clock phase (CPHA) = 1.
     .spics_io_num = -1, // CS pin not used here, since ESP driver makes CS pin does not behave in the
@@ -82,12 +82,12 @@ spi_device_interface_config_t devcfg = {
 };
 
 // SPI
-DRAM_ATTR spi_device_handle_t adc_ext_spi_handle;
+DRAM_ATTR static spi_device_handle_t adc_ext_spi_handle;
 
 // Preallocated and fill SPI transactions for reading ADC values. This allows higher aquisition frequencies
 // We need 2 transactions to aquire 1 channel and 4 to acquire 2 channels because sometimes the same channel is sent twice.
 // mcp_transactions[0] is always the command transaction, the others are used to read the data.
-DMA_ATTR spi_transaction_t mcp_transactions[4] = {
+DMA_ATTR static spi_transaction_t mcp_transactions[4] = {
     {
         .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
         .length = 8,

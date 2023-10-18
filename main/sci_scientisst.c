@@ -41,11 +41,11 @@
 #define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
 #define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settings
 
-TaskHandle_t send_task;
-TaskHandle_t battery_task;
-TaskHandle_t rcv_task;
-TaskHandle_t acq_adc1_task;
-TaskHandle_t imu_task;
+DRAM_ATTR TaskHandle_t send_task;
+DRAM_ATTR TaskHandle_t battery_task;
+DRAM_ATTR TaskHandle_t rcv_task;
+DRAM_ATTR TaskHandle_t acq_adc1_task;
+DRAM_ATTR TaskHandle_t imu_task;
 
 DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .device_name = BT_DEFAULT_DEVICE_NAME,
@@ -109,7 +109,7 @@ DMA_ATTR scientisst_buffers_t scientisst_buffers = {
     .json = NULL,
 };
 
-static void allocate_frame_buffers(void)
+static void allocateFrameBuffers(void)
 {
     uint8_t num_buffers =
         scientisst_device_settings.op_settings.com_mode == COM_MODE_SD_CARD ? NUM_BUFFERS_SDCARD : NUM_BUFFERS;
@@ -188,7 +188,7 @@ void initScientisst(void)
 #ifdef CONFIG_SD_CARD
     // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
     sdmmc_host_t *sd_card_spi_host = NULL;
-    sd_card_spi_host = init_sd_card_spi_bus();
+    sd_card_spi_host = initSdCardSpiBus();
     adcExtInit(sd_card_spi_host);
 
 #ifdef CONFIG_ADC_EXT
@@ -208,8 +208,8 @@ void initScientisst(void)
 
 #ifdef CONFIG_IMU
     // Init and start in new task the IMU
-    xTaskCreatePinnedToCore((TaskFunction_t)&bno055_task, "imu_task", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
-                            ACQ_ADC1_PRIORITY, &imu_task, 0);
+    xTaskCreatePinnedToCore((TaskFunction_t)&taskBno055, "imu_task", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, ACQ_ADC1_PRIORITY,
+                            &imu_task, 0);
 #endif
 
     // If it's a Wi-Fi com mode, let's first try to set up the Wi-Fi and (if it's station) try to connect to the
@@ -225,7 +225,7 @@ void initScientisst(void)
     {
     case COM_MODE_BT:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
-        allocate_frame_buffers();
+        allocateFrameBuffers();
         initBt();
         xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "taskBatteryMonitor", DEFAULT_TASK_STACK_SIZE_SMALL,
                                 NULL, BATTERY_PRIORITY, &battery_task, 0);
@@ -236,7 +236,7 @@ void initScientisst(void)
         break;
     case COM_MODE_BLE:
         scientisst_buffers.frame_buffer_length_bytes = GATTS_NOTIFY_LEN;
-        allocate_frame_buffers();
+        allocateFrameBuffers();
         initBle();
         xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "taskBatteryMonitor", DEFAULT_TASK_STACK_SIZE_SMALL,
                                 NULL, BATTERY_PRIORITY, &battery_task, 0);
@@ -250,7 +250,7 @@ void initScientisst(void)
     case COM_MODE_TCP_AP:
     case COM_MODE_SERIAL:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
-        allocate_frame_buffers();
+        allocateFrameBuffers();
         xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
                                 &rcv_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
@@ -260,7 +260,7 @@ void initScientisst(void)
         break;
     case COM_MODE_WS_AP:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
-        allocate_frame_buffers();
+        allocateFrameBuffers();
         startWebserver();
         xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
                                 &rcv_task, 0);
@@ -272,8 +272,8 @@ void initScientisst(void)
 #ifdef CONFIG_SD_CARD
     case COM_MODE_SD_CARD:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
-        allocate_frame_buffers();
-        xTaskCreatePinnedToCore((TaskFunction_t)&task_battery_monitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
+        allocateFrameBuffers();
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
                                 BATTERY_PRIORITY, &battery_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", DEFAULT_TASK_STACK_SIZE_LARGE, NULL, 24,
                                 &acq_adc1_task, 1);

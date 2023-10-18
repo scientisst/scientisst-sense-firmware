@@ -13,7 +13,7 @@
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
-struct addrinfo *udp_server_addr;
+static struct addrinfo *udp_server_addr;
 
 /**
  * \brief Initializes the UDP client

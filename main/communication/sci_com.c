@@ -24,8 +24,8 @@
 #define NUM_UNUSED_BITS_FOR_CH_MASK 2
 #define STATUS_PACKET_SIZE 16
 
-int send_fd = 0; ///< File descriptor to send data to client, only part of communication so it is the only global variable
-                 ///< not declared in sci_scientisst.h
+DRAM_ATTR int send_fd = 0; ///< File descriptor to send data to client, only part of communication so it is the only global
+                           ///< variable not declared in sci_scientisst.h
 
 /**
  * \brief Processes the command received from the client

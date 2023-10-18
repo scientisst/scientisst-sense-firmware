@@ -99,7 +99,7 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
     // Store values of IMU data into frame
     for (int i = 0; i < num_intern_active_chs; ++i)
     {
-        adc_internal_res[i] = get_imu_value(i);
+        adc_internal_res[i] = getImuValue(i);
     }
 #else
     // Get raw values from A1 to A6 (A1 to A6)

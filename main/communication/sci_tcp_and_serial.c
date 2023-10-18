@@ -13,7 +13,7 @@
 #include "sci_scientisst.h"
 #include "sci_tcp.h"
 
-int listen_fd = 0; ///< Used to listen for connections when used as a TCP server
+DRAM_ATTR static int listen_fd = 0; ///< Used to listen for connections when used as a TCP server
 
 /**
  * \brief Initializes a TCP server.

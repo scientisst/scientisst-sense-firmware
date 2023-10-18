@@ -16,7 +16,7 @@
 #include "sci_macros.h"
 #include "sci_scientisst.h"
 
-const uart_port_t serial_com_uart_num = UART_NUM_0;
+static const uart_port_t serial_com_uart_num = UART_NUM_0;
 
 int serialInit(void)
 {

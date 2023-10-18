@@ -17,9 +17,8 @@
 #include "sci_scientisst.h"
 
 static const size_t max_clients = 1;
-
-httpd_handle_t ws_hd;
-int ws_fd;
+static httpd_handle_t ws_hd;
+static int ws_fd;
 
 /**
  * \brief Send data to the websocket client

@@ -24,12 +24,12 @@ DRAM_ATTR static struct bno055_t BNO_handle = {.dev_addr = BNO055_I2C_ADDR1,
                                                .bus_write = &bno055I2CBusWrite,
                                                .bus_read = &bno055I2CBusRead,
                                                .delay_msec = &bno055DelayMSec};
-DRAM_ATTR uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
+DRAM_ATTR static uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};
 #ifdef CONFIG_EULER_ANGLES_AND_LINEAR_ACCELERATION
-DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {EULER_ANGLES, LINEAR_ACCELERATION};
+DRAM_ATTR static bno055_data_types_t bno055_data_to_acquire[2] = {EULER_ANGLES, LINEAR_ACCELERATION};
 #endif
 #ifdef CONFIG_ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
-DRAM_ATTR bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCITY, LINEAR_ACCELERATION};
+DRAM_ATTR static bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCITY, LINEAR_ACCELERATION};
 #endif
 
 _Noreturn void IRAM_ATTR taskBno055(void)

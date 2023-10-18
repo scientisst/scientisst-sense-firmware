@@ -19,8 +19,8 @@
 #define BATTERY_DIVIDER_FACTOR 2
 
 // ADC
-DRAM_ATTR const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
-                                                                 ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7};
+DRAM_ATTR static const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
+                                                                        ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7};
 
 uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag)
 {

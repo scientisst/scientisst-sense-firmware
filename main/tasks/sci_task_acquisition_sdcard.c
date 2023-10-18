@@ -14,7 +14,7 @@
 #include "sci_sd_card.h"
 #include "sci_timer.h"
 
-TaskHandle_t file_sync_task;
+DRAM_ATTR static TaskHandle_t file_sync_task;
 
 uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
 void startAcquisitionSDCard(void);
@@ -80,7 +80,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     if (scientisst_device_settings.active_ext_chs[0] == 7 || scientisst_device_settings.active_ext_chs[1] == 7)
         channel_mask |= 0b10;
 
-    res = get_adc_ext_values_raw(channel_mask, (uint32_t *)buffer_ptr);
+    res = getAdcExtValuesRaw(channel_mask, (uint32_t *)buffer_ptr);
     ESP_ERROR_CHECK_WITHOUT_ABORT(res);
 #endif
 
