@@ -188,7 +188,7 @@ static void startAcquisitionSDCard(void)
         break;
     default:
         active_channels_sd = 0b00111111;
-        scientisst_device_settings.sample_rate = 1000;
+        scientisst_device_settings.sample_rate = 3000;
         // If external ADC is not used, start the secondary task that writes the data to the SD card
         xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL, 20,
                                 &file_sync_task, 0);

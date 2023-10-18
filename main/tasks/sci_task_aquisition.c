@@ -16,8 +16,8 @@
         (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                                       \
     })
 
-const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
-uint16_t crc_seq = 0; ///< Frame sequence number
+DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
+DRAM_ATTR uint16_t crc_seq = 0; ///< Frame sequence number
 
 static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2]);
 static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
@@ -54,8 +54,9 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
         writeFrame(scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff] +
                        scientisst_buffers.frame_buffer_write_idx,
                    adc_internal_res, adc_external_res, io_state);
-        ++crc_seq;                                                                   // Increment sequence number
+
         scientisst_buffers.frame_buffer_write_idx += scientisst_buffers.packet_size; // Update write index
+        ++crc_seq;                                                                   // Increment sequence number;
 
         // Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send
         // acq_curr_buff, we need to update it
@@ -192,7 +193,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
 
     // Calculate CRC & SEQ Number---------------------------------------------------------
     // Store seq number
-    *(uint16_t *)(frame + scientisst_buffers.packet_size - 2) = (uint16_t)(crc_seq << 4);
+    *(uint16_t *)(frame + scientisst_buffers.packet_size - 2) = (uint16_t)((crc_seq & 0x0FFF) << 4);
 
     // calculate CRC (except last byte (seq+CRC) )
     for (int i = 0; i < scientisst_buffers.packet_size - 2; ++i)

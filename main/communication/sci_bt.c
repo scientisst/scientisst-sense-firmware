@@ -35,12 +35,12 @@
  */
 void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *))
 {
-    int buf_ready;
+    uint16_t buf_ready;
     // Check if there's anything to send and if there is, check if it's enough
     // to send
     buf_ready = scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff];
 
-    if (!buf_ready)
+    if (buf_ready == 0)
     {
         scientisst_device_settings.send_busy = 0;
         return;
@@ -65,7 +65,7 @@ void IRAM_ATTR finalizeSend(void)
 {
     // Clear recently sent buffer
     memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-           scientisst_buffers.frame_buffer_length_bytes);
+           scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff]);
 
     scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
