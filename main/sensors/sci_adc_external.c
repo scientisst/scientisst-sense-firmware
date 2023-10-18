@@ -299,7 +299,7 @@ static void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
  * \param rx_data_bytes Amount of bytes to be read.
  * \return uint32_t Register value.
  */
-static uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
+uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
 {
     spi_transaction_t read_transaction;
     spi_transaction_t cmd_transaction;

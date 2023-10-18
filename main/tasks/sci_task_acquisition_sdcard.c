@@ -9,6 +9,7 @@
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
 #include "sci_sd_card.h"
+#include "sci_task_imu.h"
 #include "sci_timer.h"
 
 DRAM_ATTR static TaskHandle_t file_sync_task;
@@ -66,6 +67,22 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
         *(uint16_t *)buffer_ptr = getAdcInternalValue(ADC_INTERNAL_1, (uint8_t)i, 0) & 0x0FFF;
         buffer_ptr += 2;
     }
+
+#ifdef CONFIG_IMU
+    // Store values of IMU data into frame
+    for (int i = 5; i >= 0; --i)
+    {
+        *(uint16_t *)buffer_ptr = getImuValue(i);
+        buffer_ptr += 2;
+    }
+#else
+    // Get raw values from A1 to A6 (A1 to A6)
+    for (int i = 5; i >= 0; --i)
+    {
+        *(uint16_t *)buffer_ptr = getAdcInternalValue(ADC_INTERNAL_1, (uint8_t)i, 0) & 0x0FFF;
+        buffer_ptr += 2;
+    }
+#endif
 
 #ifdef CONFIG_ADC_EXT
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
