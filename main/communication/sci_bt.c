@@ -8,22 +8,18 @@
 #include "sci_bt.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "esp_attr.h"
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
-#include "esp_err.h"
 #include "esp_gap_bt_api.h"
-#include "esp_log.h"
 #include "esp_spp_api.h"
 #include "esp_system.h"
-#include "freertos/FreeRTOS.h"
 
 #include "sci_com.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define SEND_AFTER_C0NG 2
 #define SPP_SERVER_NAME "SPP_SERVER"

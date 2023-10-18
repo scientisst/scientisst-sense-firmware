@@ -9,17 +9,12 @@
 #include <string.h>
 
 #include "esp_event.h"
-#include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "freertos/event_groups.h"
-#include "freertos/FreeRTOS.h"
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
-
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define EXAMPLE_ESP_WIFI_PASS "12345678"
 #define EXAMPLE_ESP_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1

@@ -13,9 +13,6 @@
 #include "esp_vfs_dev.h"
 #include "sys/select.h"
 
-#include "sci_macros.h"
-#include "sci_scientisst.h"
-
 static const uart_port_t serial_com_uart_num = UART_NUM_0;
 
 int serialInit(void)

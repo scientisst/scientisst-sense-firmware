@@ -9,8 +9,6 @@
 
 #include <stdint.h>
 
-#include "esp_attr.h"
-
 #include "sci_scientisst.h"
 
 #ifdef CONFIG_HARDWARE_VERSION_CORE

@@ -7,13 +7,7 @@
 
 #include "sci_timer.h"
 
-#include "driver/timer.h"
 #include "esp_types.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 /**
  * \brief Initialize selected timer of the specified timer group

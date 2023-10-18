@@ -11,10 +11,7 @@
 #include <stdio.h>
 
 #include "driver/sdmmc_types.h"
-#include "driver/spi_master.h"
-#include "driver/spi_slave.h"
 
-#include "sci_com.h"
 #include "sci_scientisst.h"
 
 #define ADC_EXT_SLCK_HZ_1_EXT_CH (APB_CLK_FREQ / 8)

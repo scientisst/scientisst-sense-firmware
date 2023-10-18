@@ -15,14 +15,9 @@
 #include "esp_gap_ble_api.h"
 #include "esp_gatt_common_api.h"
 #include "esp_gatts_api.h"
-#include "esp_log.h"
 #include "esp_system.h"
-#include "freertos/FreeRTOS.h"
-#include "sdkconfig.h"
 
 #include "sci_com.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define GATTS_SERVICE_UUID_TEST_A 0x00FF
 #define GATTS_CHAR_UUID_TEST_A 0xFF01

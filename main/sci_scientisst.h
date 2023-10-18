@@ -48,8 +48,8 @@ typedef struct
     uint8_t gpio_out_state[2];                         ///< Output of 01 & O2 (O0 & O1)
     api_config_t api_config;                           //
     op_settings_info_t op_settings;                    ///< Holds settings that should be saved on flash between reboots
-    uint8_t op_mode;                                   ///< Flag that indicates if op mode is on (idle, live or config)
-    uint8_t send_busy;                                 ///< Flag that indicates if send task is busy
+    volatile uint8_t op_mode;                          ///< Flag that indicates if op mode is on (idle, live or config)
+    volatile uint8_t send_busy;                        ///< Flag that indicates if send task is busy
     uint32_t sample_rate;                              ///< Sample rate of the acquisition
     uint8_t is_op_settings_valid;                      ///< Indicates if op_settings has been loaded from flash
 } scientisst_device_t;

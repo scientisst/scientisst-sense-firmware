@@ -1,15 +1,12 @@
-#include "include/sci_task_aquisition.h"
+#include "sci_task_aquisition.h"
 
 #include <string.h>
 
 #include "esp_attr.h"
-#include "sdkconfig.h"
 
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 #include "sci_task_imu.h"
 #include "sci_timer.h"
 
@@ -70,7 +67,8 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] = 1;
 
             // If send task is idle, wake it up
-            xTaskNotifyGive(send_task);
+            if (scientisst_device_settings.send_busy == 0)
+                xTaskNotifyGive(send_task);
 
             acq_next_buff = (scientisst_buffers.acq_curr_buff + 1) % (NUM_BUFFERS - 1);
 
@@ -97,7 +95,7 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
 
 #ifdef CONFIG_IMU
     // Store values of IMU data into frame
-    for (int i = 0; i < num_intern_active_chs; ++i)
+    for (int i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
     {
         adc_internal_res[i] = getImuValue(i);
     }

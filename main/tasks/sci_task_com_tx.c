@@ -1,13 +1,11 @@
-#include "include/sci_task_com_tx.h"
+#include "sci_task_com_tx.h"
 
 #include "esp_attr.h"
 
 #include "sci_ble.h"
 #include "sci_bt.h"
 #include "sci_com.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
-#include "sci_tcp.h"
+#include "sci_tcp_and_serial.h"
 #include "sci_udp.h"
 #include "sci_ws.h"
 

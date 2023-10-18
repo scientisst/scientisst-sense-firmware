@@ -10,14 +10,9 @@
 
 #include <string.h>
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 #include "sci_task_aquisition.h"
 #include "sci_timer.h"
 
@@ -26,6 +21,16 @@
 
 DRAM_ATTR int send_fd = 0; ///< File descriptor to send data to client, only part of communication so it is the only global
                            ///< variable not declared in sci_scientisst.h
+
+static void triggerGpio(const uint8_t *buff);
+static void triggerDAC(const uint8_t *buff);
+static void changeAPI(uint8_t mode);
+static void sendStatusPacket();
+static void sendFirmwareVersionPacket();
+static void selectChsFromMaskScientisstAndJson(const uint8_t *buff);
+static void setSampleRate(uint8_t *buff);
+static void startAcquisition(void);
+static uint8_t getPacketSize(void);
 
 /**
  * \brief Processes the command received from the client
@@ -106,7 +111,7 @@ void processPacket(uint8_t *buff)
  *
  * This function sets the output channels to the requested value.
  */
-void triggerGpio(const uint8_t *buff)
+static void triggerGpio(const uint8_t *buff)
 {
     uint8_t o2_lvl = (buff[0] & 0b00001000) >> 3;
     uint8_t o1_lvl = (buff[0] & 0b00000100) >> 2;
@@ -124,7 +129,7 @@ void triggerGpio(const uint8_t *buff)
  *
  * This function sets the output DAC level according to the received command.
  */
-void triggerDAC(const uint8_t *buff)
+static void triggerDAC(const uint8_t *buff)
 {
     dac_output_voltage(DAC_CHANNEL_1, buff[1]);
     DEBUG_PRINT_I("triggerDAC", "DAC output to %d", buff[1]);
@@ -137,7 +142,7 @@ void triggerDAC(const uint8_t *buff)
  * acquire data and select channels. Currently, the API modes are: Bitalino
  * (Legacy), Scientisst and JSON.
  */
-void changeAPI(uint8_t mode)
+static void changeAPI(uint8_t mode)
 {
     if (mode == API_MODE_BITALINO)
     {
@@ -166,7 +171,7 @@ void changeAPI(uint8_t mode)
  *
  * \return The packet size
  */
-uint8_t getPacketSize(void)
+static uint8_t getPacketSize(void)
 {
     uint8_t _packet_size = 0;
 
@@ -213,7 +218,7 @@ uint8_t getPacketSize(void)
  *
  * \param buff The received command
  */
-void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
+static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
 {
     char aux_str[10];
     char value_str[10];
@@ -315,7 +320,7 @@ void selectChsFromMaskBitalino(const uint8_t *buff)
  *
  * This function sets the sample rate according to the received command.
  */
-void setSampleRate(uint8_t *buff)
+static void setSampleRate(uint8_t *buff)
 {
     uint32_t aux = 1;
 
@@ -345,7 +350,7 @@ void setSampleRate(uint8_t *buff)
  * simulated). It also changes the LED state.
  *
  */
-void startAcquisition(void)
+static void startAcquisition(void)
 {
     // Clear send buffs, because of potential previous live mode
     scientisst_buffers.tx_curr_buff = 0;
@@ -472,7 +477,7 @@ void stopAcquisition(void)
  * This function sends the status packet. It is called when the client
  * requests the status packet.
  */
-void sendStatusPacket(void)
+static void sendStatusPacket(void)
 {
     uint8_t crc = 0;
     uint16_t true_send_threshold;
@@ -520,7 +525,7 @@ void sendStatusPacket(void)
  * the lowers the send threshold to 0, so that the data is sent as soon as
  * possible and then restores the send threshold to its previous value.
  */
-void sendFirmwareVersionPacket(void)
+static void sendFirmwareVersionPacket(void)
 {
     uint16_t true_send_threshold;
 

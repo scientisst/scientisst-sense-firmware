@@ -9,13 +9,10 @@
 #include <string.h>
 
 #include "driver/gpio.h"
-#include "esp_system.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "driver/spi_master.h"
+#include "driver/spi_slave.h"
 
 #include "sci_gpio.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define MCP_ADDR 0b01
 
@@ -116,7 +113,7 @@ DMA_ATTR static spi_transaction_t mcp_transactions[4] = {
     },
 };
 
-void mcpReadADCValues(uint8_t rx_data_bytes);
+static void mcpReadADCValues(uint8_t rx_data_bytes);
 
 /**
  * \brief Initializes SPI bus and SPI interface with the ext adc.
@@ -193,7 +190,7 @@ esp_err_t IRAM_ATTR getAdcExtValuesRaw(uint8_t channels_mask, uint32_t values[2]
     return ESP_OK;
 }
 
-static inline uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd)
+static inline uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd)
 {
     uint8_t cmd_byte = MCP_ADDR << 6;
 
@@ -215,7 +212,7 @@ static inline uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd)
  *
  * \param cmd Command to be sent.
  */
-void mcpSendCmd(uint8_t cmd)
+static void mcpSendCmd(uint8_t cmd)
 {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(0, cmd);
@@ -238,7 +235,7 @@ void mcpSendCmd(uint8_t cmd)
  * \param tx_data Data to be written.
  * \param tx_data_bytes Amount of bytes to be written.
  */
-void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
+static void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
 {
     spi_transaction_t transaction;
     uint8_t cmd_byte = mcpGetCmdByte(address, WREG);
@@ -266,7 +263,7 @@ void mcpWriteRegister(uint8_t address, uint32_t tx_data, uint8_t tx_data_bytes)
  * \param address Address of the register to be read. Always REG_ADCDATA (0x00).
  * \param rx_data_bytes Amount of bytes to be read.
  */
-void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
+static void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
 {
     gpio_intr_disable(MCP_DRDY_IO);
 
@@ -302,7 +299,7 @@ void IRAM_ATTR mcpReadADCValues(uint8_t rx_data_bytes)
  * \param rx_data_bytes Amount of bytes to be read.
  * \return uint32_t Register value.
  */
-uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
+static uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
 {
     spi_transaction_t read_transaction;
     spi_transaction_t cmd_transaction;

@@ -8,7 +8,6 @@
 #pragma once
 
 #include "esp_http_server.h"
-#include "sdkconfig.h"
 
 #include "sci_scientisst.h"
 

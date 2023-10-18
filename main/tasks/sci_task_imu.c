@@ -1,13 +1,9 @@
 #include "sci_task_imu.h"
 
+#include "bno055.h"
 #include "driver/i2c.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "sensors/include/bno055.h"
 
 #include "sci_gpio.h"
-#include "sci_macros.h"
 
 #define SDA_PIN SDA_IO
 #define SCL_PIN SCL_IO

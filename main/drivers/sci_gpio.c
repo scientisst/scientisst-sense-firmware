@@ -12,7 +12,6 @@
 #include "hal/gpio_types.h"
 
 #include "sci_adc_internal.h"
-#include "sci_macros.h"
 
 /**
  * \brief Configure LED Controller
@@ -67,8 +66,8 @@ void configLedController(void)
  * This function configures the GPIO pins. It sets the mode, interrupt type,
  * pull up/down and pin bit mask.
  */
-void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en,
-                gpio_pullup_t pull_up_en)
+static void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en,
+                       gpio_pullup_t pull_up_en)
 {
     gpio_config_t io_conf;
 

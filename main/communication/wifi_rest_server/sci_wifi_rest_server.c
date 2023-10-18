@@ -10,22 +10,16 @@
     CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include "communication/wifi_rest_server/sci_wifi_rest_server.h"
+#include "sci_wifi_rest_server.h"
 
 #include <fcntl.h>
 #include <string.h>
 
-#include "cJSON.h"
 #include "esp_http_server.h"
-#include "esp_log.h"
 #include "esp_spiffs.h"
 #include "esp_system.h"
 #include "esp_vfs.h"
 #include "lwip/apps/netbiosns.h"
-#include "sdkconfig.h"
-
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define WEB_MOUNT_POINT "/www" // Specify the mount point in VFS.
 

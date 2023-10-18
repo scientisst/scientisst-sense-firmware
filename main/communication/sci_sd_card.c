@@ -9,7 +9,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "driver/adc.h"
+#include "driver/gpio.h"
+#include "esp_attr.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "sys/stat.h"
@@ -17,10 +18,12 @@
 
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 #define DEFAULT_SAVE_FILE_NAME "/sdcard/acquisition_datapoints"
+#define PIN_NUM_MISO GPIO_NUM_19
+#define PIN_NUM_MOSI GPIO_NUM_23
+#define PIN_NUM_CLK GPIO_NUM_18
+#define PIN_NUM_CS GPIO_NUM_4
 
 sdmmc_host_t sd_spi_host = {
     .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
@@ -66,7 +69,7 @@ static sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
 static sdmmc_card_t *card;                   ///< SD card handle
 static const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
 
-esp_err_t createFile(void);
+static esp_err_t createFile(void);
 
 sdmmc_host_t *initSdCardSpiBus(void)
 {
@@ -159,7 +162,7 @@ void writeFileHeader(void)
  *
  * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
-esp_err_t createFile(void)
+static esp_err_t createFile(void)
 {
     char full_file_name[100];
     char int_str[15];

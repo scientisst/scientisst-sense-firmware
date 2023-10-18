@@ -137,7 +137,7 @@ config SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
 
 endchoice
 
-config PREVENT_ACQUISTION_ON_LOW_BATTERY
+config PREVENT_ACQUISITION_ON_LOW_BATTERY
     bool "Prevent acquisition on low battery"
     default n
     help

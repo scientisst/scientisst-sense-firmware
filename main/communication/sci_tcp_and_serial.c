@@ -5,13 +5,12 @@
    functions.
 */
 
+#include "sci_tcp_and_serial.h"
+
+#include "esp_attr.h"
 #include "lwip/err.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
-
-#include "sci_macros.h"
-#include "sci_scientisst.h"
-#include "sci_tcp.h"
 
 DRAM_ATTR static int listen_fd = 0; ///< Used to listen for connections when used as a TCP server
 

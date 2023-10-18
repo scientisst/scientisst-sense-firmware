@@ -6,9 +6,6 @@
 
 #pragma once
 
-#include <stdio.h>
-
-#include "esp_attr.h"
 #include "esp_err.h"
 
 #include "sci_scientisst.h"

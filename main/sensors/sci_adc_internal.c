@@ -6,10 +6,9 @@
 
 #include "sci_adc_internal.h"
 
-#include <stdio.h>
-
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
+#include "esp_attr.h"
 #include "esp_timer.h"
 
 #define ADC_RESOLUTION ADC_WIDTH_BIT_12
@@ -58,7 +57,7 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
  * \param adc_resolution resolution of the adc
  * \param adc_channel channel to be configured
  */
-void configAdc(adc_internal_id_t adc_index, int adc_channel)
+static void configAdc(adc_internal_id_t adc_index, int adc_channel)
 {
     int dummy;
     esp_err_t ret;

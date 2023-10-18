@@ -1,14 +1,11 @@
-#include "include/sci_task_com_rx.h"
+#include "sci_task_com_rx.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
-#include "sdkconfig.h"
 
 #include "sci_com.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 #include "sci_serial.h"
-#include "sci_tcp.h"
+#include "sci_tcp_and_serial.h"
 #include "sci_udp.h"
 
 #define CMD_MAX_BYTES 4

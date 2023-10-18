@@ -6,12 +6,10 @@
 */
 #include "sci_udp.h"
 
+#include "esp_attr.h"
 #include "lwip/err.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
-
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 static struct addrinfo *udp_server_addr;
 

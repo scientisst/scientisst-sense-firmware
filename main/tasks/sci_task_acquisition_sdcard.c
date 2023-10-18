@@ -1,7 +1,6 @@
 #include "include/sci_task_acquisition_sdcard.h"
 
 #include <string.h>
-#include <sys/cdefs.h>
 #include <unistd.h>
 
 #include "esp_attr.h"
@@ -9,15 +8,13 @@
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 #include "sci_sd_card.h"
 #include "sci_timer.h"
 
 DRAM_ATTR static TaskHandle_t file_sync_task;
 
-uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
-void startAcquisitionSDCard(void);
+static uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
+static void startAcquisitionSDCard(void);
 
 /**
  * \brief Acquisition task of the data from the ADC and save it to the SD
@@ -50,7 +47,7 @@ _Noreturn void IRAM_ATTR acquisitionSDCard(void)
  * is written directly to the SD card. This is done because the SDCard and EXT ADC use the same SPI lines.
  *
  */
-uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
+static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 {
     static uint16_t crc_seq = 0; // Static variable that counts the number of packets sent
 
@@ -122,7 +119,7 @@ uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     return buffer_ptr;
 }
-_Noreturn void IRAM_ATTR fileSyncTask(void)
+_Noreturn static void IRAM_ATTR fileSyncTask(void)
 {
     while (1)
     {
@@ -155,7 +152,7 @@ _Noreturn void IRAM_ATTR fileSyncTask(void)
  * saves the data to a CSV file on the SD card.
  *
  */
-void startAcquisitionSDCard(void)
+static void startAcquisitionSDCard(void)
 {
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
     int active_channels_sd; // All internal channels are always active
@@ -180,8 +177,6 @@ void startAcquisitionSDCard(void)
                                 &file_sync_task, 0);
         break;
     }
-
-    changeAPI(API_MODE_SCIENTISST); // Change API to ScientISST, not really needed but kept for consistency
 
     scientisst_device_settings.num_intern_active_chs = 0;
     scientisst_device_settings.num_extern_active_chs = 0;

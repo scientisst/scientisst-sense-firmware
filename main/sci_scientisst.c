@@ -15,6 +15,7 @@
 #include "sdkconfig.h"
 #include "sdmmc_cmd.h"
 
+#include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_ble.h"
 #include "sci_bt.h"
@@ -56,7 +57,6 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .num_intern_active_chs = 0,
     .num_extern_active_chs = 0,
     .active_internal_chs = {0, 0, 0, 0, 0, 0},
-    .analog_channels = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4, ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7},
     .active_ext_chs = {0, 0},
     .api_config = {.api_mode = API_MODE_BITALINO, .select_ch_mask_func = &selectChsFromMaskBitalino},
     .is_op_settings_valid = 0,
@@ -65,7 +65,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
         {
 #ifdef CONFIG_SD_CARD
             .com_mode = COM_MODE_SD_CARD,
-#endif
+#else
 #ifdef CONFIG_DEFAULT_COM_MODE_BT
             .com_mode = COM_MODE_BT,
 #endif
@@ -86,6 +86,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
 #endif
 #ifdef CONFIG_DEFAULT_COM_MODE_WS_AP
             .com_mode = COM_MODE_WS_AP,
+#endif
 #endif
             .is_battery_threshold_inflated = 0,
             .host_ip = "192.168.1.100",
@@ -187,7 +188,7 @@ void initScientisst(void)
 
 #ifdef CONFIG_SD_CARD
     // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
-    sdmmc_host_t *sd_card_spi_host = NULL;
+    const sdmmc_host_t *sd_card_spi_host = NULL;
     sd_card_spi_host = initSdCardSpiBus();
     adcExtInit(sd_card_spi_host);
 
@@ -208,6 +209,8 @@ void initScientisst(void)
 
 #ifdef CONFIG_IMU
     // Init and start in new task the IMU
+    ret = initIMU();
+    ESP_ERROR_CHECK(ret);
     xTaskCreatePinnedToCore((TaskFunction_t)&taskBno055, "imu_task", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, ACQ_ADC1_PRIORITY,
                             &imu_task, 0);
 #endif
@@ -273,8 +276,8 @@ void initScientisst(void)
     case COM_MODE_SD_CARD:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
         allocateFrameBuffers();
-        xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE, NULL,
-                                BATTERY_PRIORITY, &battery_task, 0);
+        xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
+                                NULL, BATTERY_PRIORITY, &battery_task, 0);
         xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", DEFAULT_TASK_STACK_SIZE_LARGE, NULL, 24,
                                 &acq_adc1_task, 1);
         break;

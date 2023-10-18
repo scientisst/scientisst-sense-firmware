@@ -13,8 +13,6 @@
 #include "sys/param.h"
 
 #include "sci_com.h"
-#include "sci_macros.h"
-#include "sci_scientisst.h"
 
 static const size_t max_clients = 1;
 static httpd_handle_t ws_hd;
