@@ -61,13 +61,6 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     ++crc_seq; // Increment the sequence number
 
-    // All intern channels are always active, acquire them
-    for (int i = 5; i >= 0; --i)
-    {
-        *(uint16_t *)buffer_ptr = getAdcInternalValue(ADC_INTERNAL_1, (uint8_t)i, 0) & 0x0FFF;
-        buffer_ptr += 2;
-    }
-
 #ifdef CONFIG_IMU
     // Store values of IMU data into frame
     for (int i = 5; i >= 0; --i)
@@ -128,7 +121,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
         while (scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] != 0)
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
-            vTaskDelay(1 / portTICK_PERIOD_MS);
+            vTaskDelay(10 / portTICK_PERIOD_MS);
         }
         buffer_ptr = (scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff]);
     }
@@ -188,7 +181,7 @@ static void startAcquisitionSDCard(void)
         break;
     default:
         active_channels_sd = 0b00111111;
-        scientisst_device_settings.sample_rate = 1000;
+        scientisst_device_settings.sample_rate = 3000;
         // If external ADC is not used, start the secondary task that writes the data to the SD card
         xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL, 20,
                                 &file_sync_task, 0);
