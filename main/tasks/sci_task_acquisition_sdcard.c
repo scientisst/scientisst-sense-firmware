@@ -1,4 +1,4 @@
-#include "include/sci_task_acquisition_sdcard.h"
+#include "sci_task_acquisition_sdcard.h"
 
 #include <string.h>
 #include <unistd.h>
