@@ -3,7 +3,6 @@
 
     This file contains the websocket server code. It is used to send data to the
    web interface.
-    //TODO: Confirm it is imcomplete and undestand what it's supposed to do.
 */
 #include "sci_ws.h"
 

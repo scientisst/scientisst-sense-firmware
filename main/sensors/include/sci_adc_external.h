@@ -1,9 +1,6 @@
 /** \file spi.h
     \brief This file contains the definitions of the functions used to
    communicate with the external ADCs.
-
-    //TODO: Add more info
-
 */
 
 #pragma once

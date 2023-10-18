@@ -23,7 +23,7 @@
 
 typedef enum
 {
-    ADC_INTERNAL_1 = 1,
+    ADC_INTERNAL_1 = 0,
     ADC_INTERNAL_2,
 } adc_internal_id_t;
 

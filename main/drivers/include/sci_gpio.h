@@ -1,7 +1,5 @@
 /** \file gpio.h
     \brief GPIO interactions
-
-    //TODO: Add more details
 */
 
 #pragma once

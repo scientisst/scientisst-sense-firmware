@@ -39,7 +39,7 @@ typedef struct
 typedef struct
 {
     char device_name[17];                              //
-    uint16_t battery_threshold;                        //
+    uint16_t battery_threshold;                        // When under this threshold, low battery LED is lit
     uint8_t num_intern_active_chs;                     //
     uint8_t num_extern_active_chs;                     //
     uint8_t active_internal_chs[DEFAULT_ADC_CHANNELS]; ///< If all channels are active: = {5, 4, 3, 2, 1, 0}
@@ -56,13 +56,15 @@ typedef struct
 
 typedef struct
 {
-    uint8_t *frame_buffer[NUM_BUFFERS];           ///< Buffer that holds the frames to be sent
-    uint16_t frame_buffer_length_bytes;           ///< Length of each send buffer, set to optimal value depending on com mode
-    uint16_t frame_buffer_write_idx[NUM_BUFFERS]; ///< The index of the first free element in for each buffer
-    volatile uint16_t frame_buffer_ready_to_send[NUM_BUFFERS]; ///< If element 0 is set to 1, bt task has to send snd_buff[0]
-    uint8_t tx_curr_buff;                                      ///< Index of the buffer that tx task is currently sending
-    uint8_t acq_curr_buff;   ///< Index of the buffer that acquisition task is currently using
-    uint8_t packet_size;     ///< Current packet size (dependent on number of channels used)
+    uint8_t *frame_buffer[NUM_BUFFERS]; ///< Buffer that holds the frames to be sent
+    uint16_t frame_buffer_length_bytes; ///< Length of each send buffer, set to optimal value depending on com mode
+    uint16_t frame_buffer_write_idx;    ///< The index of the first free element in for each buffer
+    volatile uint16_t
+        frame_buffer_ready_to_send[NUM_BUFFERS]; ///< If 0, buffer is not full/not ready to send. If != 0, then the buffer is
+                                                 ///< ready to send and it holds the number of bytes to send
+    uint8_t tx_curr_buff;                        ///< Index of the buffer that tx task is currently sending
+    uint8_t acq_curr_buff;                       ///< Index of the buffer that acquisition task is currently using
+    uint8_t packet_size;                         ///< Current packet size (dependent on number of channels used)
     uint16_t send_threshold; ///< Based on buffer and packet sizes, threshold that marks the buffer as ready to send and
                              ///< changes buffer used for acquisition
     FILE *sd_card_save_file; ///< File where data is saved in SD card mode

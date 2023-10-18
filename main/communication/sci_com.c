@@ -364,9 +364,9 @@ static void startAcquisition(void)
     for (int i = 0; i < NUM_BUFFERS; i++)
     {
         memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
-        scientisst_buffers.frame_buffer_write_idx[i] = 0;
         scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
+    scientisst_buffers.frame_buffer_write_idx = 0;
 
     // WARNING: if changed, change same code in API
     if (scientisst_device_settings.sample_rate > 100)
@@ -456,9 +456,9 @@ void stopAcquisition(void)
     for (uint8_t i = 0; i < NUM_BUFFERS; i++)
     {
         memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
-        scientisst_buffers.frame_buffer_write_idx[i] = 0;
         scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
+    scientisst_buffers.frame_buffer_write_idx = 0;
 
     scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.acq_curr_buff = 0;
@@ -480,13 +480,13 @@ void stopAcquisition(void)
 static void sendStatusPacket(void)
 {
     uint8_t crc = 0;
-    uint16_t true_send_threshold;
 
-    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1]);
-    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
-    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
-    true_send_threshold = scientisst_buffers.send_threshold;
-    scientisst_buffers.send_threshold = 0;
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
+    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_length_bytes);
 
     // calculate CRC (except last byte (seq+CRC) )
     for (uint8_t i = 0; i < STATUS_PACKET_SIZE - 1; i++)
@@ -503,17 +503,11 @@ static void sendStatusPacket(void)
     // store CRC and Seq in the last byte of the packet
     scientisst_buffers.frame_buffer[NUM_BUFFERS - 1][STATUS_PACKET_SIZE - 1] = crc;
 
-    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += STATUS_PACKET_SIZE;
-
     scientisst_buffers.tx_curr_buff = NUM_BUFFERS - 1;
+    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = STATUS_PACKET_SIZE;
 
     // send new data
     xTaskNotifyGive(send_task);
-    // Wait for send task to send data, TODO: find a better way to do this
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-    scientisst_buffers.tx_curr_buff = 0;
-    scientisst_buffers.send_threshold = true_send_threshold;
 }
 
 /**
@@ -527,40 +521,37 @@ static void sendStatusPacket(void)
  */
 static void sendFirmwareVersionPacket(void)
 {
-    uint16_t true_send_threshold;
+    uint16_t write_idx = 0;
 
-    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1]);
-    scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] = 0;
-    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = 1;
-    true_send_threshold = scientisst_buffers.send_threshold;
-    scientisst_buffers.send_threshold = 0;
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
+    memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_length_bytes);
 
     if (scientisst_device_settings.api_config.api_mode != API_MODE_BITALINO)
     {
         memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], FIRMWARE_VERSION, strlen(FIRMWARE_VERSION) + 1);
-        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_VERSION) + 1;
+        write_idx += strlen(FIRMWARE_VERSION) + 1;
 
         // Send ADC1 configurations for raw2voltage precision conversions
-        memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1] + scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1],
+        memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1] + write_idx,
                &(scientisst_device_settings.adc_chars[ADC_INTERNAL_1]), 6 * sizeof(uint32_t));
         // We don't want to send the 2 last pointers of adc_chars struct
-        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += 6 * sizeof(uint32_t);
+        write_idx += 6 * sizeof(uint32_t);
     }
     else
     {
         memcpy(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], FIRMWARE_BITALINO_VERSION,
                strlen(FIRMWARE_BITALINO_VERSION));
-        scientisst_buffers.frame_buffer_write_idx[NUM_BUFFERS - 1] += strlen(FIRMWARE_BITALINO_VERSION);
+        write_idx += strlen(FIRMWARE_BITALINO_VERSION);
     }
 
+    scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] = write_idx;
     scientisst_buffers.tx_curr_buff = NUM_BUFFERS - 1;
 
     xTaskNotifyGive(send_task);
-    // Wait for send task to send data, TODO: find a better way to do this
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-    scientisst_buffers.tx_curr_buff = 0;
-    scientisst_buffers.send_threshold = true_send_threshold;
 
     DEBUG_PRINT_I("sendFirmwareVersionPacket", "Sent firmware version and adc chars");
 }

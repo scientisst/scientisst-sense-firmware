@@ -53,8 +53,7 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const
     }
 
     scientisst_device_settings.send_busy = 1;
-    esp_spp_write(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff],
-                  scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
+    esp_spp_write(send_fd, buf_ready, scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
 }
 
 /**
@@ -64,12 +63,11 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const
  */
 void IRAM_ATTR finalizeSend(void)
 {
-    scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
-
     // Clear recently sent buffer
     memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-           scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff]);
-    scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff] = 0;
+           scientisst_buffers.frame_buffer_length_bytes);
+
+    scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
     // Change send buffer
     scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);

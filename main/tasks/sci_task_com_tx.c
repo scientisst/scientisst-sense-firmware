@@ -73,7 +73,7 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const u
 
     while (1) // Loop to send all the available data
     {
-        int buf_ready;
+        uint16_t buf_ready;
         esp_err_t ret;
         // Check if there's anything to send and if there is, check if it's enough
         // to send
@@ -92,18 +92,16 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const u
         }
 
         scientisst_device_settings.send_busy = 1;
-        ret = tx_write_func(send_fd, scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff],
-                            scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
+        ret = tx_write_func(send_fd, buf_ready, scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
 
         if (ret == ESP_FAIL) // If the send function failed, stop sending data. Connection was possibly lost
             break;
 
-        scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
-
         // Clear recently sent buffer
         memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-               scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff]);
-        scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.tx_curr_buff] = 0;
+               scientisst_buffers.frame_buffer_length_bytes);
+
+        scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
         // Change send buffer
         scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);

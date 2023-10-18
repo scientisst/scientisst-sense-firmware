@@ -42,9 +42,8 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
 
     if (convert_to_mV_flag)
     {
-        value =
-            (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index - 1])) *
-            BATTERY_DIVIDER_FACTOR;
+        value = (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
+                BATTERY_DIVIDER_FACTOR;
     }
 
     return value;
@@ -123,7 +122,7 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
 
         // Characterize ADC
         val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC1_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF,
-                                            &(scientisst_device_settings.adc_chars[0]));
+                                            &(scientisst_device_settings.adc_chars[ADC_INTERNAL_1]));
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {
@@ -146,7 +145,7 @@ void initAdc(uint8_t adc1_en, uint8_t adc2_en)
         configAdc(ADC_INTERNAL_2, BATTERY_ADC_CH);
 
         val_type = esp_adc_cal_characterize(ADC_UNIT_2, ADC2_ATTENUATION, ADC_RESOLUTION, DEFAULT_VREF,
-                                            &(scientisst_device_settings.adc_chars[1]));
+                                            &(scientisst_device_settings.adc_chars[ADC_INTERNAL_2]));
 
         if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
         {

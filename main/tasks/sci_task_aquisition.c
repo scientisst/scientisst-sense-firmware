@@ -52,19 +52,19 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
 
         // Store sensor data on current buffer with de adequate frame format
         writeFrame(scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff] +
-                       scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff],
+                       scientisst_buffers.frame_buffer_write_idx,
                    adc_internal_res, adc_external_res, io_state);
-        ++crc_seq; // Increment sequence number
-        scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff] +=
-            scientisst_buffers.packet_size; // Update write index
+        ++crc_seq;                                                                   // Increment sequence number
+        scientisst_buffers.frame_buffer_write_idx += scientisst_buffers.packet_size; // Update write index
 
         // Check if acq_curr_buff is above send_threshold and consequently send acq_curr_buff. If we send
         // acq_curr_buff, we need to update it
-        if (scientisst_buffers.frame_buffer_write_idx[scientisst_buffers.acq_curr_buff] >= scientisst_buffers.send_threshold)
+        if (scientisst_buffers.frame_buffer_write_idx >= scientisst_buffers.send_threshold)
         {
             // Tell bt task that it has acq_curr_buff to send (but it will only send after the buffer is
             // filled above the threshold)
-            scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] = 1;
+            scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] =
+                scientisst_buffers.frame_buffer_write_idx;
 
             // If send task is idle, wake it up
             if (scientisst_device_settings.send_busy == 0)
@@ -77,10 +77,12 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] == 1)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
-                xTaskNotifyGive(send_task);
+                if (scientisst_device_settings.send_busy == 0)
+                    xTaskNotifyGive(send_task);
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;
+            scientisst_buffers.frame_buffer_write_idx = 0; // Reset write index
         }
     }
 }
