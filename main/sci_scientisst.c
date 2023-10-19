@@ -190,9 +190,9 @@ void initScientisst(void)
     // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
     const sdmmc_host_t *sd_card_spi_host = NULL;
     sd_card_spi_host = initSdCardSpiBus();
-    adcExtInit(sd_card_spi_host);
 
 #ifdef CONFIG_ADC_EXT
+    adcExtInit(sd_card_spi_host);
     scientisst_device_settings.num_extern_active_chs = CONFIG_NUMBER_CHANNELS_EXT_ADC;
 #else
     scientisst_device_settings.num_extern_active_chs = 0;
@@ -277,7 +277,7 @@ void initScientisst(void)
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
         allocateFrameBuffers();
         xTaskCreatePinnedToCore((TaskFunction_t)&taskBatteryMonitor, "task_battery_monitor", DEFAULT_TASK_STACK_SIZE_SMALL,
-                                NULL, BATTERY_PRIORITY, &battery_task, 0);
+                                NULL, BATTERY_PRIORITY, &battery_task, 1);
         xTaskCreatePinnedToCore((TaskFunction_t)&acquisitionSDCard, "acqSDCard", DEFAULT_TASK_STACK_SIZE_LARGE, NULL, 24,
                                 &acq_adc1_task, 1);
         break;

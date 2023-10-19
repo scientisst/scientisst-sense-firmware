@@ -31,7 +31,7 @@ sdmmc_host_t sd_spi_host = {
 #ifdef CONFIG_ADC_EXT
     .max_freq_khz = ADC_EXT_SLCK_HZ_2_EXT_CH,
 #else
-    .max_freq_khz = SDMMC_FREQ_DEFAULT,
+    .max_freq_khz = SDMMC_FREQ_HIGHSPEED,
 #endif
     .io_voltage = 3.3f,
     .init = &sdspi_host_init,

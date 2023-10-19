@@ -81,14 +81,21 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     esp_err_t res = ESP_OK;
     uint8_t channel_mask = 0;
+    uint32_t adc_ext_values[CONFIG_NUMBER_CHANNELS_EXT_ADC];
 
     if (scientisst_device_settings.active_ext_chs[0] == 6 || scientisst_device_settings.active_ext_chs[1] == 6)
         channel_mask |= 0b01;
     if (scientisst_device_settings.active_ext_chs[0] == 7 || scientisst_device_settings.active_ext_chs[1] == 7)
         channel_mask |= 0b10;
 
-    res = getAdcExtValuesRaw(channel_mask, (uint32_t *)buffer_ptr);
+    res = getAdcExtValuesRaw(channel_mask, adc_ext_values);
     ESP_ERROR_CHECK_WITHOUT_ABORT(res);
+    for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
+    {
+        *(uint32_t *)buffer_ptr = adc_ext_values[i];
+        buffer_ptr += 3;
+    }
+
 #endif
 
     *(uint64_t *)buffer_ptr = esp_timer_get_time();
@@ -121,7 +128,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
         while (scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.acq_curr_buff] != 0)
         {
             DEBUG_PRINT_E("acqAdc1", "Buffer overflow!");
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
         buffer_ptr = (scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff]);
     }
@@ -135,18 +142,14 @@ _Noreturn static void IRAM_ATTR fileSyncTask(void)
     {
         if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
             continue;
-        while (1)
+        while (scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] != 0)
         {
-            if (scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] == 0)
-                break;
-
             write(fileno(scientisst_buffers.sd_card_save_file),
                   (scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]),
                   scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff]);
             fflush(scientisst_buffers.sd_card_save_file);
             fsync(fileno(scientisst_buffers.sd_card_save_file));
-            memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-                   scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff]);
+
             scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
             scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % NUM_BUFFERS_SDCARD;
         }
