@@ -100,7 +100,7 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const u
 
         // Clear recently sent buffer
         memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-               scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff]);
+               scientisst_buffers.frame_buffer_length_bytes);
 
         scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
