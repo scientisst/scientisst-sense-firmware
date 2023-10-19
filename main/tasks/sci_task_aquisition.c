@@ -167,7 +167,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
 
     for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
     {
-        *(uint32_t *)(frame + frame_next_wr) |= adc_external_res[i];
+        *(uint32_t *)(frame + frame_next_wr) = adc_external_res[i];
         frame_next_wr += 3;
     }
 

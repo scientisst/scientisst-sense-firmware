@@ -121,6 +121,7 @@ static void allocateFrameBuffers(void)
             (uint8_t *)malloc(scientisst_buffers.frame_buffer_length_bytes * sizeof(uint8_t));
         CHECK_NOT_NULL(scientisst_buffers.frame_buffer[i]);
         memset(scientisst_buffers.frame_buffer[i], 0, scientisst_buffers.frame_buffer_length_bytes);
+        scientisst_buffers.frame_buffer_ready_to_send[i] = 0;
     }
 }
 

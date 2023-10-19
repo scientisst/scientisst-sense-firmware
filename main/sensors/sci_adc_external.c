@@ -344,9 +344,9 @@ uint32_t mcpReadRegister(uint8_t address, uint8_t rx_data_bytes)
  */
 void mcpSetupRoutine(uint8_t channel_mask)
 {
-#ifndef CONFIG_SD_CARD
-    adcExtInit(NULL);
-#endif
+    if (scientisst_device_settings.op_settings.com_mode != COM_MODE_SD_CARD)
+        adcExtInit(NULL);
+
     mcpSendCmd(RESET);
     mcpWriteRegister(REG_CONFIG0, VALUE_CONFIG0, 1);
     mcpWriteRegister(REG_CONFIG1, VALUE_CONFIG1, 1);

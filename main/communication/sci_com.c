@@ -352,6 +352,12 @@ static void setSampleRate(uint8_t *buff)
  */
 static void startAcquisition(void)
 {
+    // Make sure the data on last buffer (firmware/status packets) are sent
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
     // Clear send buffs, because of potential previous live mode
     scientisst_buffers.tx_curr_buff = 0;
     scientisst_buffers.acq_curr_buff = 0;
@@ -451,6 +457,7 @@ void stopAcquisition(void)
 
     // Reset simulation's signal iterator
     crc_seq = 0;
+    scientisst_device_settings.send_busy = 0;
 
     // Clean send buffers
     for (uint8_t i = 0; i < NUM_BUFFERS; i++)

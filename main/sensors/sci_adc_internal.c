@@ -23,7 +23,7 @@ DRAM_ATTR static const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHA
 
 uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag)
 {
-    uint16_t value = 0;
+    int value = 0;
     esp_err_t res;
 
     if (adc_index == ADC_INTERNAL_1)
@@ -32,7 +32,7 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
     }
     else if (adc_index == ADC_INTERNAL_2)
     {
-        res = adc2_get_raw(adc_channel, ADC_RESOLUTION, (int *)&value);
+        res = adc2_get_raw(adc_channel, ADC_RESOLUTION, &value);
         if (res != ESP_OK)
         {
             DEBUG_PRINT_E("adc2_get_raw", "Error!");
@@ -42,11 +42,11 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
 
     if (convert_to_mV_flag)
     {
-        value = (uint16_t)esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
+        value = esp_adc_cal_raw_to_voltage((uint32_t)value, &(scientisst_device_settings.adc_chars[adc_index])) *
                 BATTERY_DIVIDER_FACTOR;
     }
 
-    return value;
+    return (uint16_t)value;
 }
 
 /**
@@ -61,11 +61,11 @@ static void configAdc(adc_internal_id_t adc_index, int adc_channel)
     int dummy;
     esp_err_t ret;
 
-    if (adc_index == 1)
+    if (adc_index == ADC_INTERNAL_1)
     {
         adc1_config_channel_atten(adc_channel, ADC1_ATTENUATION);
     }
-    else if (adc_index == 2)
+    else if (adc_index == ADC_INTERNAL_2)
     {
         adc2_config_channel_atten(adc_channel, ADC2_ATTENUATION);
         ret = adc2_get_raw(adc_channel, ADC_RESOLUTION, &dummy);
