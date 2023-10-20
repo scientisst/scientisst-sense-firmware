@@ -188,14 +188,14 @@ void initScientisst(void)
     initAdc(1, !IS_COM_TYPE_WIFI(scientisst_device_settings.op_settings.com_mode));
 
 #ifdef CONFIG_SD_CARD
+#ifdef CONFIG_ADC_EXT
     // If SD card is enabled, ext adc has to be added to the spi bus before the sd card
     const sdmmc_host_t *sd_card_spi_host = NULL;
     sd_card_spi_host = initSdCardSpiBus();
-
-#ifdef CONFIG_ADC_EXT
     adcExtInit(sd_card_spi_host);
     scientisst_device_settings.num_extern_active_chs = CONFIG_NUMBER_CHANNELS_EXT_ADC;
 #else
+    initSdCardSpiBus();
     scientisst_device_settings.num_extern_active_chs = 0;
 #endif
 
