@@ -1,4 +1,5 @@
 import os
+import sys
 
 # Constants used for calculations related to ADC values.
 LIN_COEFF_A_SCALE = 65536
@@ -6,6 +7,9 @@ LIN_COEFF_A_ROUND = LIN_COEFF_A_SCALE / 2
 VOLT_DIVIDER_FACTOR = 3.399
 
 
+
+# Function 'revision1' handles the conversion for a specific file revision.
+# It reads binary data, processes it, and writes formatted data to an output file.
 def revision1(input_file, output_file):
     # Parse the header bytes
 
