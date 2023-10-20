@@ -74,11 +74,11 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
 
             // Check if next buffer is full. If this happens, it means all buffers are full and bt task
             // can't handle this sending throughput
-            while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] == 1)
+            while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] != 0)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
-                vTaskDelay(10 / portTICK_PERIOD_MS);
+                vTaskDelay(1 / portTICK_PERIOD_MS);
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;
             scientisst_buffers.frame_buffer_write_idx = 0; // Reset write index
