@@ -68,8 +68,7 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
                 scientisst_buffers.frame_buffer_write_idx;
 
             // If send task is idle, wake it up
-            if (scientisst_device_settings.send_busy == 0)
-                xTaskNotifyGive(send_task);
+            xTaskNotifyGive(send_task);
 
             acq_next_buff = (scientisst_buffers.acq_curr_buff + 1) % (NUM_BUFFERS - 1);
 
@@ -78,8 +77,7 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             while (scientisst_buffers.frame_buffer_ready_to_send[acq_next_buff] == 1)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
-                if (scientisst_device_settings.send_busy == 0)
-                    xTaskNotifyGive(send_task);
+                xTaskNotifyGive(send_task);
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;

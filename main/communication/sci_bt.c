@@ -18,11 +18,17 @@
 #include "esp_gap_bt_api.h"
 #include "esp_spp_api.h"
 #include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 #include "sci_com.h"
 
+#define SEND_AFTER_C0NG_WRITE_FAILED 3
 #define SEND_AFTER_C0NG 2
 #define SPP_SERVER_NAME "SPP_SERVER"
+
+DRAM_ATTR SemaphoreHandle_t bt_send_semaphore;
+DRAM_ATTR volatile uint16_t failed_write_bytes_sent_count = 0;
 
 // Send Data for Bluetooth mode. Given that the bluetooth connection has to wait for events to send data, this
 // function is called by the event handler. If others modes used the same approach, it created a recursive
@@ -54,6 +60,7 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const
 
     scientisst_device_settings.send_busy = 1;
     esp_spp_write(send_fd, buf_ready, scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff]);
+    xSemaphoreTake(bt_send_semaphore, portMAX_DELAY);
 }
 
 /**
@@ -65,12 +72,15 @@ void IRAM_ATTR finalizeSend(void)
 {
     // Clear recently sent buffer
     memset(scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff], 0,
-           scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff]);
+           scientisst_buffers.frame_buffer_length_bytes);
 
     scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
     // Change send buffer
-    scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
+    if (scientisst_buffers.tx_curr_buff != NUM_BUFFERS - 1)
+        scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
+    else
+        scientisst_buffers.tx_curr_buff = 0;
 }
 
 /**
@@ -111,6 +121,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_CLOSE_EVT");
         send_fd = 0;
         stopAcquisition(); // Make sure that sendBtTask doesn't stay stuck waiting for a successful write
+        xSemaphoreGive(bt_send_semaphore);
         break;
     case ESP_SPP_START_EVT: // server started
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_START_EVT");
@@ -123,12 +134,27 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         processPacket(param->data_ind.data);
         break;
     case ESP_SPP_CONG_EVT: // connection congestion status changed
-        if (param->cong.cong == 0 && scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
+        if (param->cong.cong == 0)
         {
-            sendDataBluetooth(NULL); // bt write is free
+            if (scientisst_device_settings.send_busy == SEND_AFTER_C0NG_WRITE_FAILED)
+            {
+                scientisst_device_settings.send_busy = 1;
+                esp_spp_write(send_fd,
+                              scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] -
+                                  failed_write_bytes_sent_count,
+                              scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff] +
+                                  failed_write_bytes_sent_count);
+                failed_write_bytes_sent_count = 0;
+            }
+            else if (scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
+            {
+                scientisst_device_settings.send_busy = 1;
+                xSemaphoreGive(bt_send_semaphore);
+            }
         }
         else if (param->cong.cong == 1)
         {
+            scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
             DEBUG_PRINT_W("espSppCb", "ESP_SPP_CONG_EVT");
         }
         break;
@@ -139,20 +165,47 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
             // Try to send next buff
             if (param->write.cong == 0) // bt write is free
             {
-                sendDataBluetooth(NULL);
+                scientisst_device_settings.send_busy = 1;
+                xSemaphoreGive(bt_send_semaphore);
             }
             else
             {
                 scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
             }
-            // write failed because congestion, so wait event 'ESP_SPP_CONG_EVT' and 'param->cong.cong == 0'
-            // to resend the failed writing data.
         }
         else
         {
-            // To resend the same buffer (note that because the write was unsuccessful, bt_curr_buff wasn't
-            // updated)
-            scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
+            failed_write_bytes_sent_count = (uint16_t)param->write.len;
+            if (failed_write_bytes_sent_count <
+                scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff])
+            {
+                if (param->write.cong == 0)
+                {
+                    scientisst_device_settings.send_busy = 1;
+                    esp_spp_write(send_fd,
+                                  scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] -
+                                      failed_write_bytes_sent_count,
+                                  scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff] +
+                                      failed_write_bytes_sent_count);
+                    failed_write_bytes_sent_count = 0;
+                }
+                else
+                {
+                    scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
+                }
+            }
+            else
+            {
+                if (param->write.cong == 0)
+                {
+                    scientisst_device_settings.send_busy = 1;
+                    xSemaphoreGive(bt_send_semaphore);
+                }
+                else
+                {
+                    scientisst_device_settings.send_busy = SEND_AFTER_C0NG;
+                }
+            }
         }
         break;
     default:
@@ -227,6 +280,9 @@ static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param
 void initBt(void)
 {
     esp_err_t ret;
+
+    bt_send_semaphore = xSemaphoreCreateBinary();
+    CHECK_NOT_NULL(bt_send_semaphore);
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
 

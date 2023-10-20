@@ -105,6 +105,9 @@ static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const u
         scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff] = 0;
 
         // Change send buffer
-        scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
+        if (scientisst_buffers.tx_curr_buff != NUM_BUFFERS - 1)
+            scientisst_buffers.tx_curr_buff = (scientisst_buffers.tx_curr_buff + 1) % (NUM_BUFFERS - 1);
+        else
+            scientisst_buffers.tx_curr_buff = 0;
     }
 }

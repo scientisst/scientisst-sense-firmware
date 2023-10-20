@@ -491,7 +491,7 @@ static void sendStatusPacket(void)
 
     while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
     {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
     memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_length_bytes);
@@ -533,7 +533,7 @@ static void sendFirmwareVersionPacket(void)
 
     while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
     {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
     memset(scientisst_buffers.frame_buffer[NUM_BUFFERS - 1], 0, scientisst_buffers.frame_buffer_length_bytes);
