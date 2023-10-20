@@ -126,7 +126,9 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
 #else
     if (scientisst_device_settings.num_extern_active_chs == 2)
     {
-        *(uint64_t *)(adc_external_res) = (uint64_t)(esp_timer_get_time() & 0xFFFFFFFFFFFF);
+        uint64_t timestamp = (uint64_t)esp_timer_get_time() & 0x0000FFFFFFFFFFFF;
+        adc_external_res[0] = (uint32_t)(timestamp & 0x00000000FFFFFFFF);
+        adc_external_res[1] = (uint32_t)(timestamp >> 32);
     }
 #endif
 }
@@ -165,7 +167,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
 
     for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
     {
-        *(uint32_t *)(frame + frame_next_wr) = adc_external_res[i];
+        *(uint32_t *)(frame + frame_next_wr) |= adc_external_res[i];
         frame_next_wr += 3;
     }
 

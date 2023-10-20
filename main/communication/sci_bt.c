@@ -144,7 +144,6 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
                                   failed_write_bytes_sent_count,
                               scientisst_buffers.frame_buffer[scientisst_buffers.tx_curr_buff] +
                                   failed_write_bytes_sent_count);
-                failed_write_bytes_sent_count = 0;
             }
             else if (scientisst_device_settings.send_busy == SEND_AFTER_C0NG)
             {
@@ -161,6 +160,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     case ESP_SPP_WRITE_EVT: // write operation status changed
         if (param->write.status == ESP_SPP_SUCCESS)
         {
+            failed_write_bytes_sent_count = 0;
             finalizeSend();
             // Try to send next buff
             if (param->write.cong == 0) // bt write is free
@@ -175,7 +175,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         }
         else
         {
-            failed_write_bytes_sent_count = (uint16_t)param->write.len;
+            failed_write_bytes_sent_count += (uint16_t)param->write.len;
             if (failed_write_bytes_sent_count <
                 scientisst_buffers.frame_buffer_ready_to_send[scientisst_buffers.tx_curr_buff])
             {

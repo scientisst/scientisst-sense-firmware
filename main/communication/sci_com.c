@@ -353,7 +353,7 @@ static void setSampleRate(uint8_t *buff)
 static void startAcquisition(void)
 {
     // Make sure the data on last buffer (firmware/status packets) are sent
-    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
     {
         DEBUG_PRINT_E("startAcquisition", "Acquisition stuck");
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -489,7 +489,7 @@ static void sendStatusPacket(void)
 {
     uint8_t crc = 0;
 
-    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -531,7 +531,7 @@ static void sendFirmwareVersionPacket(void)
 {
     uint16_t write_idx = 0;
 
-    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0)
+    while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
