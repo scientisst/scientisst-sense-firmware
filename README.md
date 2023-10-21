@@ -7,11 +7,43 @@ The firmware for the Scientisst - Sense development board
 ## Repository structure
 
 ```
-- deps              :   External Dependencies
-- main              :   Firmware Source Files
-- sdkconfig         :   ESP32 Hardware Configurations
-- www               :   Configuration HTML Page
+├── deps/                           : External Dependencies
+│    ├── BNO055_driver/             : Bosch Sensortec's BNO055 driver
+│    ├── esp-idf/                   : Espressif Systems' ESP-IDF v4.4.4
+├── docs/                           : Documentation of the repository
+│    ├── doxygen/                   : Doxygen generated documentation of the main/ directory
+│    ├── How_to_flash_scientisst/   : Instructions on how to flash a ScientISST device
+│    ├── frames.jpg/.svg            : Layout of the frames used to communicate between the device and the various APIs
+├── main/                           : Firmware source files: all ScientISST files follow the format "sci_XXXXX.c/.h"
+│    ├── certs/                     : Cryptographic files used for secure communications protocols
+│    ├── communication/             : Communication protocols
+│    ├── drivers/                   : GPIO, wifi, UART, timer
+│    ├── sensors/                   : Internal and external ADCs, BNO055
+│    ├── tasks/                     : Tasks created by the firmware
+│    ├── CMakeLists.txt             : CMake file
+│    ├── component.mk
+│    ├── doxygen_config_file        : Doxygen configuration file
+│    ├── Kconfig                    : Allows configuring the firmware using the menuconfig tool
+│    ├── main.c 
+│    ├── sci_macros.h               : Global macros used by the firmware
+│    ├── sci_scientisst.c           : Initialization of the device, task selection and creation, buffer allocation.
+│    ├── sci_scientisst.h           : Contains global variables
+│    └── sci_version.h              : Contains the version of the firmware, automatically updated with each commit
+├── SDCardFileConverter/            : Python script to convert the binary files stored in the SD Card to CSV files
+├── www/                            : Configuration HTML page
+├── CMakeLists.txt                  : CMake file
+├── dependencies.lock               : ESP-IDF dependencies lock file
+├── get_idf.bat                     : Script to install and export to path the ESP-IDF for Windows
+├── get_idf.sh                      : Script to install and export to path the ESP-IDF for Linux/MacOS
+├── LICENSE
+├── Makefile
+├── partitions.csv                  : Custom ESP32 partitions
+├── README.md
+├── sdkconfig                       : ESP32 ESP-IDF configurations
+├── sdkconfig.defaults              : ESP32 ESP-IDF configurations (defaults)
+└── update_version.sh               : Script to update the version of the firmware, used as a pre-commit hook to update sci_version.h with the latest commit hash
 ``` 
+
 
 ## Installing
 
