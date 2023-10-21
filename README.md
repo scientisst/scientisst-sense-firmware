@@ -7,6 +7,7 @@ The firmware for the Scientisst - Sense development board
 ## Repository structure
 
 ```
+scientisst-sense-firmware/
 ├── deps/                           : External Dependencies
 │    ├── BNO055_driver/             : Bosch Sensortec's BNO055 driver
 │    ├── esp-idf/                   : Espressif Systems' ESP-IDF v4.4.4
@@ -46,6 +47,7 @@ The firmware for the Scientisst - Sense development board
 
 
 ## Installing
+This is an overview of the steps required to install the firmware. For more detailed instructions, please refer to the [How to flash a ScientISST device](docs/How_to_flash_scientisst/how_to_flash_a_scientisst.ipynb) document.
 
 ### 1) Prerequisites
 
@@ -72,6 +74,29 @@ git clone --recursive git@github.com:scientisst/scientisst-sense-firmware.git
 ```sh
 get_idf.bat --install
 ```
+
+### 4) Load Xtensa's tools
+This step must be done every time you open a new terminal.
+#### (Linux/MacOS)
+
+```sh
+. get_idf.sh 
+```
+
+#### (Windows)
+
+```sh
+get_idf.bat 
+```
+
+## Configure Firmware
+First open the menuconfig tool:
+
+```sh
+idf.py menuconfig
+```
+Then navigate to ScientISST Configuration: Component config -> SCIENTISST Configuration (last option) and configure the desired options.
+The tool does not verify if the physical hardware supports the selected options, so be careful when selecting the options. Using the monitor tool, you can check if the device is working as expected and if any errors occur.
 
 ## Flash Firmware (Linux/MacOS)
 
