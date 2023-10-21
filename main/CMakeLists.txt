@@ -2,7 +2,8 @@ file(GLOB_RECURSE COMMUNICATION_SOURCES "communication/*.c")
 file(GLOB_RECURSE SENSORS_SOURCES "sensors/*.c")
 file(GLOB_RECURSE DRIVERS_SOURCES "drivers/*.c")
 file(GLOB_RECURSE TASKS_SOURCES "tasks/*.c")
-set(srcs "sci_scientisst.c" ${COMMUNICATION_SOURCES} ${DRIVERS_SOURCES} ${TASKS_SOURCES} ${SENSORS_SOURCES})
+file(GLOB_RECURSE BNO055_SOURCES "../deps/BNO055_driver/*.c")
+set(srcs "sci_scientisst.c" ${COMMUNICATION_SOURCES} ${DRIVERS_SOURCES} ${TASKS_SOURCES} ${SENSORS_SOURCES} ${BNO055_SOURCES})
 
 set(requires esp_adc_cal nvs_flash json mdns bt esp_http_server fatfs spiffs esp_https_server driver sdmmc)
 
@@ -16,7 +17,7 @@ else ()
 endif ()
 
 idf_component_register(SRCS ${srcs}
-        INCLUDE_DIRS "." ".." "communication/include" "communication/wifi_rest_server" "drivers/include" "sensors/include" "tasks/include"
+        INCLUDE_DIRS "." ".." "communication/include" "communication/wifi_rest_server" "drivers/include" "sensors/include" "tasks/include" "../deps/BNO055_driver"
         REQUIRES ${requires}
         EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/certs/cacert.pem" "${CMAKE_CURRENT_LIST_DIR}/certs/prvtkey.pem"
 )
