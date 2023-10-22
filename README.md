@@ -47,7 +47,8 @@ The firmware is divided into tasks, each task is responsible for a specific func
 - **sci_task_acquisition_sdcard**: When in SD Card mode, responsible for acquiring data from the sensors and storing it
   in the SD Card. This task is created instead of sci_task_acquisition, sci_task_com_tx and sci_task_com_rx.
 - **sci_task_imu**: Responsible for acquiring data from the BNO055 IMU at a constant 100 Hz and storing it in static
-  variables. Acquisition tasks can use getImuValues() to get the latest data from the IMU.
+  variables. Acquisition tasks can use getImuValues() to get the latest data from the IMU. :warning: Replaces internal
+  all channels.
 
 The firmware supports the following communication modes:
 
@@ -62,10 +63,27 @@ The firmware supports the following communication modes:
 - **SD Card**: The device stores the data in the SD Card. The data can be retrieved by removing the SD Card and using
   the [SDCardFileConveter.py](SDCardFileConverter/sdcardfileconversion.py) script to convert the binary files to CSV
   files. Check [SDCardBinaryFileFormat.md](docs/SDCardBinaryFileFormat.md) for more information about the binary file
-  format.
-- **Web Socket - AP**: The device acts as a Web Socket server and can be
-  connected to a Web Socket client. :warning: **Warning**: Currently not working.
--
+  format. When using this mode, the device does not transmit the data to the API unless SD Card initialization fails.
+  Then it acts uses Classic Bluetooth as a fallback. :warning: Only 2 modes are supported at the moment: all internal
+  channels at 2000Hz and all internal channels and 1 or 2 external channels at 100Hz.
+- **Web Socket - AP**: (:warning: Currently not working) The device acts as a Web Socket server and can be
+  connected to a Web Socket client.
+
+The firmware supports the following sensors:
+
+- **Internal ADC 1**: 6 channel, 12-bit ADC with a range of 0.254-3.3V. :warning: Replaced by IMU when active.
+- **Internal ADC 2**: 1 channel, 12-bit ADC with used only to monitor the battery level.
+- **External ADC (MCP3564)**: 2 channel, 24-bit ADC with a range of -3.3V to 3.3V. Given the use cases, all values
+  bellow 0 are treated as 0 making the range 0-3.3V. Has a precision of 0.001mV.
+- **IMU (BNO066)**: 9-axis IMU with a range of -16g to 16g. Currently only supports Euler Angles, Angular Velocity and
+  Linear Acceleration. :warning: Replaces all internal channels.
+
+The firmware supports the following APIs:
+
+- **Scientisst API**: This is the recommended API, as it has more features and is the one currently maintained. It can
+  be found at [Scientisst Python API](https://github.com/scientisst/scientisst-sense-api-python).
+- **Bitalino API**: (deprecated) This API is only supported for compatibility with the Bitalino API.
+- **JSON API**: (:warning: Currently not working).
 
 ## Repository structure
 
@@ -80,6 +98,7 @@ scientisst-sense-firmware/
 │    ├── doxygen/                   : Doxygen generated documentation of the main/ directory
 │    ├── How_to_flash_scientisst/   : Instructions on how to flash a ScientISST device
 │    ├── frames.jpg/.svg            : Layout of the frames used to communicate between the device and the various APIs
+│    ├── SDCardBinaryFileFormat.md  : Description of the binary file format used to store the data in the SD Card
 ├── main/                           : Firmware source files: all ScientISST files follow the format "sci_XXXXX.c/.h"
 │    ├── certs/                     : Cryptographic files used for secure communications protocols
 │    ├── communication/             : Communication protocols
