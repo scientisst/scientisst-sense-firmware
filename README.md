@@ -1,10 +1,75 @@
 # Scientisst - Sense Firmware
 
+---
+
 The firmware for the Scientisst - Sense development board
+
+## Table of contents
 
 ---
 
+- [General overview](#General overview)
+- [Repository structure](#repository-structure)
+- [Installing](#installing)
+    - [1) Prerequisites](#1-prerequisites)
+    - [2) Getting this repository](#2-getting-this-repository)
+    - [3) Install Xtensa's toolchain](#3-install-xtensas-toolchain)
+    - [4) Load Xtensa's tools](#4-load-xtensas-tools)
+- [Configure firmware](#configure-firmware)
+- [Flash firmware](#flash-firmware)
+- [Troubleshooting](#troubleshooting)
+- [Serial monitor](#serial-monitor-linuxmacos)
+- [Licensing](#licensing)
+- [Disclaimer](#disclaimer)
+- [Acknowledgments](#acknowledgments)
+
+## General overview
+
+---
+
+The Scientisst - Sense firmware is based on the ESP-IDF framework, which is Espressif Systems' official development.
+This firmware is flashed onto the Scientisst - Sense board (Core, Cardio and Nano) designed in-house, which are based on
+the ESP32 microcontroller. The firmware is responsible for initializing the device, configuring the sensors, and
+communicating with the various APIs.
+
+The firmware is divided into tasks, each task is responsible for a specific function. The tasks are:
+
+- **main task (sci_scientisst)**: Responsible for initializing the device, configuring the sensors, and creating the
+  other tasks. Terminates itself after the setup is complete.
+- **sci_task_acquisition**: Responsible for acquiring data from the sensors and storing it in the buffers. A timer is
+  used to wake this task up at the desired sampling rate. The sampling rate can be changed at runtime using the API.
+- **sci_task_battery_monitor**: Responsible for monitoring the battery level and turning on a red LED when the battery
+  is low. Does not interact with other tasks. Only run when not using a Wi-Fi communication mode because ADC2 and Wi-Fi
+  cannot be used at the same time.
+- **sci_task_com_tx**: Responsible for transmitting the data stored in the buffers to the API.
+- **sci_task_com_rx**: Responsible for receiving and processing commands from the API like start/stop acquisition,
+  change sampling rate, change API mode, active channels, etc.
+- **sci_task_acquisition_sdcard**: When in SD Card mode, responsible for acquiring data from the sensors and storing it
+  in the SD Card. This task is created instead of sci_task_acquisition, sci_task_com_tx and sci_task_com_rx.
+- **sci_task_imu**: Responsible for acquiring data from the BNO055 IMU at a constant 100 Hz and storing it in static
+  variables. Acquisition tasks can use getImuValues() to get the latest data from the IMU.
+
+The firmware supports the following communication modes:
+
+- **Bluetooth Classic**: The device acts as a Bluetooth Classic SPP server and can be connected to a Bluetooth Classic
+  SPP client.
+- **Bluetooth Low Energy (BLE)**: The device acts as a BLE peripheral and can be connected to a BLE central device. The
+  data is transmitted using the BLE GATT protocol.
+- **TCP - AP**: The device acts as a TCP server and can be connected to a TCP client.
+- **TCP - STA**: The device acts as a TCP client and can be connected to a TCP server.
+- **UDP - STA**: The device acts as a UDP client and can be connected to a UDP server.
+- **Serial**: The device acts as a serial device and can be connected via USB.
+- **SD Card**: The device stores the data in the SD Card. The data can be retrieved by removing the SD Card and using
+  the [SDCardFileConveter.py](SDCardFileConverter/sdcardfileconversion.py) script to convert the binary files to CSV
+  files. Check [SDCardBinaryFileFormat.md](docs/SDCardBinaryFileFormat.md) for more information about the binary file
+  format.
+- **Web Socket - AP**: The device acts as a Web Socket server and can be
+  connected to a Web Socket client. :warning: **Warning**: Currently not working.
+-
+
 ## Repository structure
+
+---
 
 ```
 scientisst-sense-firmware/
@@ -45,9 +110,12 @@ scientisst-sense-firmware/
 └── update_version.sh               : Script to update the version of the firmware, used as a pre-commit hook to update sci_version.h with the latest commit hash
 ``` 
 
-
 ## Installing
-This is an overview of the steps required to install the firmware. For more detailed instructions, please refer to the [How to flash a ScientISST device](docs/How_to_flash_scientisst/how_to_flash_a_scientisst.ipynb) document.
+
+---
+
+This is an overview of the steps required to install the firmware. For more detailed instructions, please refer to
+the [How to flash a ScientISST device](docs/How_to_flash_scientisst/how_to_flash_a_scientisst.ipynb) document.
 
 ### 1) Prerequisites
 
@@ -76,7 +144,9 @@ get_idf.bat --install
 ```
 
 ### 4) Load Xtensa's tools
+
 This step must be done every time you open a new terminal.
+
 #### (Linux/MacOS)
 
 ```sh
@@ -89,16 +159,26 @@ This step must be done every time you open a new terminal.
 get_idf.bat 
 ```
 
-## Configure Firmware
+## Configure firmware
+
+---
+
 First open the menuconfig tool:
 
 ```sh
 idf.py menuconfig
 ```
-Then navigate to ScientISST Configuration: Component config -> SCIENTISST Configuration (last option) and configure the desired options.
-The tool does not verify if the physical hardware supports the selected options, so be careful when selecting the options. Using the monitor tool, you can check if the device is working as expected and if any errors occur.
 
-## Flash Firmware (Linux/MacOS)
+Then navigate to ScientISST Configuration: Component config -> SCIENTISST Configuration (last option) and configure the
+desired options.
+The tool does not verify if the physical hardware supports the selected options, so be careful when selecting the
+options. Using the monitor tool, you can check if the device is working as expected and if any errors occur.
+
+## Flash firmware
+
+---
+
+### Flash firmware (Linux/MacOS)
 
 ```sh
 . get_idf.sh
@@ -106,7 +186,7 @@ The tool does not verify if the physical hardware supports the selected options,
 idf.py flash
 ```
 
-## Flash Firmware (Windows)
+### Flash firmware (Windows)
 
 ```sh
 get_idf.bat
@@ -114,7 +194,9 @@ get_idf.bat
 idf.py flash
 ```
 
-### Troubleshooting
+## Troubleshooting
+
+---
 
 #### Cannot open /dev/ttyUSB0: Permission denied
 
@@ -144,7 +226,9 @@ sudo usermod -a -G dialout <your username>
 
 Then your user should have access to tty without use of sudo.
 
-## Serial Monitor (Linux/MacOS)
+## Serial monitor (Linux/MacOS only)
+
+---
 
 ```sh
 idf_monitor
@@ -154,15 +238,16 @@ To exit the serial monitor, press `CTRL+T` followed by `CTRL+X`
 
 ## Licensing
 
-This project is covered by multiple licenses:
+---
+
+This project is covered by multiple licenses. The full text is available in the [LICENSE](LICENSE) file.
 
 - **Apache License, Version 2.0 (Apache-2.0)**: This license applies to certain parts of the project. It is a permissive
-  license that allows for free use, modification, and distribution. More details can be found in the [LICENSE](LICENSE)
-  file.
+  license that allows for free use, modification, and distribution.
 
 - **BSD 3-Clause License (BSD-3-Clause)**: The BSD 3-Clause License covers specific components, particularly those
   related to Bosch Sensortec GmbH. This license also allows for free use, modification, and distribution, with some
-  conditions. The full text and specifics are available in the [LICENSE](LICENSE) file.
+  conditions.
 
 When using, modifying, or distributing this project, please ensure that you respect and follow the conditions laid out
 in both licenses. If you incorporate this project into your work or use it as a dependency, make sure to include the
@@ -170,10 +255,14 @@ proper license notices and files.
 
 ## Disclaimer
 
-This is not a medical device certified for diagnosis or treatment. It is provided to you as is only for research and
+---
+
+This is not a medical device certified for diagnosis or treatment. It is provided to you as is and only for research and
 educational purposes.
 
 ## Acknowledgments
+
+---
 
 This work was partially supported by Fundação para a Ciência e Tecnologia (FCT) under the projects’ UIDB/50008/2020 and
 PCIF/SSO/0163/2019 (SafeFire), and by the Active Assisted Living Programme Collaborative Project AAL-2020-7-237-CP (
