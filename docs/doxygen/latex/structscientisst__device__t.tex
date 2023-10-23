@@ -1,0 +1,64 @@
+\hypertarget{structscientisst__device__t}{}\doxysection{scientisst\+\_\+device\+\_\+t Struct Reference}
+\label{structscientisst__device__t}\index{scientisst\_device\_t@{scientisst\_device\_t}}
+
+
+Collaboration diagram for scientisst\+\_\+device\+\_\+t\+:
+% FIG 0
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a46d2993802cde70227cb000ebff49048}\label{structscientisst__device__t_a46d2993802cde70227cb000ebff49048}} 
+char \mbox{\hyperlink{structscientisst__device__t_a46d2993802cde70227cb000ebff49048}{device\+\_\+name}} \mbox{[}17\mbox{]}
+\begin{DoxyCompactList}\small\item\em Name of the device. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_a1916e30461a808c6449d2205b6422934}\label{structscientisst__device__t_a1916e30461a808c6449d2205b6422934}} 
+uint16\+\_\+t \mbox{\hyperlink{structscientisst__device__t_a1916e30461a808c6449d2205b6422934}{battery\+\_\+threshold}}
+\begin{DoxyCompactList}\small\item\em Low battery indication threshold. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_a24a76eac1fecc55ee117be42f7bc5fd0}\label{structscientisst__device__t_a24a76eac1fecc55ee117be42f7bc5fd0}} 
+uint8\+\_\+t {\bfseries num\+\_\+intern\+\_\+active\+\_\+chs}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a973f61adb3771d17a6a7df9b23aebda5}\label{structscientisst__device__t_a973f61adb3771d17a6a7df9b23aebda5}} 
+uint8\+\_\+t {\bfseries num\+\_\+extern\+\_\+active\+\_\+chs}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a1321295b69675c4823a6172f08dfa54a}\label{structscientisst__device__t_a1321295b69675c4823a6172f08dfa54a}} 
+uint8\+\_\+t {\bfseries active\+\_\+internal\+\_\+chs} \mbox{[}DEFAULT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a0fe53e4470c21ca2eeacbe24d89b1eb6}\label{structscientisst__device__t_a0fe53e4470c21ca2eeacbe24d89b1eb6}} 
+uint8\+\_\+t {\bfseries active\+\_\+ext\+\_\+chs} \mbox{[}EXT\+\_\+\+ADC\+\_\+\+CHANNELS\mbox{]}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a7c5216074b97b31d340d4d3de980ad68}\label{structscientisst__device__t_a7c5216074b97b31d340d4d3de980ad68}} 
+esp\+\_\+adc\+\_\+cal\+\_\+characteristics\+\_\+t {\bfseries adc\+\_\+chars} \mbox{[}2\mbox{]}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a257fd60479ad81964f33e2cf2a5f279f}\label{structscientisst__device__t_a257fd60479ad81964f33e2cf2a5f279f}} 
+uint8\+\_\+t \mbox{\hyperlink{structscientisst__device__t_a257fd60479ad81964f33e2cf2a5f279f}{gpio\+\_\+out\+\_\+state}} \mbox{[}2\mbox{]}
+\begin{DoxyCompactList}\small\item\em States of GPIO outputs O1 and O2. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_acd04d399320dc61168bf11b284ac42f1}\label{structscientisst__device__t_acd04d399320dc61168bf11b284ac42f1}} 
+\mbox{\hyperlink{structapi__config__t}{api\+\_\+config\+\_\+t}} \mbox{\hyperlink{structscientisst__device__t_acd04d399320dc61168bf11b284ac42f1}{api\+\_\+config}}
+\begin{DoxyCompactList}\small\item\em API configuration structure. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_a6bcd35a7802b07c08373beb750b07e51}\label{structscientisst__device__t_a6bcd35a7802b07c08373beb750b07e51}} 
+\mbox{\hyperlink{structop__settings__info__t}{op\+\_\+settings\+\_\+info\+\_\+t}} \mbox{\hyperlink{structscientisst__device__t_a6bcd35a7802b07c08373beb750b07e51}{op\+\_\+settings}}
+\begin{DoxyCompactList}\small\item\em Operational settings structure. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_adbfb1e4d78932930ef666af790e0ed49}\label{structscientisst__device__t_adbfb1e4d78932930ef666af790e0ed49}} 
+volatile uint8\+\_\+t {\bfseries op\+\_\+mode}
+\item 
+volatile uint8\+\_\+t \mbox{\hyperlink{structscientisst__device__t_a5dec68489d9ca55c35e449ffa17f2717}{send\+\_\+busy}}
+\item 
+\mbox{\Hypertarget{structscientisst__device__t_a9b05e0cce2516d12d0e7f73a8b03bf85}\label{structscientisst__device__t_a9b05e0cce2516d12d0e7f73a8b03bf85}} 
+uint32\+\_\+t \mbox{\hyperlink{structscientisst__device__t_a9b05e0cce2516d12d0e7f73a8b03bf85}{sample\+\_\+rate\+\_\+hz}}
+\begin{DoxyCompactList}\small\item\em Current sampling rate for data acquisition. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__device__t_a91f1f70010df1dcc45583c542d6e2a8f}\label{structscientisst__device__t_a91f1f70010df1dcc45583c542d6e2a8f}} 
+uint8\+\_\+t \mbox{\hyperlink{structscientisst__device__t_a91f1f70010df1dcc45583c542d6e2a8f}{is\+\_\+op\+\_\+settings\+\_\+valid}}
+\begin{DoxyCompactList}\small\item\em True if valid operational settings were loaded from flash. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structscientisst__device__t_a5dec68489d9ca55c35e449ffa17f2717}\label{structscientisst__device__t_a5dec68489d9ca55c35e449ffa17f2717}} 
+\index{scientisst\_device\_t@{scientisst\_device\_t}!send\_busy@{send\_busy}}
+\index{send\_busy@{send\_busy}!scientisst\_device\_t@{scientisst\_device\_t}}
+\doxysubsubsection{\texorpdfstring{send\_busy}{send\_busy}}
+{\footnotesize\ttfamily volatile uint8\+\_\+t scientisst\+\_\+device\+\_\+t\+::send\+\_\+busy}
+
+Flag indicating if the device is currently sending data, also used to pause calling write functions when congested. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+sci\+\_\+scientisst.\+h\end{DoxyCompactItemize}

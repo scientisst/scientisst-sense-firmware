@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['i2c_5fsensor_5fstate_0',['I2c_Sensor_State',['../structI2c__Sensor__State.html',1,'']]]
+  ['scientisst_5fbuffers_5ft_29',['scientisst_buffers_t',['../structscientisst__buffers__t.html',1,'']]],
+  ['scientisst_5fdevice_5ft_30',['scientisst_device_t',['../structscientisst__device__t.html',1,'']]]
 ];

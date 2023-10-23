@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['op_5fmode_0',['op_mode',['../scientisst_8c.html#aec948fb30e99b1eda7e3d9ff741d417a',1,'op_mode():&#160;scientisst.c'],['../scientisst_8h.html#aec948fb30e99b1eda7e3d9ff741d417a',1,'op_mode():&#160;scientisst.c']]]
+  ['is_5fbattery_5fthreshold_5finflated_43',['is_battery_threshold_inflated',['../structop__settings__info__t.html#ab70648963a8efc241a4fffc2e5159fd3',1,'op_settings_info_t']]],
+  ['is_5fop_5fsettings_5fvalid_44',['is_op_settings_valid',['../structscientisst__device__t.html#a91f1f70010df1dcc45583c542d6e2a8f',1,'scientisst_device_t']]]
 ];

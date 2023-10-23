@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['is_5fop_5fsettings_5fvalid_0',['is_op_settings_valid',['../scientisst_8c.html#a304133f917e93ba96a348df51387dc92',1,'is_op_settings_valid():&#160;scientisst.c'],['../scientisst_8h.html#a304133f917e93ba96a348df51387dc92',1,'is_op_settings_valid():&#160;scientisst.c']]]
+  ['gpio_5fout_5fstate_42',['gpio_out_state',['../structscientisst__device__t.html#a257fd60479ad81964f33e2cf2a5f279f',1,'scientisst_device_t']]]
 ];

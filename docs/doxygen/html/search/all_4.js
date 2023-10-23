@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['default_5fbattery_5fthreshold_0',['DEFAULT_BATTERY_THRESHOLD',['../adc_8h.html#ace491076e4abfca2474f6a281bc85940',1,'adc.h']]]
+  ['gpio_5fout_5fstate_11',['gpio_out_state',['../structscientisst__device__t.html#a257fd60479ad81964f33e2cf2a5f279f',1,'scientisst_device_t']]]
 ];

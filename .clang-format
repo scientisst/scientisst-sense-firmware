@@ -1,3 +1,22 @@
-BasedOnStyle: Google
+BasedOnStyle: Microsoft
 IndentWidth: 4
+ColumnLimit: 125
 DerivePointerAlignment: false
+SortIncludes: CaseInsensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Headers in <> without extension.
+  - Regex: '<([A-Za-z0-9\/-_])+>'
+    Priority: 1
+  # Headers in <> from specific external libraries.
+  - Regex: '<((\bboost\b)|(\bcatch2\b))\/([A-Za-z0-9.\/-_])+>'
+    Priority: 2
+  # Headers in <> with extension.
+  - Regex: '<([A-Za-z0-9.\/-_])+>'
+    Priority: 3
+  # Headers in "" with extension from main/.
+  - Regex: '^"sci_.*\.h"'
+    Priority: 5
+  # Headers in "" with extension.
+  - Regex: '"([A-Za-z0-9.\/-_])+"'
+    Priority: 4

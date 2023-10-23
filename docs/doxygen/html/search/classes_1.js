@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['gatts_5fprofile_5finst_0',['gatts_profile_inst',['../structgatts__profile__inst.html',1,'']]]
+  ['op_5fsettings_5finfo_5ft_28',['op_settings_info_t',['../structop__settings__info__t.html',1,'']]]
 ];

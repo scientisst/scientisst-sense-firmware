@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ext_5fadc_5fraw_5fdata_0',['ext_adc_raw_data',['../scientisst_8c.html#a677980e26e55da72e6d7091450572300',1,'ext_adc_raw_data():&#160;scientisst.c'],['../scientisst_8h.html#a677980e26e55da72e6d7091450572300',1,'ext_adc_raw_data():&#160;scientisst.c']]]
+  ['device_5fname_37',['device_name',['../structscientisst__device__t.html#a46d2993802cde70227cb000ebff49048',1,'scientisst_device_t']]]
 ];

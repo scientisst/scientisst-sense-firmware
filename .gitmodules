@@ -4,3 +4,6 @@
 [submodule "www"]
 	path = www
 	url = https://github.com/scientisst/scientisst-sense-firmware-config.git
+[submodule "deps/BNO055_driver"]
+	path = deps/BNO055_driver
+	url = git@github.com:boschsensortec/BNO055_driver.git

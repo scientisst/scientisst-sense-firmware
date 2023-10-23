@@ -1,0 +1,11 @@
+digraph "scientisst_device_t"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="scientisst_device_t",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" api_config" ,fontname="Helvetica"];
+  Node2 [label="api_config_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structapi__config__t.html",tooltip=" "];
+  Node3 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" op_settings" ,fontname="Helvetica"];
+  Node3 [label="op_settings_info_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structop__settings__info__t.html",tooltip=" "];
+}
