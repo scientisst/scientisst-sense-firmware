@@ -1,7 +1,7 @@
-/** \file com.h
-    \brief This file contains the definitions of the functions used to process
-   the received data.
-*/
+/**
+ * \file sci_com.h
+ * \brief Header file for sci_com.c
+ */
 
 #pragma once
 

@@ -1,9 +1,9 @@
-/** \file timer.h
-    \brief Timer functions for the Scientisst firmware.
-
-    This file contains the functions for the timer used in the Scientisst
-   firmware.
-*/
+/**
+ * \file sci_timer.h
+ * \brief Header file for sci_timer.c
+ *
+ * This file also contains relevant macros like timer divider and timer scale, timer groups and timer indices.
+ */
 
 #pragma once
 

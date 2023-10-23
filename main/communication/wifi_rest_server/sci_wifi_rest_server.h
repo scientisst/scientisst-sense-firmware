@@ -1,6 +1,7 @@
-/** \file wifi_rest_server.h
-    \brief Header file for wifi_rest_server.c
-*/
+/**
+ * \file sci_wifi_rest_server.h
+ * \brief Header file for the sci_wifi_rest_server.c.
+ */
 
 #pragma once
 

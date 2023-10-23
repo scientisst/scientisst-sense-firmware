@@ -1,8 +1,7 @@
-/** \file bt.h
-    \brief Bluetooth header file
-
-    This file contains the bluetooth header file and relevant macros.
-*/
+/**
+ * \file sci_bt.h
+ * \brief Header file for sci_bt.c
+ */
 
 #pragma once
 

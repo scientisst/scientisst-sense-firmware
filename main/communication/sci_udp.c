@@ -1,9 +1,9 @@
-/** \file udp.c
-    \brief Contains functions to send data over UDP
-
-    This file contains functions to send data over UDP. The data is sent to the
-   server specified in the config file.
-*/
+/**
+ * \file sci_udp.c
+ * \brief UDP Communication Implementation.
+ *
+ * This file contains the implementation of functions used for UDP communication.
+ */
 #include "sci_udp.h"
 
 #include "esp_attr.h"
@@ -14,17 +14,14 @@
 static struct addrinfo *udp_server_addr;
 
 /**
- * \brief Initializes the UDP client
+ * \brief Initializes the UDP client.
  *
- * This function initializes the UDP client. It creates a socket and performs a
- * handshake with the server.
+ * This function sets up the UDP client by establishing a socket connection and performing a handshake with the server.
  *
- * \param ip The IP address of the server
- * \param port The port of the server
+ * \param[in] ip The IP address of the server.
+ * \param[in] port The port on the server to connect to.
  *
- * \return:
- *      - The file descriptor of the socket if successful
- *      - -1 if an error occurred
+ * \return The file descriptor for the socket connected to the server, or ESP_FAIL if an error occurs.
  */
 int initUdpClient(const char *ip, const char *port)
 {
@@ -35,7 +32,7 @@ int initUdpClient(const char *ip, const char *port)
     if (server_fd == -1)
     {
         DEBUG_PRINT_E("initUdpClient", "ERROR: SOCKET CREATION FAILED");
-        return -1;
+        return ESP_FAIL;
     }
 
     // getaddrinfo() returns a list of sockaddr given the ip/host and port. This list is stored in
@@ -51,7 +48,7 @@ int initUdpClient(const char *ip, const char *port)
         shutdown(server_fd, 0);
         close(server_fd);
         server_fd = 0;
-        return -1;
+        return ESP_FAIL;
     }
 
     // Perform handshake, so that the server has our address
@@ -63,7 +60,7 @@ int initUdpClient(const char *ip, const char *port)
         shutdown(server_fd, 0);
         close(server_fd);
         server_fd = 0;
-        return -1;
+        return ESP_FAIL;
     }
 
     DEBUG_PRINT_I("initUdpClient", "Client successfully created");
@@ -71,18 +68,15 @@ int initUdpClient(const char *ip, const char *port)
 }
 
 /**
- * \brief Sends data over UDP
+ * \brief Sends data to a server via UDP.
  *
- * This function sends data over UDP. It is called by sendData() when in UDP
- * mpde.
+ * This function is responsible for sending data packets over a UDP connection.
  *
- * \param fd The file descriptor of the socket
- * \param len The length of the data to be sent
- * \param buff The data to be sent
+ * \param[in] fd The file descriptor of the socket.
+ * \param[in] len The length of the data in bytes.
+ * \param[in] buff The buffer containing the data to be sent.
  *
- * \return:
- *      - ESP_OK if successful
- *      - ESP_FAIL if an error occurred
+ * \return ESP_OK - the data was sent successfully,  ESP_FAIL - an error occurred during transmission.
  */
 esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, const uint8_t *buff)
 {

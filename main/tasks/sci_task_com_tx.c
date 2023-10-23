@@ -1,3 +1,17 @@
+/**
+ * \file sci_task_com_tx.h
+ * \brief Communication Transmission Task
+ *
+ * This file contains the implementation of the task responsible for handling data transmission
+ * across various communication protocols. It is designed to work with multiple communication
+ * methods, including BLE, Bluetooth Classic (BT), TCP, UDP, WebSocket, and Serial communication.
+ *
+ * The core functionality involves waiting for notifications from the data acquisition task,
+ * indicating that data is ready for transmission. Based on the system's current communication
+ * settings, it selects the appropriate transmission method, initiates the send process, and
+ * manages any necessary post-transmission operations.
+ */
+
 #include "sci_task_com_tx.h"
 
 #include "esp_attr.h"
@@ -12,14 +26,14 @@
 static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *));
 
 /**
- * \brief Task that sends data to the client.
+ * \brief Task responsible for managing and routing data transmission based on communication settings.
  *
- * This task is responsible for sending data to the client. It is notified by
- * the taskAcquisition when there is data to send. If the client is BT or BLE it
- * initializes the respective component.
+ * This task is continuously running after system initialization. It listens for notifications from the
+ * data acquisition task, signaling that new data is ready for transmission. Upon trigger, it selects the
+ * appropriate data transmission method based on current communication settings and initiates the sending
+ * process.
  *
- * This task can be removed and taskAcquisition can do the sendData() when
- * not send_busy. But, atm taskAcquisition is the bottleneck
+ * \return Never returns.
  */
 _Noreturn void IRAM_ATTR sendTask(void)
 {
@@ -64,8 +78,14 @@ _Noreturn void IRAM_ATTR sendTask(void)
 }
 
 /**
- * \brief Function to send data using the appropriate send function.
+ * \brief Function responsible for checking buffers ready for transmission, sending data and clearing sent buffers.
  *
+ * This function is used for all communication modes except Bluetooth and SDCard. This function checks the readiness of
+ * the data buffers, sends the data through the appropriate channel, and manages buffer state post-transmission.
+ *
+ * \param[in] tx_write_func Pointer to the function responsible for data transmission over the selected communication
+ * protocol.
+ * \return None.
  */
 static void IRAM_ATTR sendData(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *))
 {

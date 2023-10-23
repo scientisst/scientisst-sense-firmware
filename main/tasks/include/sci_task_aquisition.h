@@ -1,6 +1,7 @@
-//
-// Created by kiko on 10/10/23.
-//
+/**
+ * \file sci_task_aquisition.h
+ * \brief Header file for sci_task_aquisition.c
+ */
 
 #pragma once
 

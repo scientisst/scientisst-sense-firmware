@@ -154,7 +154,7 @@ git clone --recursive git@github.com:scientisst/scientisst-sense-firmware.git
 #### (Linux/MacOS)
 
 ```sh
-. get_idf.sh --install
+. ./get_idf.sh --install
 ```
 
 #### (Windows)
@@ -170,7 +170,7 @@ This step must be done every time you open a new terminal.
 #### (Linux/MacOS)
 
 ```sh
-. get_idf.sh 
+. ./get_idf.sh 
 ```
 
 #### (Windows)
@@ -201,7 +201,7 @@ options. Using the monitor tool, you can check if the device is working as expec
 ### Flash firmware (Linux/MacOS)
 
 ```sh
-. get_idf.sh
+. ./get_idf.sh
 #Flash Firmware. Sense must be in flash mode: press MODE (without releasing), press RESET (without releasing), release RESET, release MODE.
 idf.py flash
 ```

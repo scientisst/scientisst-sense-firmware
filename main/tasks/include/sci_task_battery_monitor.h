@@ -1,6 +1,7 @@
-//
-// Created by kiko on 10/10/23.
-//
+/**
+ * \file sci_task_battery_monitor.h
+ * \brief Header file for sci_task_battery_monitor.c
+ */
 
 #pragma once
 

@@ -1,6 +1,7 @@
-//
-// Created by frederico on 12-09-2023.
-//
+/**
+ * \file sci_task_imu.h
+ * \brief Header file for sci_task_imu.c
+ */
 
 #pragma once
 

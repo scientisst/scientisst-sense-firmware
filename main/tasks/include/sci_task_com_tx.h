@@ -1,6 +1,7 @@
-//
-// Created by kiko on 10/10/23.
-//
+/**
+ * \file sci_task_com_tx.h
+ * \brief Header file for sci_task_com_rx.c
+ */
 
 #pragma once
 

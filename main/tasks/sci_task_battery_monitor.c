@@ -1,3 +1,14 @@
+/**
+ * \file sci_task_battery_monitor.h
+ * \brief Battery Monitoring Task
+ *
+ * This file contains the implementation of the battery monitoring task.
+ * The monitoring task is synchronized with a timer to check the battery status periodically. It interacts
+ * with the ADC2 of the ESP32 to read battery levels and controls a status LED to indicate low battery conditions.
+ * Additionally, it handles system behavior under low battery conditions, potentially stopping data acquisition
+ * and initiating system restarts to preserve the integrity of operations and data.
+ */
+
 #include "sci_task_battery_monitor.h"
 
 #include "esp_attr.h"
@@ -8,11 +19,14 @@
 #include "sci_timer.h"
 
 /**
- * \brief Task that acquires data from adc2 (battery).
+ * \brief Task monitoring the battery voltage.
  *
- * This task is responsible for acquiring data from adc2 (battery). It is
- * notified by the timerGrp1Isr when to acquire data. It notifies the sendTask
- * when there is data to send. It is also the main task of CPU0 (PRO CPU)
+ * This function represents a continuously running task that monitors the battery's voltage through the ADC. It is triggered
+ * by a timer to check the battery status at regular intervals. If the battery voltage drops below a certain threshold, the
+ * function can inflate the threshold to prevent oscillatory behavior, control a status LED, and potentially halt data
+ * acquisition and restart the system until the battery is recharged.
+ *
+ * \return Never returns.
  */
 _Noreturn void IRAM_ATTR taskBatteryMonitor(void)
 {

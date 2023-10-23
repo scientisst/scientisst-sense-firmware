@@ -1,3 +1,16 @@
+/**
+ * \file sci_task_acquisition_sdcard.h
+ * \brief Interface for data acquisition tasks specific to the SD card.
+ *
+ * This file contains the functions used for acquiring data from ADCs and storing the data directly onto an SD card. It
+ * includes functions for initializing data acquisition, handling data from different sources, and managing file
+ * synchronization tasks. When using only the internal ADCs, the data is first stored in a buffer and then written to the SD
+ * Card by another task, akin to how other modes work. When using the external ADC, the data is written directly to the SD
+ * card after acquiring it. This is done because the SD card and external ADC use the same SPI lines and, through testing, it
+ * was found that this approach would yield the best performance. More testing and performance optimizations will be
+ * conducted.
+ */
+
 #include "sci_task_acquisition_sdcard.h"
 
 #include <string.h>
@@ -12,19 +25,18 @@
 #include "sci_task_imu.h"
 #include "sci_timer.h"
 
-DRAM_ATTR static TaskHandle_t file_sync_task;
+DRAM_ATTR static TaskHandle_t file_sync_task; ///< Handle for the file synchronization task.
 
 static uint8_t *acquireChannelsSDCard(uint8_t *buffer_ptr);
 static void startAcquisitionSDCard(void);
 
 /**
- * \brief Acquisition task of the data from the ADC and save it to the SD
- * card.
+ * \brief Main task for data acquisition from the ADC and storage on the SD card.
  *
- * This function is identical to the acquire task but instead of saving the data to
- * the buffers it saves it directly to the SD card. This also means that the
- * send task is not active.
+ * This task manages the continuous acquisition of data from when in SD Card mode. It replaces sci_task_acquisition,
+ * sci_task_com_rx, and sci_task_com_tx.
  *
+ * \return Never returns.
  */
 _Noreturn void IRAM_ATTR acquisitionSDCard(void)
 {
@@ -41,12 +53,15 @@ _Noreturn void IRAM_ATTR acquisitionSDCard(void)
 }
 
 /**
- * \brief Acquire the channels and store them in the SD card.
+ * \brief Acquires data from active channels and sensors.
  *
- * This function acquires the channels and stores them in the SD card. If no EXT ADC is used, the data is
- * stored into buffers and a second task will write the data to the SD card. If an EXT ADC is used, the data
- * is written directly to the SD card. This is done because the SDCard and EXT ADC use the same SPI lines.
+ * This function is responsible for retrieving data from both internal and external ADCs and/or the IMU, based on the
+ * current configuration. It either stores the data in a buffer or writes it directly to the SD card, depending on if the
+ * external ADC is used or not.
  *
+ * \param[in/out] buffer_ptr Pointer to the current position in the buffer, where new data will be written.
+ *
+ * \return A pointer to the buffer position following the data write.
  */
 static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 {
@@ -136,6 +151,16 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     return buffer_ptr;
 }
+
+/**
+ * \brief Background task for file synchronization on the SD card.
+ *
+ * Akin to how other com modes work, this task is notified whenever a buffer is ready for writing to the SD card. It writes
+ * the buffer data to the file system and handles file synchronization to ensure data integrity. It is only active when the
+ * external ADC is not used.
+ *
+ * \return Never returns.
+ */
 _Noreturn static void IRAM_ATTR fileSyncTask(void)
 {
     while (1)
@@ -157,13 +182,13 @@ _Noreturn static void IRAM_ATTR fileSyncTask(void)
 }
 
 /**
- * \brief Start the acquisition of data from the ADC and save it to the SD
- * card.
+ * \brief Initializes the data acquisition process and starts writing data to the SD card.
  *
- * This function will start the acquisition of data from the ADC and save it
- * to the SD card. It acquires from all available channels at 1000Hz and
- * saves the data to a CSV file on the SD card.
+ * This function configures the system for data acquisition, setting up active channels, sample rates, and
+ * initializing peripherals. If no external ADC is used, starts the fileSyncTask. It creates the header for the data file on
+ * the SD card, start the timer and sets the state LED on the correct mode.
  *
+ * \return None.
  */
 static void startAcquisitionSDCard(void)
 {
@@ -176,15 +201,15 @@ static void startAcquisitionSDCard(void)
     {
     case 1:
         active_channels_sd = 0b01111111;
-        scientisst_device_settings.sample_rate = 100;
+        scientisst_device_settings.sample_rate_hz = 100;
         break;
     case 2:
         active_channels_sd = 0b11111111;
-        scientisst_device_settings.sample_rate = 100;
+        scientisst_device_settings.sample_rate_hz = 100;
         break;
     default:
         active_channels_sd = 0b00111111;
-        scientisst_device_settings.sample_rate = 2000;
+        scientisst_device_settings.sample_rate_hz = 2000;
         // If external ADC is not used, start the secondary task that writes the data to the SD card
         xTaskCreatePinnedToCore((TaskFunction_t)&fileSyncTask, "file_sync_task", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL, 20,
                                 &file_sync_task, 0);
@@ -238,7 +263,7 @@ static void startAcquisitionSDCard(void)
     writeFileHeader();
 
     // Init timer for adc task top start
-    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate);
+    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate_hz);
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
 

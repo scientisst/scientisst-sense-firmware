@@ -1,10 +1,10 @@
-/** \file com.c
-    \brief This file contains the functions that handle the communication with
-   the client
-
-    This file provides the functions that handle the communication with the
-   client.
-*/
+/**
+ * \file sci_com.c
+ * \brief General communication functions.
+ *
+ * This file contains the implementation of functions responsible for processing commands from a client, managing different
+ * modes of operation, and controlling communication parameters.
+ */
 
 #include "sci_com.h"
 
@@ -33,12 +33,14 @@ static void startAcquisition(void);
 static uint8_t getPacketSize(void);
 
 /**
- * \brief Processes the command received from the client
+ * \brief Process a received packet from the client.
  *
- * This function processes the command received from the client. It works in any
- * mode and with all API's.
+ * This function decodes and processes a command packet received from the client. It performs actions based on the command,
+ * such as starting or stopping data acquisition, changing settings, or triggering outputs.
  *
- * \param buff The buffer received
+ * \param[in] buff Pointer to the buffer containing the received packet.
+ *
+ * \return None.
  */
 void processPacket(uint8_t *buff)
 {
@@ -107,9 +109,14 @@ void processPacket(uint8_t *buff)
 }
 
 /**
- * \brief Set output GPIO levels
+ * \brief Trigger GPIO outputs based on the client's command.
  *
- * This function sets the output channels to the requested value.
+ * This function controls the digital output channels by setting their levels according to the values specified in the
+ * received buffer.
+ *
+ * \param[in] buff Pointer to the buffer containing the trigger command and levels.
+ *
+ * \return None.
  */
 static void triggerGpio(const uint8_t *buff)
 {
@@ -125,9 +132,13 @@ static void triggerGpio(const uint8_t *buff)
 }
 
 /**
- * \brief Set output DAC level
+ * \brief Set the output level of the DAC.
  *
- * This function sets the output DAC level according to the received command.
+ * This function controls the DAC output, setting its level according to the value specified in the received buffer.
+ *
+ * \param[in] buff Pointer to the buffer containing the DAC level value.
+ *
+ * \return None.
  */
 static void triggerDAC(const uint8_t *buff)
 {
@@ -141,6 +152,19 @@ static void triggerDAC(const uint8_t *buff)
  * This function changes the API mode and updates the functions that are used to
  * acquire data and select channels. Currently, the API modes are: Bitalino
  * (Legacy), Scientisst and JSON.
+ */
+
+/**
+ * \brief Change the API mode of the device.
+ *
+ * This function switches between different API modes available for the device. It affects the data frames' format.
+ * Currently, the API modes are: Bitalino (Legacy), Scientisst and JSON.
+ *
+ * \param[in] mode The new API mode to switch to.
+ *
+ * \warning The JSON API mode is not fully working.
+ *
+ * \return None.
  */
 static void changeAPI(uint8_t mode)
 {
@@ -166,8 +190,7 @@ static void changeAPI(uint8_t mode)
 /**
  * \brief Returns the packet size
  *
- * This function returns the packet size in function of the current API mode and
- * the number of active channels.
+ * This function returns the packet size in function of the current API mode and the number of active channels.
  *
  * \return The packet size
  */
@@ -213,10 +236,11 @@ static uint8_t getPacketSize(void)
 /**
  * \brief Selects the active channels
  *
- * This function selects the active channels according to the received command
- * for the ScientISST and JSON API modes.
+ * This function selects the active channels according to the received command for the ScientISST and JSON API modes.
  *
- * \param buff The received command
+ * \param[in] buff The received command
+ *
+ * \return None.
  */
 static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
 {
@@ -287,9 +311,11 @@ static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
 /**
  * \brief Selects the active channels
  *
- * This function selects the active channels according to the received command.
+ * This function selects the active channels according to the received command for the BITalino API mode.
  *
- * \param buff The received command
+ * \param[in] buff The received command
+ *
+ * \return None.
  */
 void selectChsFromMaskBitalino(const uint8_t *buff)
 {
@@ -319,6 +345,10 @@ void selectChsFromMaskBitalino(const uint8_t *buff)
  * \brief Sets the sample rate
  *
  * This function sets the sample rate according to the received command.
+ *
+ * \param[in] buff The received command
+ *
+ * \return None.
  */
 static void setSampleRate(uint8_t *buff)
 {
@@ -337,18 +367,18 @@ static void setSampleRate(uint8_t *buff)
         aux = (*(uint16_t *)(buff + 1) & 0xFFFF);
     }
 
-    scientisst_device_settings.sample_rate = aux;
+    scientisst_device_settings.sample_rate_hz = aux;
 
-    DEBUG_PRINT_I("processPacket", "Sampling rate received: %dHz", scientisst_device_settings.sample_rate);
+    DEBUG_PRINT_I("processPacket", "Sampling rate received: %dHz", scientisst_device_settings.sample_rate_hz);
 }
 
 /**
  * \brief Starts the acquisition
  *
- * This function starts the acquisition according to the received command. It
- * starts the ADC and the timer. It also sets the acquisition mode (live or
- * simulated). It also changes the LED state.
+ * This function starts the acquisition according to the received command. It starts the ADC and the timer. It also changes
+ * the LED state.
  *
+ * \return None.
  */
 static void startAcquisition(void)
 {
@@ -376,7 +406,7 @@ static void startAcquisition(void)
     scientisst_buffers.frame_buffer_write_idx = 0;
 
     // WARNING: if changed, change same code in API
-    if (scientisst_device_settings.sample_rate > 100)
+    if (scientisst_device_settings.sample_rate_hz > 100)
     {
         scientisst_buffers.send_threshold =
             !(scientisst_buffers.frame_buffer_length_bytes % scientisst_buffers.packet_size)
@@ -404,7 +434,7 @@ static void startAcquisition(void)
 #endif
 
     // Init timer for adc task top start
-    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate);
+    timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate_hz);
 
     // Set led state to blink at live mode frequency
     ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
@@ -426,8 +456,10 @@ static void startAcquisition(void)
 /**
  * \brief Stops the acquisition
  *
- * This function stops the acquisition. It stops the ADC and the timer.
- * It also changes the LED state. It cleans all buffers and active channels.
+ * This function stops the acquisition. It stops the external ADC (if active) and the timer. It also changes the LED state.
+ * It cleans all buffers and active channels.
+ *
+ * \return None.
  */
 void stopAcquisition(void)
 {
@@ -480,15 +512,18 @@ void stopAcquisition(void)
 }
 
 /**
- * \brief Sends the status packet
+ * \brief Send a status packet to the client.
  *
- * This function sends the status packet. It is called when the client
- * requests the status packet.
+ * This function prepares a status packet containing various information about the device's current state and sends it to the
+ * client.
+ *
+ * \return None.
  */
 static void sendStatusPacket(void)
 {
     uint8_t crc = 0;
 
+    // Make sure the buffer is empty and send task is not busy
     while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -519,18 +554,18 @@ static void sendStatusPacket(void)
 }
 
 /**
- * \brief Sends the firmware version packet
+ * \brief Send the firmware version packet to the client.
  *
- * This function sends the firmware version packet. It is called when the client
- * requests the firmware version packet. It fills one position of the send
- * buffer with the information and marks it as ready to be sent. It also changes
- * the lowers the send threshold to 0, so that the data is sent as soon as
- * possible and then restores the send threshold to its previous value.
+ * This function prepares a packet containing the device's firmware version and possibly other related information, then
+ * sends it to the client.
+ *
+ * \return None.
  */
 static void sendFirmwareVersionPacket(void)
 {
     uint16_t write_idx = 0;
 
+    // Make sure the buffer is empty and send task is not busy
     while (scientisst_buffers.frame_buffer_ready_to_send[NUM_BUFFERS - 1] != 0 && scientisst_device_settings.send_busy != 0)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);

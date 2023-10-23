@@ -1,7 +1,7 @@
-/** \file spi.h
-    \brief This file contains the definitions of the functions used to
-   communicate with the external ADCs.
-*/
+/**
+ * \file sci_adc_external.h
+ * \brief Header file for sci_adc_external.c
+ */
 
 #pragma once
 
@@ -11,8 +11,9 @@
 
 #include "sci_scientisst.h"
 
-#define ADC_EXT_SLCK_HZ_1_EXT_CH (APB_CLK_FREQ / 8)
-#define ADC_EXT_SLCK_HZ_2_EXT_CH (APB_CLK_FREQ / 64)
+// Define 2 different clock frequencies because when using 2 channels the data gets corrupted if the clock is too fast.
+#define ADC_EXT_SLCK_HZ_1_EXT_CH (APB_CLK_FREQ / 8)  ///< ADC external clock frequency when using 1 external channel
+#define ADC_EXT_SLCK_HZ_2_EXT_CH (APB_CLK_FREQ / 64) ///< ADC external clock frequency when using 2 external channels
 
 void adcExtInit(const sdmmc_host_t *spi_host);
 void adcExtStart(void);

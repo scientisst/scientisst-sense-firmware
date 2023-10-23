@@ -1,8 +1,10 @@
-/** \file ble.c
-    \brief Bluetooth Low Energy (BLE) mode functions.
-
-    This file contains the functions for the BLE mode. And relevant macros.
-*/
+/**
+ * \file ble.c
+ * \brief Bluetooth Low Energy (BLE) mode functions.
+ *
+ * This file contains the functions for BLE mode, including initialization, callbacks, and utility functions, as well as
+ * relevant macros.
+ */
 
 #include "sci_ble.h"
 
@@ -39,7 +41,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 static uint8_t char1_str[] = {0x11, 0x22, 0x33};
 static esp_gatt_char_prop_t a_property = 0;
 
-static esp_attr_value_t gatts_demo_char1_val = {
+static esp_attr_value_t gatts_char1_val = {
     .attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
     .attr_len = sizeof(char1_str),
     .attr_value = char1_str,
@@ -163,10 +165,15 @@ typedef struct
 static prepare_type_env_t a_prepare_write_env;
 
 /**
- * \brief ESP32 BLE GATT Server Event Handler.
+ * \brief BLE GAP event handler.
  *
- * \param event ESP32 BLE GATT Server Event.
- * \param param ESP32 BLE GATT Server Event Parameters.
+ * Handles GAP events such as advertisement data set completion, advertisement start, advertisement stop, and connection
+ * parameter update.
+ *
+ * \param[in] event Type of GAP event.
+ * \param[in] param Parameters for the GAP event.
+ *
+ * \return None.
  */
 static void gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
@@ -218,11 +225,15 @@ static void gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t
 }
 
 /**
- * \brief example write event.
+ * \brief BLE write event handler.
  *
- * \param gatts_if GATT Server Interface.
- * \param prepare_write_env Prepare Write Environment.
- * \param param ESP32 BLE GATT Server Event Parameters.
+ * Handles write events, including preparation for long writes.
+ *
+ * \param[in] gatts_if GATT server interface.
+ * \param[in/out] prepare_write_env Environment for preparing long writes.
+ * \param[in] param Write event parameters.
+ *
+ * \return None.
  */
 void writeEvent(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
 {
@@ -279,10 +290,14 @@ void writeEvent(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, e
 }
 
 /**
- * \brief example exec write event.
+ * \brief Execute write event handler.
  *
- * \param prepare_write_env Prepare Write Environment.
- * \param param ESP32 BLE GATT Server Event Parameters.
+ * Handles execute write events, completing prepared long writes or cancelling them.
+ *
+ * \param[in/out] prepare_write_env Environment for preparing long writes, to be cleaned up after execution.
+ * \param[in] param Execute write event parameters.
+ *
+ * \return None.
  */
 void execWritEvent(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param)
 {
@@ -303,14 +318,16 @@ void execWritEvent(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param
 }
 
 /**
- * \brief GATT Server Event Handler for profile A.
+ * \brief BLE GATT server event handler for profile A.
  *
- * This function is called when a GATT Server Event occurs for profile A. For
- * now it is the only profile.
+ * Handles GATT server events specifically for profile A. Events include registration, read/write requests, service start,
+ * connection, disconnection, and more.
  *
- * \param event ESP32 BLE GATT Server Event.
- * \param gatts_if GATT Server Interface.
- * \param param ESP32 BLE GATT Server Event Parameters.
+ * \param[in] event GATT server event.
+ * \param[in] gatts_if GATT server interface.
+ * \param[in] param Event parameters.
+ *
+ * \return None.
  */
 static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if,
                                           esp_ble_gatts_cb_param_t *param)
@@ -388,7 +405,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         a_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
         esp_err_t add_char_ret = esp_ble_gatts_add_char(
             gl_profile_tab[PROFILE_A_APP_ID].service_handle, &gl_profile_tab[PROFILE_A_APP_ID].char_uuid,
-            ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, a_property, &gatts_demo_char1_val, NULL);
+            ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, a_property, &gatts_char1_val, NULL);
         if (add_char_ret)
         {
             DEBUG_PRINT_E("GATTS", "add char failed, error code =%x", add_char_ret);
@@ -482,14 +499,15 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 }
 
 /**
- * \brief GATT Server Event Handler.
+ * \brief BLE general GATT server event handler.
  *
- * This function is called when a GATT Server event occurs. This is a general
- * function that forwards the event to the correct profile.
+ * Distributes GATT server events to appropriate profile handlers.
  *
- * \param event ESP32 BLE GATT Server Event.
- * \param gatts_if GATT Server Interface.
- * \param param ESP32 BLE GATT Server Event Parameters.
+ * \param[in] event GATT server event.
+ * \param[in] gatts_if GATT server interface.
+ * \param[in] param Event parameters.
+ *
+ * \return None.
  */
 static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
@@ -521,11 +539,15 @@ static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if
 }
 
 /**
- * \brief send data function for BLE.
+ * \brief Send data over BLE.
  *
- * \param fd File descriptor (unused for this function, created for consistency
- * with other send functions). \param len Length of data. \param buff Data to
- * send.
+ * Sends data to the connected BLE client.
+ *
+ * \param[in] fd File descriptor, unused in this function.
+ * \param[in] len Length of the data to send.
+ * \param[in] buff Buffer containing the data.
+ *
+ * \return ESP_OK - Success,  ESP_ERR - failure.
  */
 esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, const uint8_t *buff)
 {
@@ -544,9 +566,11 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, const uint8_t *buff)
 }
 
 /**
- * \brief BLE GATT Server Initialization.
+ * \brief Initialize the BLE functionality.
  *
- * This function initializes the BLE GATT Server.
+ * Sets up the BLE hardware, initializes the required services, and registers the GATT event handlers.
+ *
+ * \return None.
  */
 void initBle(void)
 {
@@ -605,6 +629,4 @@ void initBle(void)
     {
         DEBUG_PRINT_E("GATTS", "set local  MTU failed, error code = %x", local_mtu_ret);
     }
-
-    return;
 }

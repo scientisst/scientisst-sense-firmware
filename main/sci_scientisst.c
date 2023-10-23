@@ -1,9 +1,9 @@
-/** \file scientisst.c
-    \brief Main file for the Scientisst firmware.
-
-    This file is the main file for the Scientisst firmware. It handles the
-   initialization of the firmware and the creation of the tasks.
-*/
+/**
+ * \file scientisst.c
+ * \brief Scientisst Firmware initialization.
+ *
+ * This file orchestrates the initialization of the firmware components and the creation of tasks.
+ */
 
 #include "sci_scientisst.h"
 
@@ -34,14 +34,17 @@
 #include "sci_wifi_rest_server.h"
 #include "sci_ws.h"
 
+// Task priorities
 #define BT_SEND_PRIORITY 10 // MAX priority in ESP32 is 25
 #define BATTERY_PRIORITY 1
 #define WIFI_RCV_PRIORITY 1
 #define ACQ_ADC1_PRIORITY 10
 
+// NVS keys and namespaces for storing operational settings.
 #define KEY_SETTINGS_INFO "opSettingsInfo" // key used in NVS for connection info
 #define SCI_BOOTWIFI_NAMESPACE "bootwifi"  // namespace in NVS, used to store connection info and some other op settings
 
+// Task handlers, device settings, and buffer management.
 DRAM_ATTR TaskHandle_t send_task;
 DRAM_ATTR TaskHandle_t battery_task;
 DRAM_ATTR TaskHandle_t rcv_task;
@@ -53,7 +56,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
     .battery_threshold = DEFAULT_BATTERY_THRESHOLD,
     .gpio_out_state = {0, 0},
     .op_mode = OP_MODE_IDLE,
-    .sample_rate = DEFAULT_SAMPLE_RATE,
+    .sample_rate_hz = DEFAULT_SAMPLE_RATE,
     .num_intern_active_chs = 0,
     .num_extern_active_chs = 0,
     .active_internal_chs = {0, 0, 0, 0, 0, 0},
@@ -94,7 +97,7 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
             .ssid = "riot",
             .password = "",
         },
-};
+}; ///< All device related variables
 
 // We use DMA_ATTR because some of the functions require that the buffers are word aligned
 DMA_ATTR scientisst_buffers_t scientisst_buffers = {
@@ -108,7 +111,7 @@ DMA_ATTR scientisst_buffers_t scientisst_buffers = {
     .send_threshold = MAX_BUFFER_SIZE,
     .sd_card_save_file = NULL,
     .json = NULL,
-};
+}; ///< All buffer related variables
 
 static void allocateFrameBuffers(void)
 {
@@ -131,13 +134,12 @@ static esp_err_t getOpSettingsInfo(op_settings_info_t *_op_settings);
 /**
  * \brief Initializes the Scientisst device.
  *
- * This function initializes various components and settings of the Scientisst device,
- * including the mutex, NVS, device name, GPIOs, LED control, DAC, Wi-Fi, timers, ADCs,
- * SD card (if enabled), IMU (if enabled), communication modes, and memory allocation
- * for send buffers.
+ * This function serves as the entry point for device initialization. It sets up various components,
+ * including NVS, device name, GPIOs, LED control, DAC, Wi-Fi, timers, ADCs, SD card (if enabled),
+ * IMU (if enabled), and communication modes. It also allocates memory for send buffers and initializes
+ * various tasks based on the operational mode and configuration.
  *
- *
- * \return None.
+ * \return None. In case of critical failures, the system may reboot.
  */
 void initScientisst(void)
 {
@@ -290,10 +292,13 @@ void initScientisst(void)
 }
 
 /**
- * \brief Puts the device in config mode.
+ * \brief Engages the device in configuration mode.
  *
- * This function puts the device in config mode. It initializes the rest server
- * and sets the state led to fixed white.
+ * This function initializes the REST server for device configuration and sets the device LED to a
+ * fixed white color, indicating configuration mode. It keeps the device in this mode until the user
+ * successfully submits a new configuration via the web interface.
+ *
+ * \return Never returns.
  */
 _Noreturn static void opModeConfig(void)
 {
@@ -311,13 +316,12 @@ _Noreturn static void opModeConfig(void)
 }
 
 /**
- * \brief Read the operational settings from NVS
+ * \brief Retrieves operational settings from NVS.
  *
- * \param _op_settings pointer to the operational settings structure
+ * This function fetches the stored operational settings from the NVS.
  *
- * \return:
- *     - ESP_OK if successful
- *     - ESP_FAIL if unsuccessful
+ * \param[out] _op_settings Pointer to the structure receiving the operational settings.
+ * \return ESP_OK if successful, ESP_FAIL otherwise.
  */
 static esp_err_t getOpSettingsInfo(op_settings_info_t *_op_settings)
 {
@@ -350,10 +354,12 @@ static esp_err_t getOpSettingsInfo(op_settings_info_t *_op_settings)
 }
 
 /**
- * \brief Save the operational settings to NVS
+ * \brief Saves operational settings to NVS.
  *
- * \param pOpSettingsInfo pointer to the operational settings structure
+ * This function commits the current operational settings to the NVS, ensuring they are preserved
+ * for subsequent.
  *
+ * \param[in] pOpSettingsInfo Pointer to the structure containing the operational settings to save.
  */
 void saveOpSettingsInfo(const op_settings_info_t *pOpSettingsInfo)
 {

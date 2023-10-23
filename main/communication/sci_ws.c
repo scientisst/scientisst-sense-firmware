@@ -1,9 +1,13 @@
-/** \file ws.c
-    \brief Websocket server
+/**
+ * \file sci_ws.c
+ * \brief Websocket server implementation.
+ *
+ * This file contains the implementation of the websocket server used for real-time communication between the device and the
+ * web interface. It handles sending and receiving data through websockets.
+ *
+ * \warning WS_AP mode is not fully working yet.
+ */
 
-    This file contains the websocket server code. It is used to send data to the
-   web interface.
-*/
 #include "sci_ws.h"
 
 #include "esp_https_server.h"
@@ -13,23 +17,21 @@
 
 #include "sci_com.h"
 
-static const size_t max_clients = 1;
-static httpd_handle_t ws_hd;
-static int ws_fd;
+static const size_t max_clients = 1; ///< Maximum number of websocket clients that can be connected simultaneously.
+static httpd_handle_t ws_hd;         ///< Handle to the websocket server.
+static int ws_fd;                    ///< File descriptor for the websocket server.
 
 /**
- * \brief Send data to the websocket client
+ * \brief Sends data to a connected websocket client.
  *
- * This function sends data to the websocket client. It is called by the
- * sendData function when in websocket mode.
+ * This function is responsible for sending binary data over an established websocket connection. It prepares a websocket
+ * frame with the provided data and sends it asynchronously.
  *
- * \param fd The file descriptor of the TCP connection.
- * \param len The length of the data to send.
- * \param buff The data to send.
+ * \param[in] fd File descriptor for the websocket connection.
+ * \param[in] len Length of the data to be sent.
+ * \param[in] buff Pointer to the data buffer.
  *
- * \return:
- *      - ESP_OK if the data was sent successfully
- *      - ESP_FAIL otherwise
+ * \return ESP_OK if the data was sent successfully, or an error code indicating the type of failure.
  */
 esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, const uint8_t *buff)
 {
@@ -50,11 +52,14 @@ esp_err_t IRAM_ATTR wsSerialSend(uint32_t fd, int len, const uint8_t *buff)
 }
 
 /**
- * \brief Receive data from the websocket client and process it
+ * \brief Handles incoming data from a websocket client.
  *
- * \return:
- *      - ESP_OK if the server was started successfully
- *      - ESP_FAIL otherwise
+ * This function is a callback for the server to handle incoming websocket frames. It reads the data from the frame,
+ * processes it if necessary, and performs any required responses or actions based on the data.
+ *
+ * \param[in] req The request structure containing client information.
+ *
+ * \return ESP_OK - Success, ESP Error Code - Failure.
  */
 esp_err_t rxHandler(httpd_req_t *req)
 {
@@ -101,19 +106,23 @@ esp_err_t rxHandler(httpd_req_t *req)
 }
 
 /**
- * \brief Send the ScientISST Sense self-signed certificate to the client
+ * \brief Sends a confirmation response to the client.
  *
- * \return:
- *      - ESP_OK always
+ * This function handles GET requests to a specific endpoint, responding with a confirmation message.
+ *
+ * \param[in] req The request structure containing the HTTP request.
+ *
+ * \return ESP_OK - response was sent successfully, ESP_FAIL - Failure.
  */
 esp_err_t getHandler(httpd_req_t *req)
 {
+    esp_err_t ret = ESP_OK;
     const char resp[] = "<!DOCTYPE html><html><body><h1>Success!</h1><p>Authorized ScientISST "
                         "Sense self-signed "
                         "certificate</p><script>setTimeout(()=>{history.back();},1000);</"
                         "script></body></html>";
-    httpd_resp_send(req, resp, HTTPD_RESP_USE_STRLEN);
-    return ESP_OK;
+    ret = httpd_resp_send(req, resp, HTTPD_RESP_USE_STRLEN);
+    return ret;
 }
 
 const httpd_uri_t ws = {.uri = "/", .method = HTTP_GET, .handler = rxHandler, .user_ctx = NULL, .is_websocket = true};
@@ -121,11 +130,12 @@ const httpd_uri_t ws = {.uri = "/", .method = HTTP_GET, .handler = rxHandler, .u
 const httpd_uri_t cert_get = {.uri = "/cert", .method = HTTP_GET, .handler = getHandler, .user_ctx = NULL};
 
 /**
- * \brief Start the websocket server
+ * \brief Starts the secure websocket server.
  *
- * \return:
- *      - The handle of the server if it was started successfully
- *      - NULL otherwise
+ * This function initializes the configuration for the server, loads SSL certificates, and starts the server. It also
+ * registers URI handlers for handling websocket connections and other HTTP requests.
+ *
+ * \return A handle to the started server, or NULL if the server failed to start.
  */
 httpd_handle_t startWebserver(void)
 {

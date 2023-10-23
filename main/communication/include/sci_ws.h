@@ -1,9 +1,11 @@
-/** \file ws.h
-    \brief Websocket server
-
-    This file contains the websocket server code. It is used to send data to the
-   web interface.
-*/
+/**
+ * \file sci_ws.h
+ * \brief Header file for the websocket server.
+ *
+ * Checks if websocket support is enabled in the esp-http-server component configuration.
+ *
+ * \warning The WS_AP communication mode is not fully working at the moment.
+ */
 
 #pragma once
 

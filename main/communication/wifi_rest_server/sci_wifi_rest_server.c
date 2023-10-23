@@ -50,9 +50,10 @@ static void opSettingsSaveMember(char *member, const char *value);
 /**
  * \brief Set HTTP response content type according to file extension
  *
- * \param req HTTP request
- * \param filepath File path
+ * \param[in] req HTTP request
+ * \param[in] filepath File path
  *
+ * \return ESP_OK - Success, ESP_FAIL - Fail
  */
 static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filepath)
 {
@@ -87,11 +88,9 @@ static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filepa
 /**
  * \brief Send HTTP response with the contents of the requested file
  *
- * \param req HTTP request
+ * \param[in] req HTTP request
  *
- * \return:
- *     - ESP_OK Success
- *     - ESP_FAIL Failed
+ * \return ESP_OK - Success, ESP_FAIL - Fail
  */
 static esp_err_t rest_common_get_handler(httpd_req_t *req)
 {
@@ -161,11 +160,9 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
 /**
  * \brief Simple handler for getting system handler
  *
- * \param req HTTP request
+ * \param[in] req HTTP request
  *
- * \return:
- *    - ESP_OK Success
- *    - ESP_FAIL Failed
+ * \return ESP_OK Success, ESP_FAIL Failed
  */
 static esp_err_t op_settings_get_handler(httpd_req_t *req)
 {
@@ -188,7 +185,7 @@ static esp_err_t op_settings_get_handler(httpd_req_t *req)
         cJSON_AddStringToObject(connectionInfo, "host_ip", scientisst_device_settings.op_settings.host_ip);
         cJSON_AddStringToObject(connectionInfo, "port_number", scientisst_device_settings.op_settings.port_number);
         cJSON_AddStringToObject(bitalinoInfo, "bit_when", scientisst_device_settings.op_settings.bit_when);
-        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", scientisst_device_settings.op_settings.sampling_rate);
+        cJSON_AddStringToObject(bitalinoInfo, "sampling_rate", scientisst_device_settings.op_settings.sampling_rate_hz);
         cJSON_AddStringToObject(bitalinoInfo, "no_channels", scientisst_device_settings.op_settings.no_channels);
         cJSON_AddStringToObject(bitalinoInfo, "channels", scientisst_device_settings.op_settings.channels);
         cJSON_AddStringToObject(bitalinoInfo, "bit_mode", scientisst_device_settings.op_settings.bit_mode);
@@ -218,6 +215,18 @@ static esp_err_t op_settings_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/**
+ * \brief Handler for POST requests for operational settings.
+ *
+ * This function handles POST requests sent to the operational settings endpoint. It reads the request content, which is
+ * expected to contain operational settings, validates and processes the content, and then saves the settings into flash
+ * memory. If the request is processed successfully, it sends a "301 Moved Permanently" response to the client with a
+ * redirect to the confirmation page. In case of errors, it responds with the appropriate error status code.
+ *
+ * \param[in] req Pointer to the httpd_req_t structure for the HTTP request.
+ *
+ * \return ESP_OK - Success, ESP_FAIL - Failure.
+ */
 static esp_err_t op_settings_post_handler(httpd_req_t *req)
 {
     int total_len = req->content_len;
@@ -256,9 +265,14 @@ static esp_err_t op_settings_post_handler(httpd_req_t *req)
 }
 
 /**
- * \brief Parse recieved HTTP form and save each member in op_settings
+ * \brief Parses an HTTP form and updates operational settings accordingly.
  *
- * \param buff HTTP form
+ * This function takes a buffer containing the raw form data from an HTTP request, parses the key-value pairs, and updates
+ * the operational settings stored in the global variable accordingly.
+ *
+ * \param buff Pointer to the buffer containing the raw form data.
+ *
+ * \return None.
  */
 static void parseHttpForm(char *buff)
 {
@@ -293,10 +307,15 @@ static void parseHttpForm(char *buff)
 }
 
 /**
- * \brief Save each member in op_settings
+ * \brief Updates a specific member in the operational settings.
  *
- * \param member Member of op_settings
- * \param value Value of member
+ * This function updates the value of a specific member of the operational settings, based on the provided key-value pair. It
+ * handles known keys and ignores unrecognized ones.
+ *
+ * \param[in] member Pointer to the string containing the key (member name).
+ * \param[in] value Pointer to the string containing the new value.
+ *
+ * \return None.
  */
 static void opSettingsSaveMember(char *member, const char *value)
 {
@@ -343,7 +362,7 @@ static void opSettingsSaveMember(char *member, const char *value)
     }
     else if (!strcmp(member, "sampling_rate"))
     {
-        strcpy(scientisst_device_settings.op_settings.sampling_rate, value);
+        strcpy(scientisst_device_settings.op_settings.sampling_rate_hz, value);
     }
     else if (!strcmp(member, "no_channels"))
     {
@@ -372,13 +391,15 @@ static void opSettingsSaveMember(char *member, const char *value)
 }
 
 /**
- * \brief Start REST server
+ * \brief Starts the REST server.
  *
- * \param base_path Base path of REST server
+ * This function initializes the REST server context, starts the server with the default configuration, and registers URI
+ * handlers for handling specific types of requests. It also handles error checking and cleanup in case of initialization
+ * failures.
  *
- * \return:
- *     - ESP_OK Success
- *     - ESP_FAIL Fail
+ * \param[in] base_path The base path for the REST server, used for constructing full paths.
+ *
+ * \return ESP_OK - successful start, ESP_FAIL - failure.
  */
 esp_err_t start_rest_server(const char *base_path)
 {
@@ -419,11 +440,12 @@ err:
 // restful_server_main.c-------------------------------------------------------------------------------------------------------------------
 
 /**
- * \brief Initialize SPIFFS
+ * \brief Initializes the SPIFFS filesystem where the web files are stored.
  *
- * \return:
- *    - ESP_OK Success
- *    - ESP_FAIL Fail
+ * This function attempts to mount the SPIFFS filesystem at the predefined mount point. If the filesystem is not found or
+ * fails to mount, the function provides diagnostic information about the cause of the failure.
+ *
+ * \return ESP_OK - Success, ESP_FAIL - otherwise.
  */
 esp_err_t init_fs_www(void)
 {
@@ -463,7 +485,12 @@ esp_err_t init_fs_www(void)
 }
 
 /**
- * \brief Initialize REST server
+ * \brief Initializes and starts the REST server.
+ *
+ * This function is responsible for the higher-level initialization required for the REST server. It initializes the SPIFFS
+ * filesystem and then starts the REST server. It checks for errors and aborts if any of the initialization steps fail.
+ *
+ * \return None.
  */
 void initRestServer(void)
 {

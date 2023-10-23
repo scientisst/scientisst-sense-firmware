@@ -1,9 +1,7 @@
-/** \file ble.h
-    \brief BLE mode functions header file.
-
-    This file contains the functions to initialize and send data in BLE mode. It
-   also contains the maximum length of the buffer in BLE mode.
-*/
+/**
+ * \file sci_ble.h
+ * \brief Header file for sci_ble.c
+ */
 
 #pragma once
 

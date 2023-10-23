@@ -1,9 +1,7 @@
-/** \file udp.h
-    \brief UDP client functions
-
-    This file contains the definitions of functions to create a UDP client and
-   send data to a server.
-*/
+/**
+ * \file sci_udp.h
+ * \brief Header file for sci_udp.c
+ */
 
 #pragma once
 

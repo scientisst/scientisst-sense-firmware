@@ -1,8 +1,10 @@
-/** \file adc.c
-    \brief ADC interactions functions file.
-
-    This file contains the declarations for the ADC interactions.
-*/
+/**
+ * \file sci_adc_internal.c
+ * \brief ADC interactions functions file.
+ *
+ * This file contains the declarations for the ADC interactions. It manages the interactions with both internal ADCs,
+ * including reading raw data, converting data, and configuring ADC settings.
+ */
 
 #include "sci_adc_internal.h"
 
@@ -18,9 +20,22 @@
 #define BATTERY_DIVIDER_FACTOR 2
 
 // ADC
-DRAM_ATTR static const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
-                                                                        ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7};
+DRAM_ATTR static const uint8_t analog_channels[DEFAULT_ADC_CHANNELS] = {
+    ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_4,
+    ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7}; ///< Analog channels used by the ADC.
 
+/**
+ * \brief Get a value from the internal ADC.
+ *
+ * This function reads a value from the specified channel of the specified ADC. It can optionally convert the
+ * reading from raw data to millivolts.
+ *
+ * \param[in] adc_index Identifier of the ADC to be used (ADC_INTERNAL_1 or ADC_INTERNAL_2).
+ * \param[in] adc_channel Channel number to read from.
+ * \param[in] convert_to_mV_flag Flag indicating whether to convert the reading to millivolts.
+ *
+ * \return The ADC reading. If convert_to_mV_flag is set, the reading is in millivolts.
+ */
 uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_channel, uint8_t convert_to_mV_flag)
 {
     int value = 0;
@@ -50,11 +65,14 @@ uint16_t IRAM_ATTR getAdcInternalValue(adc_internal_id_t adc_index, uint8_t adc_
 }
 
 /**
- * \brief configure Adc
+ * \brief Configure an ADC channel.
  *
- * \param adc_index 1 or 2
- * \param adc_resolution resolution of the adc
- * \param adc_channel channel to be configured
+ * This function configures a specific channel of an ADC for use.
+ *
+ * \param[in] adc_index Identifier of the ADC to be used (ADC_INTERNAL_1 or ADC_INTERNAL_2).
+ * \param[in] adc_channel Channel number to configure.
+ *
+ * \return None.
  */
 static void configAdc(adc_internal_id_t adc_index, int adc_channel)
 {
@@ -78,11 +96,15 @@ static void configAdc(adc_internal_id_t adc_index, int adc_channel)
 }
 
 /**
- * \brief initialize Adc
+ * \brief Initialize the ADCs.
  *
- * \param adc_resolution resolution of the adc
- * \param adc1_en enable adc1
- * \param adc2_en enable adc2
+ * This function initializes the ADCs based on specified parameters. It sets up both ADC units, configures their
+ * channels, and characterizes the ADCs for accurate readings. It also checks for calibration values stored in eFuse.
+ *
+ * \param[in] adc1_en Enable flag for ADC1. If set, ADC1 is configured and characterized.
+ * \param[in] adc2_en Enable flag for ADC2. If set, ADC2 is configured and characterized.
+ *
+ * \return None.
  */
 void initAdc(uint8_t adc1_en, uint8_t adc2_en)
 {

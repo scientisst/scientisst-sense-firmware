@@ -1,3 +1,18 @@
+/**
+ * \file sci_task_com_rx.h
+ * \brief Communication Reception Task
+ *
+ * This file establishes the functionality required for the continuous reception of data
+ * from different communication mediums. It supports various modes, including TCP (both server
+ * and client roles), UDP, and Serial communication. The task dynamically adapts to the communication
+ * settings specified in the system's operational parameters.
+ *
+ * The primary function of this file is to initialize the appropriate communication protocol,
+ * actively listen for incoming data, and handle that data upon receipt. It includes mechanisms
+ * to reconnect in case of connection loss and to halt data acquisition gracefully upon a controlled
+ * connection close.
+ */
+
 #include "sci_task_com_rx.h"
 
 #include "lwip/err.h"
@@ -13,9 +28,14 @@
 static void wifiSerialRxHandler(void);
 
 /**
- * \brief Task that receives data from the client.
+ * \brief Task handling the reception of data from various communication interfaces.
  *
- * This task is responsible for receiving data from the client.
+ * The rxTask function is an infinite loop task responsible for managing incoming data based on the
+ * configured communication method. It initializes the necessary communication parameters, handles reconnection
+ * attempts in case of connection failure, and delegates the data handling to the appropriate function once
+ * data is received. The task adapts to TCP, UDP, and Serial communication modes.
+ *
+ * \return Never returns.
  */
 _Noreturn void rxTask(void)
 {
@@ -80,13 +100,14 @@ _Noreturn void rxTask(void)
 }
 
 /**
- * \brief Receives data through a TCP connection and then call processPacket on the
- * data.
+ * \brief Handler for receiving and processing data through a Wi-Fi connection.
  *
- * This function receives data through a TCP connection and then call processPacket
- * on the data. If connection is closed unexpectedly, it will try to reconnect
- * in a loop. If connection is closed gracefully, it will stop acquiring data.
+ * The wifiSerialRxHandler function continuously listens for data on the established Wi-Fi connection.
+ * Upon receiving data, it checks for the integrity and amount of the data, handles any connection errors,
+ * and passes valid packets to the  processPacket() function for further processing. If the connection is
+ * closed (either gracefully or due to an error), it shuts down the socket and handles task cleanup.
  *
+ * \return None.
  */
 static void wifiSerialRxHandler(void)
 {

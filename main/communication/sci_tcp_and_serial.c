@@ -1,9 +1,12 @@
-/** \file tcp.c
-    \brief Header file for the TCP server and client functions.
-
-    This file contains the declarations for the TCP server and communications
-   functions.
-*/
+/**
+ * \file sci_tcp_and_serial.c
+ * \brief Implementation of the TCP server and client. Some functions are also used for the serial communication to save code
+ * size.
+ *
+ * This file contains the implementation of the functions necessary for setting up and communicating over a TCP server/client
+ * architecture. Some functions are also used for the serial communication to save code size. It includes functions to
+ * initialize a TCP server, accept connections, initialize a TCP client, and send data over a TCP connection.
+ */
 
 #include "sci_tcp_and_serial.h"
 
@@ -17,9 +20,12 @@ DRAM_ATTR static int listen_fd = 0; ///< Used to listen for connections when use
 /**
  * \brief Initializes a TCP server.
  *
- * \param port_str The port to listen to.
+ * This function sets up a TCP server by creating a socket, binding it to an address and port, and then starting to listen
+ * for incoming connections. It returns the file descriptor for the listening socket or a negative value indicating an error.
  *
- * \return The file descriptor of the TCP server.
+ * \param[in] port_str String representing the port number on which the server will listen for connections.
+ *
+ * \return File descriptor - Success, ESP_FAIL - Failure, along with relevant debug messages.
  */
 esp_err_t initTcpServer(const char *port_str)
 {
@@ -59,11 +65,12 @@ esp_err_t initTcpServer(const char *port_str)
 }
 
 /**
- * \brief Initializes a TCP connection.
+ * \brief Accepts a new TCP connection on a server.
  *
- * \param listen_fd The file descriptor of the TCP server.
+ * This function waits for a new connection to the server and initializes it. The function returns a new file descriptor for
+ * the accepted connection.
  *
- * \return The file descriptor of the TCP connection.
+ * \return The file descriptor for the new client connection, ESP_FAIL1 - connection failed.
  */
 int initTcpConnection(void)
 {
@@ -73,18 +80,21 @@ int initTcpConnection(void)
     if ((client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0)
     {
         DEBUG_PRINT_E("initTcpServer", "accept error");
-        return -1;
+        return ESP_FAIL;
     }
     return client_fd;
 }
 
 /**
- * \brief Initializes a TCP client.
+ * \brief Initializes a TCP client and connects it to a server.
  *
- * \param ip The IP address of the server.
- * \param port The port of the server.
+ * This function sets up a TCP client by resolving the server address and establishing a connection to it. It returns a file
+ * descriptor that can be used for subsequent communication.
  *
- * \return The file descriptor of the TCP client.
+ * \param[in] ip String representing the IP address of the server.
+ * \param[in] port String representing the port number of the server.
+ *
+ * \return The file descriptor of the client socket, ESP_FAIL - connection failed.
  */
 int initTcpClient(const char *ip, const char *port)
 {
@@ -96,7 +106,7 @@ int initTcpClient(const char *ip, const char *port)
     if (server_fd == -1)
     {
         DEBUG_PRINT_E("initTcpClient", "ERROR: SOCKET CREATION FAILED");
-        return -1;
+        return ESP_FAIL;
     }
 
     memset(&hints, 0, sizeof(hints));
@@ -110,7 +120,7 @@ int initTcpClient(const char *ip, const char *port)
         shutdown(server_fd, 0);
         close(server_fd);
         server_fd = 0;
-        return -1;
+        return ESP_FAIL;
     }
     if (connect(server_fd, res->ai_addr, res->ai_addrlen) == -1)
     {
@@ -119,7 +129,7 @@ int initTcpClient(const char *ip, const char *port)
         shutdown(server_fd, 0);
         close(server_fd);
         server_fd = 0;
-        return -1;
+        return ESP_FAIL;
     }
 
     DEBUG_PRINT_I("initTcpClient", "Client successfully connected");
@@ -127,18 +137,16 @@ int initTcpClient(const char *ip, const char *port)
 }
 
 /**
- * \brief Sends data through a TCP connection.
+ * \brief Sends data through a TCP connection or serial port.
  *
- * This function sends data through a TCP connection. It is called by the
- * sendData() function when in TCP mode.
+ * This function is responsible for sending data over an established TCP connection or serial connection. It continues to
+ * send all data in the buffer, handling partial writes as needed.
  *
- * \param fd The file descriptor of the TCP connection.
- * \param len The length of the data to send.
- * \param buff The data to send.
+ * \param[in] fd The file descriptor of the established TCP connection.
+ * \param[in] len The length of the data in bytes.
+ * \param[in] buff Pointer to the data buffer.
  *
- * \return:
- *      - ESP_OK if the data was sent successfully
- *      - ESP_FAIL otherwise
+ * \return ESP_OK - data was sent successfully, ESP_FAIL - Error.
  */
 esp_err_t IRAM_ATTR tcpSerialSend(uint32_t fd, int len, const uint8_t *buff)
 {

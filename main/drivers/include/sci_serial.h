@@ -1,6 +1,7 @@
-/** \file uart.h
-    \brief Header file for uart.c
-*/
+/**
+ * \file sci_serial.h
+ * \brief Header file for sci_serial.c
+ */
 
 #pragma once
 

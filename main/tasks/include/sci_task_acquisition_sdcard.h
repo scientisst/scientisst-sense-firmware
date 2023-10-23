@@ -1,6 +1,7 @@
-//
-// Created by kiko on 10/10/23.
-//
+/**
+ * \file sci_task_acquisition_sdcard.h
+ * \brief Header file for sci_task_acquisition_sdcard.c
+ */
 
 #pragma once
 

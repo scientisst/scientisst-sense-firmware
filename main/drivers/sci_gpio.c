@@ -1,9 +1,10 @@
-/** \file gpio.c
-    \brief GPIO interactions
-
-    This file contains the functions to initialize the GPIOs and the LEDC
-   module.
-*/
+/**
+ * \file gpio.c
+ * \brief Management of GPIO interactions and LED controller configuration.
+ *
+ * This file contains functions responsible for initializing and managing GPIOs, including setting up the LED Controller
+ * (LEDC) module. It handles the specifics of pin configuration, ISR handling, and LED control routines.
+ */
 
 #include "sci_gpio.h"
 
@@ -14,10 +15,12 @@
 #include "sci_adc_internal.h"
 
 /**
- * \brief Configure LED Controller
+ * \brief Configures the LED Controller (LEDC) timers and channels.
  *
- * This function configures the LED Controller. It prepares and sets the
- * configuration of timers.
+ * Initializes the LEDC module to control the on-board LEDs. It sets up the timer and initializes the duty cycle  for the
+ * LEDs. The function takes into consideration the hardware version to manage specific LEDs accordingly.
+ *
+ * \return None.
  */
 void configLedController(void)
 {
@@ -61,10 +64,17 @@ void configLedController(void)
 }
 
 /**
- * \brief Configures GPIO
+ * \brief Configures individual GPIOs with specific settings.
  *
- * This function configures the GPIO pins. It sets the mode, interrupt type,
- * pull up/down and pin bit mask.
+ * \param[in] mode Defines the direction (input/output) of the GPIO.
+ * \param[in] intr_type Determines the type of interrupt that the GPIO responds to.
+ * \param[in] pin_bit_mask Specifies the exact pins to be configured.
+ * \param[in] pull_down_en Enables/Disables the pull-down mode.
+ * \param[in] pull_up_en Enables/Disables the pull-up mode.
+ *
+ * The function aborts if both pull-up and pull-down are enabled simultaneously.
+ *
+ * \return None.
  */
 static void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin_bit_mask, gpio_pulldown_t pull_down_en,
                        gpio_pullup_t pull_up_en)
@@ -93,8 +103,11 @@ static void gpioConfig(gpio_mode_t mode, gpio_int_type_t intr_type, uint64_t pin
 }
 
 /**
- * \brief Initializes GPIO
+ * \brief Main function to initialize various sets of GPIOs.
  *
+ * Calls 'gpioConfig' with pre-defined parameters to set up different GPIOs for specific uses. This includes GPIOs used as
+ * output (e.g., LEDs and digital output channels) and input (e.g., buttons and digital input channels) based on the hardware
+ * version being used.
  */
 void gpioInit(void)
 {
@@ -106,7 +119,7 @@ void gpioInit(void)
 #else
     gpioConfig(GPIO_MODE_OUTPUT, (gpio_int_type_t)GPIO_PIN_INTR_DISABLE,
                ((1ULL << STATE_LED_R_IO) | (1ULL << STATE_LED_G_IO) | (1ULL << STATE_LED_B_IO) |
-                (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << SPI3_CS0_IO)),
+                (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << MCP_CS)),
                0, 0);
 #endif
 
@@ -114,17 +127,28 @@ void gpioInit(void)
                0); // The 2 IO inputs
 }
 
-// Function has to be declared with void* as argument even though it is not
-// used to avoid compiler warnings
+/**
+ * \brief ISR handler for the DRDY (Data Ready) GPIO signal.
+ *
+ * This function is executed when the DRDY signal indicates that data is ready. The function is empty because we disable
+ * interrupts during communication.
+ *
+ * \return None.
+ */
 void IRAM_ATTR gpioDrdyIsrHandler(void)
 {
     return;
 }
 
 /**
- * \brief Configures DRDY GPIO
+ * \brief Sets up a GPIO for DRDY (Data Ready) and installs the related ISR.
  *
- * This function configures the DRDY GPIO pin.
+ * \param[in] io_num The GPIO number to be used for the DRDY signal.
+ *
+ * Configures a specific GPIO to act as a signal for when data is ready. The function sets the GPIO mode, specifies the
+ * interrupt trigger type, and then installs the GPIO ISR handler specifically for this pin.
+ *
+ * \return None.
  */
 void adcExtDrdyGpio(int io_num)
 {

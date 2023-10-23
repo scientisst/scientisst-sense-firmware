@@ -1,7 +1,10 @@
-/** \file sd_card.c
-    \brief SD card driver.
-    This file implements the SD card driver.
-*/
+/**
+ * \file sci_sd_card.c
+ * \brief SD card driver.
+ *
+ * This file contains the implementation of the SD card driver, including initialization, file operations, and the handling
+ * of data acquisition from various sources.
+ */
 
 #include "sci_sd_card.h"
 
@@ -18,12 +21,9 @@
 
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
+#include "sci_gpio.h"
 
 #define DEFAULT_SAVE_FILE_NAME "/sdcard/acquisition_datapoints"
-#define PIN_NUM_MISO GPIO_NUM_19
-#define PIN_NUM_MOSI GPIO_NUM_23
-#define PIN_NUM_CLK GPIO_NUM_18
-#define PIN_NUM_CS GPIO_NUM_4
 
 sdmmc_host_t sd_spi_host = {
     .flags = SDMMC_HOST_FLAG_SPI | SDMMC_HOST_FLAG_DEINIT_ARG,
@@ -55,22 +55,32 @@ static esp_vfs_fat_sdmmc_mount_config_t mount_config = {
     .max_files = 1,
     .allocation_unit_size = 16 * 1024,
 }; ///< SD card mount config
+
 spi_bus_config_t bus_cfg = {
-    .mosi_io_num = PIN_NUM_MOSI,
-    .miso_io_num = PIN_NUM_MISO,
-    .sclk_io_num = PIN_NUM_CLK,
+    .mosi_io_num = SD_CARD_MOSI,
+    .miso_io_num = SD_CARD_MISO,
+    .sclk_io_num = SD_CARD_CLK,
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
     .max_transfer_sz = 4000,
     .flags = 0,
     .intr_flags = 0,
 }; ///< SPI bus config
+
 static sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
 static sdmmc_card_t *card;                   ///< SD card handle
 static const char mount_point[] = "/sdcard"; ///< Mount point of the SD card
 
 static esp_err_t createFile(void);
 
+/**
+ * \brief Initializes the SD card SPI bus.
+ *
+ * This function initializes the SPI bus used for SD card communication. It needs to be separate from the the rest of the SD
+ * Card initialization because, if other SPI devices are used, they must be added to the SPI bus before the SD card.
+ *
+ * \return sdmmc_host_t* A pointer to the SD card host structure.
+ */
 sdmmc_host_t *initSdCardSpiBus(void)
 {
     esp_err_t ret = ESP_OK;
@@ -82,16 +92,19 @@ sdmmc_host_t *initSdCardSpiBus(void)
 }
 
 /**
- * \brief Initialize SPI host and SPI bus and then mount the SD card.
+ * \brief Initializes and mounts the SD card.
  *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
+ * This function initializes the necessary hardware interfaces and mounts the SD card to a specified mount point in the
+ * virtual file system. It handles possible errors and reports back the status.
+ *
+ * \return ESP_OK - Success, ESP_FAIL - Failure.
  */
 esp_err_t initSDCard(void)
 {
     esp_err_t ret = ESP_OK;
 
-    gpio_pullup_en(PIN_NUM_MOSI);           // Enable pull-up on MOSI, as per SD card spec
-    slot_config.gpio_cs = PIN_NUM_CS;       // Set the CS pin
+    gpio_pullup_en(SD_CARD_MOSI);           // Enable pull-up on MOSI, as per SD card spec
+    slot_config.gpio_cs = SD_CARD_CS;       // Set the CS pin
     slot_config.host_id = sd_spi_host.slot; // Set the SPI host
 
     ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config, &mount_config, &card);
@@ -123,6 +136,14 @@ esp_err_t initSDCard(void)
     return ESP_OK;
 }
 
+/**
+ * \brief Writes the header information to the file on the SD card.
+ *
+ * This function prepares a specific header with data acquisition parameters and writes it to the beginning of the file,
+ * ensuring that data is properly parsed by SDCardFileConversion.py script.
+ *
+ * \return None.
+ */
 void writeFileHeader(void)
 {
     uint8_t file_header[25] = {0};
@@ -142,7 +163,7 @@ void writeFileHeader(void)
     file_header[12] = 0x01;                                            // External ADC data type ID
     file_header[13] = 0x01;                                            // Timestamp enable?
     file_header[14] = 0x08;                                            // # of Bytes for timestamp
-    *(uint16_t *)&file_header[15] = (uint16_t)scientisst_device_settings.sample_rate;        // Sample rate
+    *(uint16_t *)&file_header[15] = (uint16_t)scientisst_device_settings.sample_rate_hz;     // Sample rate
     *(int *)&file_header[17] = scientisst_device_settings.adc_chars[ADC_INTERNAL_1].coeff_a; // ADC1 coeff_a
     *(int *)&file_header[21] = scientisst_device_settings.adc_chars[ADC_INTERNAL_1].coeff_b; // ADC1 coeff_b
 
@@ -155,12 +176,10 @@ void writeFileHeader(void)
 /**
  * \brief Open a new file on the SD card for writing.
  *
- * This function will open a new file on the SD card for writing. First
- * checks if a file with the same name already exists and if so, will
- * increment the file name by 1 until a file name is found that does not
- * exist.
+ * This function will open a new file on the SD card for writing. First checks if a file with the same name already exists
+ * and if so, will increment the file name by 1 until a file name is found that does not exist.
  *
- * \return ESP_OK if successful, ESP_FAIL otherwise.
+ * \return ESP_OK - successful, ESP_FAIL - otherwise.
  */
 static esp_err_t createFile(void)
 {
@@ -205,12 +224,13 @@ static esp_err_t createFile(void)
 }
 
 /**
- * \brief Unmount the SD card and free the SPI bus.
+ * \brief Unmounts the SD card and frees the SPI bus.
  *
- * This function unmounts the SD card and frees the SPI bus. It also closes the file that was being written
- * to. It is unusued in the current version of the firmware because the acquisition in sdcard mode does not
- * stop until device turned of or battery runs out.
+ * This function safely unmounts the SD card from the file system and releases the SPI bus resources.
  *
+ * \note This function is unused for now, but it is kept here for future use.
+ *
+ * \return None.
  */
 void unmountSDCard(void)
 {

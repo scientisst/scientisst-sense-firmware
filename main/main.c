@@ -1,18 +1,23 @@
-/** \file main.c
-    \brief Main file for the Scientisst project.
-
-    This file contains the main function for the Scientisst project.
-*/
+/**
+ * \file main.c
+ * \brief Entry point of the Scientisst application.
+ *
+ */
 
 #include "sci_scientisst.h"
 
 /**
- *\brief Main function for the Scientisst project.
+ * \brief Starts the application's main logic.
  *
- * This function initializes the Scientisst firmware and then deletes itself.
+ * The function serves as the starting point for the Scientisst application. It first
+ * initializes the required Scientisst firmware, setting up the environment for the application.
+ * After the initial setup, it terminates itseslf.
  */
 void app_main(void)
 {
+    // Initialize the Scientisst environment.
     initScientisst();
+
+    // Task deletion indicating the end of the initialization process.
     vTaskDelete(NULL);
 }

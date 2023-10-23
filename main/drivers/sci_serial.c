@@ -1,9 +1,10 @@
-/** \file uart.c
-    \brief UART functions
+/**
+ * \file sci_serial.c
+ * \brief Serila (UART) Communication Initialization
+ *
+ * This file contains the UART initialization function, which sets up UART communication with specific configurations.
+ */
 
-    This file contains the functions for the UART communication. Only has the
-   init function for now.
-*/
 #include "sci_serial.h"
 
 #include <sys/errno.h>
@@ -13,8 +14,16 @@
 #include "esp_vfs_dev.h"
 #include "sys/select.h"
 
-static const uart_port_t serial_com_uart_num = UART_NUM_0;
+static const uart_port_t serial_com_uart_num = UART_NUM_0; ///< UART port number for serial communication.
 
+/**
+ * \brief Initializes the UART communication.
+ *
+ * This function sets up UART communication with specific configurations. The function configures parameters like
+ * baud rate, data bits, stop bits, and flow control; handles the driver installation and opens the UART file.
+ *
+ * \return File - success, or ESP_FAIL - error.
+ */
 int serialInit(void)
 {
     int fd;
@@ -36,7 +45,7 @@ int serialInit(void)
     if ((fd = open("/dev/uart/0", O_RDWR)) == -1)
     {
         DEBUG_PRINT_E("serialInit", "ERROR: OPENING UART PORT FAILED");
-        return -1;
+        return ESP_FAIL;
     }
 
     // We have a driver now installed so set up the read/write functions to use driver also.

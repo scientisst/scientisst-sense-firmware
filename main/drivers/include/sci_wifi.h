@@ -1,6 +1,7 @@
-/** \file wifi.h
-    \brief Wifi functions definitions and relevant defines
-*/
+/**
+ * \file sci_wifi.h
+ * \brief Header file for sci_wifi.c
+ */
 
 #pragma once
 

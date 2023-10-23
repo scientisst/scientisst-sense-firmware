@@ -1,8 +1,7 @@
-#include <sys/cdefs.h>
-/** \file sd_card.h
-    \brief SD card driver.
-    This file implements the SD card driver.
-*/
+/**
+ * \file sci_sd_card.h
+ * \brief Header file for sci_sd_card.c.
+ */
 
 #pragma once
 

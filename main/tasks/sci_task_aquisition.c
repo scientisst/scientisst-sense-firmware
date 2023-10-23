@@ -1,3 +1,14 @@
+/**
+ * \file sci_task_acquisition.h
+ * \brief Sensor Data Acquisition Task
+ *
+ * This file contains the implementation of the data acquisition task. This task is responsible for continuously acquiring
+ * all sensor data. The acquired data is formatted and stored in frames following the format described in /docs/frames.jpg.
+ * The acquisition task is synchronized with a timer to sample data at consistent intervals. It interacts with internal and
+ * external ADCs, GPIO for IO states, and potentially an IMU, depending on the configuration.
+ *
+ */
+
 #include "sci_task_aquisition.h"
 
 #include <string.h>
@@ -16,8 +27,8 @@
         (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                                       \
     })
 
-DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2};
-DRAM_ATTR uint16_t crc_seq = 0; ///< Frame sequence number
+DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2}; ///< CRC table
+DRAM_ATTR uint16_t crc_seq = 0;                                                                 ///< Frame sequence number
 
 static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2]);
 static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
@@ -29,11 +40,13 @@ static inline void writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, 
                               const uint8_t io_state);
 
 /**
- * \brief Task that acquires data from adc1.
+ * \brief Main routine for sensor data acquisition.
  *
- * This task is responsible for acquiring data from adc1. It is notified by the
- * timerGrp0Isr when to acquire data. It notifies the sendTask when there is
- * data to send. It is also the main task of CPU1 (APP CPU)
+ * This continuous task is responsible for the regular acquisition of sensor data. It formats this acquired data into
+ * specific frame structures (depending on the current API mode) for later transmission. The task manages buffer writing,
+ * handles "all buffers full" scenarios, and maintains notifies the sending task when a buffer is ready for transmission.
+ *
+ * \return Never returns.
  */
 _Noreturn void IRAM_ATTR taskAcquisition(void)
 {
@@ -86,6 +99,18 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
     }
 }
 
+/**
+ * \brief Collects sensor data from various sources.
+ *
+ * This function acquires the current state of IOs, reads values from the internal ADC or IMU and/or external ADC. The
+ * acquired data is stored in structures passed by reference.
+ *
+ * \param[in/out] io_state Pointer to a variable where the IO state will be stored.
+ * \param[in/out] adc_internal_res Pointer to an array where the internal ADC readings will be stored.
+ * \param[in/out] adc_external_res Pointer to an array where the external ADC readings will be stored, if applicable.
+ *
+ * \return None.
+ */
 static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2])
 {
     // Get the IO states
@@ -133,6 +158,19 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
 #endif
 }
 
+/**
+ * \brief Based on API mode, selects the appropriate frame format and writes the frame in buffer.
+ *
+ * This function takes the raw sensor data and formats it into a frame structure
+ * that's suitable for transmission, based on the current API mode (ScientISST, BITalino, or JSON).
+ *
+ * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
+ * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
+ * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
+ * \param[in] io_state The current state of the IOs.
+ *
+ * \return None.
+ */
 static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                         const uint8_t io_state)
 {
@@ -151,12 +189,17 @@ static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_inte
 }
 
 /**
- * \brief acquire adc1 channels
+ * \brief Writes sensor data into a frame in the ScientISST format.
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used
- * for ScientISST mode and API (Current).
+ * This function formats and stores sensor data, including ADC readings and IO states, into a frame with the ScientISST API
+ * format. It also calculates and appends the necessary CRC values for data integrity verification.
  *
- * \param frame pointer of frame position in memory to store the adc1 channels.
+ * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
+ * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
+ * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
+ * \param[in] io_state The current state of the IOs.
+ *
+ * \return None.
  */
 static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res,
                                            const uint32_t *adc_external_res, const uint8_t io_state)
@@ -212,12 +255,16 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
 }
 
 /**
- * \brief acquire adc1 channels
+ * \brief Writes sensor data into a frame in the BITalino format.
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used
- * for Bitalino mode and API (Legacy).
+ * This function formats and stores sensor data, including ADC readings and IO states, into a frame with the BITalino API
+ * format. It also calculates and appends the necessary CRC values for data integrity verification.
  *
- * \param frame pointer of frame position in memory to store the adc1 channels
+ * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
+ * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
+ * \param[in] io_state The current state of the IOs.
+ *
+ * \return None.
  */
 static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state)
 {
@@ -279,12 +326,18 @@ static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res,
 }
 
 /**
- * \brief acquire adc1 channels
+ * \brief Writes sensor data into a frame in the JSON format.
  *
- * Acquires and stores into frame the channel acquisitions of adc1. This is used
- * for JSON mode.
+ * This function formats and stores sensor data, including ADC readings and IO states, into a JSON structure.
  *
- * \param frame pointer of frame position in memory to store the adc1 channels
+ * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
+ * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
+ * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
+ * \param[in] io_state The current state of the IOs.
+ *
+ * \return None.
+ *
+ * \warning This API mode is not fully working.
  */
 static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                            const uint8_t io_state)

@@ -1,9 +1,9 @@
-/** \file bt.c
-    \brief BT communication file with some general functions also.
-
-    This file contains the functions used for the BT communication. It also
-   contains some general functions used in the firmware.
-*/
+/**
+ * \file sci_bt.c
+ * \brief Bluetooth communication and general functions.
+ *
+ * This file contains the functions necessary for Bluetooth communication.
+ */
 
 #include "sci_bt.h"
 
@@ -24,20 +24,24 @@
 #include "sci_com.h"
 
 #define SEND_AFTER_C0NG_WRITE_FAILED 3
-#define SEND_AFTER_C0NG 2
-#define SPP_SERVER_NAME "SPP_SERVER"
+///< Marks send status to wait for congestion to clear and then send the rest of the data of a failed write
+#define SEND_AFTER_C0NG 2            ///< Marks send status to wait for congestion to clear and then send the data
+#define SPP_SERVER_NAME "SPP_SERVER" ///< Name of the bluetooth server
 
 DRAM_ATTR SemaphoreHandle_t bt_send_semaphore;
-DRAM_ATTR volatile uint16_t failed_write_bytes_sent_count = 0;
+///< Semaphore to synchronize the send task with the event handler, wait for the write to complete and then send the next
+///< buffer or wait for congestion to clear.
+DRAM_ATTR volatile uint16_t failed_write_bytes_sent_count = 0; ///< Number of bytes sent in a failed write
 
-// Send Data for Bluetooth mode. Given that the bluetooth connection has to wait for events to send data, this
-// function is called by the event handler. If others modes used the same approach, it created a recursive
-// that could explode the stack.
-/* This function is called by the send task and sends the data using the
- * appropriate send function. It first checks if there's anything to send. The
- * buffer changing and clearing tasks are done after in finalizeSend() the
- * ESP_SPP_WRITE_EVT event occurred with writing completed successfully in
- * esp_spp_cb().
+/**
+ * \brief Send data via Bluetooth.
+ *
+ * This function is responsible for sending data over a Bluetooth connection. It's designed to work within the constraints of
+ * event-driven communication, avoiding potential stack overflows from recursive calls found in other modes. It also uses a
+ * binary semaphore to synchronize the send task with the event handler, wait for the write to complete and then send the
+ * next buffer or wait for congestion to clear.
+ *
+ * \return None.
  */
 void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *))
 {
@@ -64,9 +68,12 @@ void IRAM_ATTR sendDataBluetooth(esp_err_t (*tx_write_func)(uint32_t, int, const
 }
 
 /**
- * \brief Function to finalize the send process.
+ * \brief Finalize the sending process.
  *
- * This function clears the sent buffer and changes the current buffer to send.
+ * Once data is sent, this function is responsible for clearing the buffer that held the data and updating the buffer
+ * ready to send flag.
+ *
+ * \return None.
  */
 void IRAM_ATTR finalizeSend(void)
 {
@@ -84,8 +91,13 @@ void IRAM_ATTR finalizeSend(void)
 }
 
 /**
- * \brief espSppCb gap register callback function.
+ * \brief Callback for Bluetooth events.
  *
+ * This function is a callback for handling a variety of Bluetooth events, including initialization, data reception, and
+ * others. Actions taken during this callback depend on the event triggered by the Bluetooth ESP Stack. It notifies the send
+ * task when the write is completed successfully and when the connection is not congested.
+ *
+ * \return None.
  */
 static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -214,6 +226,11 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 }
 
 /**
+ * \brief Callback for Bluetooth GAP events.
+ *
+ * This function is a callback that handles events related to Bluetooth GAP (Generic Access Profile).
+ *
+ * \return None.
  */
 static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 {
@@ -274,8 +291,13 @@ static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param
 }
 
 /**
- * \brief Initialize the bluetooth communication.
+ * \brief Initialize Bluetooth communication.
  *
+ * This function sets up the necessary components for Bluetooth communication. This includes initializing the Bluetooth
+ * stack, setting up the necessary Bluetooth profiles, and ensuring the device is ready to pair and connect with other
+ * Bluetooth devices.
+ *
+ * \return None.
  */
 void initBt(void)
 {
@@ -348,9 +370,12 @@ void initBt(void)
 }
 
 /**
- * \brief Get the device name.
+ * \brief Generate a unique device name.
  *
- * Use the last 2 bytes of MAC-ADDRESS found on EFUSE to make the device name
+ * This function creates a unique device name based on the device's MAC address. This helps in identifying the device when
+ * attempting to pair or connect via Bluetooth.
+ *
+ * \return None.
  */
 void getDeviceName(void)
 {

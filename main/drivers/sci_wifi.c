@@ -1,8 +1,10 @@
-/** \file wifi.c
-    \brief Wifi functions
-
-    This file contains the wifi functions for the ScientISST project.
-*/
+/**
+ * \file sci_wifi.c
+ * \brief Wifi functions for the ScientISST project.
+ *
+ * This file contains the functions related to WiFi operations including initializing the WiFi in station or AP mode,
+ * handling WiFi events, and mDNS configurations.
+ */
 
 #include "sci_wifi.h"
 
@@ -16,9 +18,9 @@
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
 
-#define EXAMPLE_ESP_WIFI_PASS "12345678"
-#define EXAMPLE_ESP_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1
-#define EXAMPLE_MAX_STA_CONN 4     // Default: 4
+#define SCI_WIFI_PASS "12345678"
+#define SCI_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1
+#define SCI_MAX_STA_CONN 4 // Default: 4
 
 #define MDNS_HOST_NAME "scientisst"
 // Specify the domain name used in the mDNS service. Note that webpage also take it as a part of URL where it
@@ -26,14 +28,17 @@
 #define MDNS_INSTANCE "esp home web server"
 
 /**
- * \brief Wifi event handler
+ * \brief Handles WiFi events for SoftAP mode.
  *
- * This function handles the wifi events.
+ * This event handler function is responsible for handling WiFi events such as a new station connecting or a station
+ * disconnecting from the AP.
  *
- * \param arg unused, kept for consistency
- * \param event_base The event base
- * \param event_id The event id
- * \param event_data The event data
+ * \param[in] arg Unused parameter, kept for function signature compatibility.
+ * \param[in] event_base The base type of the event.
+ * \param[in] event_id The ID of the event.
+ * \param[in] event_data Pointer to the event-specific data.
+ *
+ * \return None.
  */
 static void wifiEventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -50,7 +55,12 @@ static void wifiEventHandler(void *arg, esp_event_base_t event_base, int32_t eve
 }
 
 /**
- * \brief Wifi softAP initialization
+ * \brief Initializes the WiFi in SoftAP mode.
+ *
+ * This function sets up the WiFi in SoftAP mode with the specified configuration parameters like SSID, password, and maximum
+ * allowed connections.
+ *
+ * \return None.
  */
 void wifiInitSoftap(void)
 {
@@ -63,14 +73,14 @@ void wifiInitSoftap(void)
 
     wifi_config_t wifi_config = {
         .ap = {.ssid_len = 0,
-               .channel = EXAMPLE_ESP_WIFI_CHANNEL,
-               .password = EXAMPLE_ESP_WIFI_PASS,
-               .max_connection = EXAMPLE_MAX_STA_CONN,
+               .channel = SCI_WIFI_CHANNEL,
+               .password = SCI_WIFI_PASS,
+               .max_connection = SCI_MAX_STA_CONN,
                .authmode = WIFI_AUTH_WPA_WPA2_PSK},
     };
     memcpy(wifi_config.ap.ssid, scientisst_device_settings.device_name, strlen(scientisst_device_settings.device_name) + 1);
 
-    if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0)
+    if (strlen(SCI_WIFI_PASS) == 0)
     {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
@@ -80,7 +90,7 @@ void wifiInitSoftap(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     DEBUG_PRINT_W("wifi softAP", "wifiInitSoftap finished. SSID:%s password:%s channel:%d", wifi_config.ap.ssid,
-                  EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
+                  SCI_WIFI_PASS, SCI_WIFI_CHANNEL);
 }
 
 // wifi
@@ -97,14 +107,17 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT BIT1
 
 /**
- * \brief Event handler
+ * \brief Handles WiFi and IP events for station mode.
  *
- * This function handles the wifi station events.
+ * This event handler function is responsible for handling events related to WiFi connectivity and IP, such as WiFi
+ * disconnection, reconnection attempts, and successful IP acquisition.
  *
- * \param arg unused, kept for consistency
- * \param event_base The event base
- * \param event_id The event id
- * \param event_data The event data
+ * \param[in] arg Unused parameter, kept for function signature compatibility.
+ * \param[in] event_base The base type of the event.
+ * \param[in] event_id The ID of the event.
+ * \param[in] event_data Pointer to the event-specific data.
+ *
+ * \return None.
  */
 static void eventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -126,11 +139,11 @@ static void eventHandler(void *arg, esp_event_base_t event_base, int32_t event_i
 }
 
 /**
- * \brief Wifi station initialization
+ * \brief Initializes the WiFi in Station mode.
  *
- * \return:
- *      - ESP_FAIL if connection to Wifi fails
- *      - ESP_OK if connection to Wifi succeeds
+ * This function sets up the WiFi in Station mode and attempts to connect to an AP with the specified SSID and password.
+ *
+ * \return ESP_OK - connection is successful, ESP_FAIL - connection failed.
  */
 int wifiInitSta(void)
 {
@@ -206,13 +219,16 @@ int wifiInitSta(void)
 }
 
 /**
- * \brief Wifi initialization
+ * \brief Initializes the WiFi interface.
  *
- * \param force_ap force the ESP32 to start in AP mode
+ * This function initializes the WiFi interface and configures it in either SoftAP or Station mode based on the specified
+ * parameters. It also initializes mDNS and registers the necessary services.
  *
- * \return:
- *    - 0 if successful
- *    - -1 if unsuccessful
+ * \param[in] force_ap Determines whether to force initialization in AP mode. If set to a non-zero value, AP mode is used
+ * regardless of other settings.
+ *
+ * \return ESP_OK - Initialization is successful and, in station mode, the connection to the AP is successful. ESP_FAIL -
+ * initialization or connection failed.
  */
 int wifiInit(uint8_t force_ap)
 {
