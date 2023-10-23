@@ -1,0 +1,40 @@
+\hypertarget{structscientisst__buffers__t}{}\doxysection{scientisst\+\_\+buffers\+\_\+t Struct Reference}
+\label{structscientisst__buffers__t}\index{scientisst\_buffers\_t@{scientisst\_buffers\_t}}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_aae29f58e2c12240afc7484c5221c5a0b}\label{structscientisst__buffers__t_aae29f58e2c12240afc7484c5221c5a0b}} 
+uint8\+\_\+t $\ast$ \mbox{\hyperlink{structscientisst__buffers__t_aae29f58e2c12240afc7484c5221c5a0b}{frame\+\_\+buffer}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\begin{DoxyCompactList}\small\item\em Data frames buffers. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_a0acedfb3981b67ec64937d1fff665d96}\label{structscientisst__buffers__t_a0acedfb3981b67ec64937d1fff665d96}} 
+uint16\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_a0acedfb3981b67ec64937d1fff665d96}{frame\+\_\+buffer\+\_\+length\+\_\+bytes}}
+\begin{DoxyCompactList}\small\item\em Size of each buffer. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_ad65d4703a2755ed427d909ff328878dd}\label{structscientisst__buffers__t_ad65d4703a2755ed427d909ff328878dd}} 
+uint16\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_ad65d4703a2755ed427d909ff328878dd}{frame\+\_\+buffer\+\_\+write\+\_\+idx}}
+\begin{DoxyCompactList}\small\item\em Write index for the current buffer. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_ac8cf899948a1de958975c036030f698f}\label{structscientisst__buffers__t_ac8cf899948a1de958975c036030f698f}} 
+volatile uint16\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_ac8cf899948a1de958975c036030f698f}{frame\+\_\+buffer\+\_\+ready\+\_\+to\+\_\+send}} \mbox{[}NUM\+\_\+\+BUFFERS\mbox{]}
+\begin{DoxyCompactList}\small\item\em Status array indicating ready-\/to-\/send buffers. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_a2528bdfa341933438a647299883a096c}\label{structscientisst__buffers__t_a2528bdfa341933438a647299883a096c}} 
+uint8\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_a2528bdfa341933438a647299883a096c}{tx\+\_\+curr\+\_\+buff}}
+\begin{DoxyCompactList}\small\item\em Index of the buffer currently being transmitted. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_a6f22c10758bc0575fb806994b5b1b6fb}\label{structscientisst__buffers__t_a6f22c10758bc0575fb806994b5b1b6fb}} 
+uint8\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_a6f22c10758bc0575fb806994b5b1b6fb}{acq\+\_\+curr\+\_\+buff}}
+\begin{DoxyCompactList}\small\item\em Index of the buffer for data acquisition. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_a159bbdb2448f5f3f3d546d4ae68196cb}\label{structscientisst__buffers__t_a159bbdb2448f5f3f3d546d4ae68196cb}} 
+uint8\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_a159bbdb2448f5f3f3d546d4ae68196cb}{packet\+\_\+size}}
+\begin{DoxyCompactList}\small\item\em Size of the frames (data packets). \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_a8fe12c4409465d747c8293b66421d0dc}\label{structscientisst__buffers__t_a8fe12c4409465d747c8293b66421d0dc}} 
+uint16\+\_\+t \mbox{\hyperlink{structscientisst__buffers__t_a8fe12c4409465d747c8293b66421d0dc}{send\+\_\+threshold}}
+\begin{DoxyCompactList}\small\item\em Threshold to trigger data transmission. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_ad0e8e4daf13a07a9a491ae6b168c3016}\label{structscientisst__buffers__t_ad0e8e4daf13a07a9a491ae6b168c3016}} 
+FILE $\ast$ \mbox{\hyperlink{structscientisst__buffers__t_ad0e8e4daf13a07a9a491ae6b168c3016}{sd\+\_\+card\+\_\+save\+\_\+file}}
+\begin{DoxyCompactList}\small\item\em File pointer for data saving on the SD card. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structscientisst__buffers__t_ac138675fda0ed076234c80fdc527bd01}\label{structscientisst__buffers__t_ac138675fda0ed076234c80fdc527bd01}} 
+c\+JSON $\ast$ \mbox{\hyperlink{structscientisst__buffers__t_ac138675fda0ed076234c80fdc527bd01}{json}}
+\begin{DoxyCompactList}\small\item\em JSON object for JSON API mode. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+sci\+\_\+scientisst.\+h\end{DoxyCompactItemize}
