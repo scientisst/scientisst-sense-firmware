@@ -38,7 +38,7 @@ Type names should be in `snake_case` and end with `_t`. For example `my_enum_t`.
 
 Macro names should be in `UPPER_SNAKE_CASE`. For example `MY_MACRO`.
 
-### Include Guards
+## Include Guards
 
 All header files should have include guards. The preferred option is:
 
@@ -54,6 +54,12 @@ over the traditional include guards:
 // Code
 #endif
 ```
+
+## Function and variable scope
+
+All functions and varibles that are only used inside a file should be declared as `static`. This makes it easier to see
+and understand the scope of the function or variable. Furthermore, ensures that there are no naming conflicts and that a
+function is not used anywhere it shouldn't.
 
 ## Documentation
 
