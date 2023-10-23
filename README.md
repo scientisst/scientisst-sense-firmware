@@ -99,6 +99,7 @@ scientisst-sense-firmware/
 │    ├── How_to_flash_scientisst/   : Instructions on how to flash a ScientISST device
 │    ├── frames.jpg/.svg            : Layout of the frames used to communicate between the device and the various APIs
 │    ├── SDCardBinaryFileFormat.md  : Description of the binary file format used to store the data in the SD Card
+│    ├── StyleGuide.md              : Style guide for the firmware
 ├── main/                           : Firmware source files: all ScientISST files follow the format "sci_XXXXX.c/.h"
 │    ├── certs/                     : Cryptographic files used for secure communications protocols
 │    ├── communication/             : Communication protocols
