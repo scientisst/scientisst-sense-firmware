@@ -284,6 +284,8 @@ educational purposes.
 
 ---
 
-This work was partially supported by Fundação para a Ciência e Tecnologia (FCT) under the projects’ UIDB/50008/2020 and
-PCIF/SSO/0163/2019 (SafeFire), and by the Active Assisted Living Programme Collaborative Project AAL-2020-7-237-CP (
-FORTO 2.0) through IT—Instituto de Telecomunicações, which is gratefully acknowledged.
+This work was partially supported by Fundação para a Ciência e Tecnologia (FCT) under the project UIDB/50008/2020 and
+under the Scientific Employment Stimulus - Individual Call - 2022.04901.CEECIND, by the Active Assisted Living Programme
+Collaborative Project AAL-2020-7-237-CP (FORTO 2.0), and by the Portuguese Recovery and Resilience Plan under the
+project C645008882 - 00000055 (Center for Responsible AI) through IT—Instituto de Telecomunicações, which is gratefully
+acknowledged.
