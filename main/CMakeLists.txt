@@ -1,5 +1,5 @@
 file(GLOB_RECURSE COMMUNICATION_SOURCES "communication/*.c")
-file(GLOB_RECURSE SENSORS_SOURCES "sensors/*.c")
+file(GLOB_RECURSE SENSORS_SOURCES "peripherals/*.c")
 file(GLOB_RECURSE DRIVERS_SOURCES "drivers/*.c")
 file(GLOB_RECURSE TASKS_SOURCES "tasks/*.c")
 file(GLOB_RECURSE BNO055_SOURCES "../deps/BNO055_driver/*.c")
@@ -17,7 +17,7 @@ else ()
 endif ()
 
 idf_component_register(SRCS ${srcs}
-        INCLUDE_DIRS "." ".." "communication/include" "communication/wifi_rest_server" "drivers/include" "sensors/include" "tasks/include" "../deps/BNO055_driver"
+        INCLUDE_DIRS "." ".." "communication/include" "communication/wifi_rest_server" "drivers/include" "peripherals/include" "tasks/include" "../deps/BNO055_driver"
         REQUIRES ${requires}
         EMBED_TXTFILES "${CMAKE_CURRENT_LIST_DIR}/certs/cacert.pem" "${CMAKE_CURRENT_LIST_DIR}/certs/prvtkey.pem"
 )

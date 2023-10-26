@@ -53,7 +53,7 @@ _Noreturn void IRAM_ATTR acquisitionSDCard(void)
 }
 
 /**
- * \brief Acquires data from active channels and sensors.
+ * \brief Acquires data from active channels and peripherals.
  *
  * This function is responsible for retrieving data from both internal and external ADCs and/or the IMU, based on the
  * current configuration. It either stores the data in a buffer or writes it directly to the SD card, depending on if the

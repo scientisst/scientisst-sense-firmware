@@ -11,3 +11,4 @@ performance.txt
 **/.cache
 /SDCardFileConverter/aaa.csv
 /SDCardFileConverter/acquisition_datapoints0.bin
+/sdkconfig.old
