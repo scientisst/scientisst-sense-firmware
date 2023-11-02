@@ -114,7 +114,7 @@ void gpioInit(void)
 #ifdef CONFIG_HARDWARE_VERSION_CARDIO
     gpioConfig(
         GPIO_MODE_OUTPUT, GPIO_PIN_INTR_DISABLE,
-        ((1ULL << STATE_LED_R_IO) | (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << SPI3_CS0_IO)),
+        ((1ULL << STATE_LED_R_IO) | (1ULL << BAT_LED_STATUS_IO) | (1ULL << O0_IO) | (1ULL << O1_IO) | (1ULL << MCP_CS)),
         0, 0);
 #else
     gpioConfig(GPIO_MODE_OUTPUT, (gpio_int_type_t)GPIO_PIN_INTR_DISABLE,
