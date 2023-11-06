@@ -152,8 +152,8 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
     if (scientisst_device_settings.num_extern_active_chs == 2)
     {
         uint64_t timestamp = (uint64_t)esp_timer_get_time() & 0x0000FFFFFFFFFFFF;
-        adc_external_res[0] = (uint32_t)(timestamp & 0x00000000FFFFFFFF);
-        adc_external_res[1] = (uint32_t)(timestamp >> 32);
+        adc_external_res[0] = (uint32_t)(timestamp & 0x0000000000FFFFFF);
+        adc_external_res[1] = (uint32_t)((timestamp >> 24) & 0x0000000000FFFFFF);
     }
 #endif
 }
