@@ -12,3 +12,9 @@ performance.txt
 /SDCardFileConverter/aaa.csv
 /SDCardFileConverter/acquisition_datapoints0.bin
 /sdkconfig.old
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/dependency_links.txt
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/not-zip-safe
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/PKG-INFO
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/requires.txt
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/SOURCES.txt
+/deps/esp-idf/tools/kconfig_new/esp-windows-curses/esp_windows_curses.egg-info/top_level.txt
