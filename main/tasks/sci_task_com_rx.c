@@ -114,11 +114,6 @@ static void wifiSerialRxHandler(void)
     uint8_t buff[CMD_MAX_BYTES];
     int read_bytes;
 
-    while (send_fd <= 0) // Wait until a connection is made
-    {
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-    }
-
     while (1)
     {
         if ((read_bytes = read(send_fd, buff, CMD_MAX_BYTES)) == 0)

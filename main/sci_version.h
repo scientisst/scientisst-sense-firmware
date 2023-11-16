@@ -17,4 +17,4 @@
 #define VERSION_CAN_INCREMENT_FLAG 0
 
 // The current firmware version, amalgamating semantic versioning with the commit hash for precise version tracking.
-#define FIRMWARE_VERSION "4.0.0-59112cc"
+#define FIRMWARE_VERSION "4.0.0-08d6bb5"
