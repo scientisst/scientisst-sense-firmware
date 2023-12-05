@@ -91,7 +91,7 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
-                vTaskDelay(1 / portTICK_PERIOD_MS);
+                vTaskDelay(50 / portTICK_PERIOD_MS);
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;
             scientisst_buffers.frame_buffer_write_idx = 0; // Reset write index
