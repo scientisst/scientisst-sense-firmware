@@ -30,16 +30,17 @@
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2}; ///< CRC table
 DRAM_ATTR uint16_t crc_seq = 0;                                                                 ///< Frame sequence number
 
-static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2]);
+static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2],
+                          uint8_t *timestamp_lsb, uint32_t *timestamp_msb);
 static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                  const uint8_t io_state);
 static void writeFrameScientisst_v2(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                    const uint8_t io_state);
+                                    const uint8_t io_state, const uint8_t timestamp_lsb, const uint32_t timestamp_msb);
 static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
 static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                            const uint8_t io_state);
 static inline void writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                              const uint8_t io_state);
+                              const uint8_t io_state, const uint8_t timestamp_lsb, const uint32_t timestamp_msb);
 
 /**
  * \brief Main routine for sensor data acquisition.
@@ -55,6 +56,8 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
     uint16_t adc_internal_res[DEFAULT_ADC_CHANNELS] = {0, 0, 0, 0, 0, 0};
     uint32_t adc_external_res[EXT_ADC_CHANNELS] = {0, 0};
     uint8_t io_state = 0;
+    uint8_t timestamp_lsb = 0;
+    uint32_t timestamp_msb = 0;
 
     uint8_t acq_next_buff;
 
@@ -63,12 +66,12 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
         if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
             continue;
 
-        getSensorData(&io_state, adc_internal_res, adc_external_res);
+        getSensorData(&io_state, adc_internal_res, adc_external_res, &timestamp_lsb, &timestamp_msb);
 
         // Store sensor data on current buffer with de adequate frame format
         writeFrame(scientisst_buffers.frame_buffer[scientisst_buffers.acq_curr_buff] +
                        scientisst_buffers.frame_buffer_write_idx,
-                   adc_internal_res, adc_external_res, io_state);
+                   adc_internal_res, adc_external_res, io_state, timestamp_lsb, timestamp_msb);
 
         scientisst_buffers.frame_buffer_write_idx += scientisst_buffers.packet_size; // Update write index
         ++crc_seq;                                                                   // Increment sequence number;
@@ -110,10 +113,14 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
  * \param[in/out] io_state Pointer to a variable where the IO state will be stored.
  * \param[in/out] adc_internal_res Pointer to an array where the internal ADC readings will be stored.
  * \param[in/out] adc_external_res Pointer to an array where the external ADC readings will be stored, if applicable.
+ * \param[in/out] timestamp_lsb Pointer to a variable where the 4 LSB of the timestamp will be stored.
+ * \param[in/out] timestamp_msb Pointer to a variable where the 32 MSB of the timestamp will be stored.
+
  *
  * \return None.
  */
-static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2])
+static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2],
+                                    uint8_t *timestamp_lsb, uint32_t *timestamp_msb)
 {
     // Get the IO states
     *io_state = (uint8_t)(gpio_get_level(I0_IO) << 7);
@@ -151,8 +158,13 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
         ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
-    if (scientisst_device_settings.num_extern_active_chs == 2 &&
-        scientisst_device_settings.api_config.api_mode != API_MODE_SCIENTISST_V2)
+    if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST_V2)
+    {
+        uint64_t temp_timestamp = (uint64_t)esp_timer_get_time();
+        *timestamp_msb = (uint32_t)((temp_timestamp & 0x0000000FFFFFFFF0) >> 4);
+        *timestamp_lsb = (uint8_t)(temp_timestamp & 0x000000000000000F);
+    }
+    else if (scientisst_device_settings.num_extern_active_chs == 2)
     {
         uint64_t timestamp = (uint64_t)esp_timer_get_time() & 0x0000FFFFFFFFFFFF;
         adc_external_res[0] = (uint32_t)(timestamp & 0x0000000000FFFFFF);
@@ -171,11 +183,13 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
  * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
  * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
  * \param[in] io_state The current state of the IOs.
+ * \param[in] timestamp_lsb The 4 LSB of the timestamp.
+ * \param[in] timestamp_msb The 32 MSB of the timestamp.
  *
  * \return None.
  */
 static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                                        const uint8_t io_state)
+                                        const uint8_t io_state, const uint8_t timestamp_lsb, const uint32_t timestamp_msb)
 {
     switch (scientisst_device_settings.api_config.api_mode)
     {
@@ -183,7 +197,7 @@ static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_inte
         writeFrameScientisst(frame, adc_internal_res, adc_external_res, io_state);
         break;
     case API_MODE_SCIENTISST_V2:
-        writeFrameScientisst_v2(frame, adc_internal_res, adc_external_res, io_state);
+        writeFrameScientisst_v2(frame, adc_internal_res, adc_external_res, io_state, timestamp_lsb, timestamp_msb);
         break;
     case API_MODE_JSON:
         writeFrameJSON(frame, adc_internal_res, adc_external_res, io_state);
@@ -206,18 +220,18 @@ static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_inte
  * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
  * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
  * \param[in] io_state The current state of the IOs.
+ * \param[in] timestamp_lsb The 4 LSB of the timestamp.
+ * \param[in] timestamp_msb The 32 MSB of the timestamp.
  *
  * \return None.
  */
 static void IRAM_ATTR writeFrameScientisst_v2(uint8_t *frame, const uint16_t *adc_internal_res,
-                                              const uint32_t *adc_external_res, const uint8_t io_state)
+                                              const uint32_t *adc_external_res, const uint8_t io_state,
+                                              const uint8_t timestamp_lsb, const uint32_t timestamp_msb)
 {
     uint8_t crc = 0;
     uint8_t frame_next_wr = 0;
     uint8_t wr_mid_byte_flag = 0;
-    uint64_t temp_timestamp = (uint64_t)esp_timer_get_time();
-    uint32_t timestamp_msb = (uint32_t)((temp_timestamp & 0x000000FFFFFFFF00) >> 4);
-    uint8_t timestamp_lsb = (uint8_t)(temp_timestamp & 0x000000000000000F);
 
     for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
     {
