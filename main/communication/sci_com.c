@@ -13,6 +13,7 @@
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
+#include "sci_macros.h"
 #include "sci_task_aquisition.h"
 #include "sci_timer.h"
 
@@ -98,7 +99,7 @@ void processPacket(uint8_t *buff)
             }
             else if (buff[0] & 0b00110000) // Change API mode
             {
-                changeAPI((buff[0] & 0b00110000) >> 4);
+                changeAPI((buff[0] & 0b11110000) >> 4);
             }
         }
         else if (!cmd) // Set battery threshold
@@ -168,23 +169,32 @@ static void triggerDAC(const uint8_t *buff)
  */
 static void changeAPI(uint8_t mode)
 {
-    if (mode == API_MODE_BITALINO)
+    switch (mode)
     {
+    case API_MODE_BITALINO:
         scientisst_device_settings.api_config.api_mode = API_MODE_BITALINO;
         scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskBitalino;
-    }
-    else if (mode == API_MODE_SCIENTISST)
-    {
+        DEBUG_PRINT_I("changeAPI", "API changed to BITalino");
+        break;
+    case API_MODE_SCIENTISST:
         scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST;
         scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
-    }
-    else if (mode == API_MODE_JSON)
-    {
+        DEBUG_PRINT_I("changeAPI", "API changed to ScientISST");
+        break;
+    case API_MODE_JSON:
         scientisst_device_settings.api_config.api_mode = API_MODE_JSON;
         scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
+        DEBUG_PRINT_I("changeAPI", "API changed to JSON");
+        break;
+    case API_MODE_SCIENTISST_V2:
+        scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST_V2;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
+        DEBUG_PRINT_I("changeAPI", "API changed to ScientISST V2");
+        break;
+    default:
+        DEBUG_PRINT_E("changeAPI", "Invalid API mode");
+        return;
     }
-
-    DEBUG_PRINT_I("changeAPI", "API changed to %d", mode);
 }
 
 /**
@@ -197,22 +207,37 @@ static void changeAPI(uint8_t mode)
 static uint8_t getPacketSize(void)
 {
     uint8_t _packet_size = 0;
+    // Table that has the packet size in function of the number of channels
+    const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
+    char *json_str = cJSON_Print(scientisst_buffers.json);
 
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO)
+    switch (scientisst_device_settings.api_config.api_mode)
     {
-        // Table that has the packet size in function of the number of channels
-        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
-
+    case API_MODE_BITALINO:
         _packet_size = packet_size_num_chs[scientisst_device_settings.num_intern_active_chs];
-    }
-    else if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
-    {
-        // Add 24bit channel's contribution to packet size
+        break;
+    case API_MODE_JSON:
+        _packet_size = (uint8_t)strlen(json_str) + 1;
+        free((void *)json_str);
+        break;
+    case API_MODE_SCIENTISST_V2:
         _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
-
-        // Add 12bit channel's contribution to packet size
-        if (!(scientisst_device_settings.num_intern_active_chs % 2))
-        { // If it's an even number
+        if (!(scientisst_device_settings.num_intern_active_chs % 2)) // If it's an even number
+        {
+            _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
+        }
+        else
+        {
+            //-4 because 4 bits can go in the I/0 byte
+            _packet_size += (((scientisst_device_settings.num_intern_active_chs * 12) - 4) / 8);
+        }
+        _packet_size += 6; // for the I/Os and timestamp+crc bytes
+        break;
+    case API_MODE_SCIENTISST:
+    default:
+        _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
+        if (!(scientisst_device_settings.num_intern_active_chs % 2)) // If it's an even number
+        {
             _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
         }
         else
@@ -221,13 +246,9 @@ static uint8_t getPacketSize(void)
             _packet_size += (((scientisst_device_settings.num_intern_active_chs * 12) - 4) / 8);
         }
         _packet_size += 3; // for the I/Os and seq+crc bytes
+        break;
     }
-    else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
-    {
-        char *json_str = cJSON_Print(scientisst_buffers.json);
-        _packet_size = (uint8_t)strlen(json_str) + 1;
-        free((void *)json_str);
-    }
+
     DEBUG_PRINT_I("getPacketSize", "Packet size is %d bytes", _packet_size);
 
     return _packet_size;

@@ -24,7 +24,7 @@
 #define CALC_BYTE_CRC(_crc, _byte, _crc_table)                                                                              \
     ({                                                                                                                      \
         (_crc) = _crc_table[(_crc)] ^ ((_byte) >> 4);                                                                       \
-        (_crc) = _crc_table[(_crc)] ^ ((_byte)&0x0F);                                                                       \
+        (_crc) = _crc_table[(_crc)] ^ ((_byte) & 0x0F);                                                                     \
     })
 
 DRAM_ATTR const uint8_t crc_table[16] = {0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2}; ///< CRC table
@@ -33,6 +33,8 @@ DRAM_ATTR uint16_t crc_seq = 0;                                                 
 static void getSensorData(uint8_t *io_state, uint16_t *adc_internal_res, uint32_t adc_external_res[2]);
 static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                  const uint8_t io_state);
+static void writeFrameScientisst_v2(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
+                                    const uint8_t io_state);
 static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
 static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                            const uint8_t io_state);
@@ -149,7 +151,8 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
         ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
-    if (scientisst_device_settings.num_extern_active_chs == 2)
+    if (scientisst_device_settings.num_extern_active_chs == 2 &&
+        scientisst_device_settings.api_config.api_mode != API_MODE_SCIENTISST_V2)
     {
         uint64_t timestamp = (uint64_t)esp_timer_get_time() & 0x0000FFFFFFFFFFFF;
         adc_external_res[0] = (uint32_t)(timestamp & 0x0000000000FFFFFF);
@@ -174,18 +177,95 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
 static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                         const uint8_t io_state)
 {
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
+    switch (scientisst_device_settings.api_config.api_mode)
     {
+    case API_MODE_SCIENTISST:
         writeFrameScientisst(frame, adc_internal_res, adc_external_res, io_state);
-    }
-    else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
-    {
+        break;
+    case API_MODE_SCIENTISST_V2:
+        writeFrameScientisst_v2(frame, adc_internal_res, adc_external_res, io_state);
+        break;
+    case API_MODE_JSON:
         writeFrameJSON(frame, adc_internal_res, adc_external_res, io_state);
-    }
-    else
-    {
+        break;
+    case API_MODE_BITALINO:
+    default:
         writeFrameBitalino(frame, adc_internal_res, io_state);
+        break;
     }
+}
+
+/**
+ * \brief Writes sensor data into a frame in the ScientISST_V2 format.
+ *
+ * This function formats and stores sensor data, including ADC readings and IO states, into a frame with the ScientISST_V2
+ * API format. ScientISST_V2 always includes a 36bit timestamp in microseconds (since boot). It also calculates and appends
+ * the necessary CRC values for data integrity verification.
+ *
+ * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
+ * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
+ * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
+ * \param[in] io_state The current state of the IOs.
+ *
+ * \return None.
+ */
+static void IRAM_ATTR writeFrameScientisst_v2(uint8_t *frame, const uint16_t *adc_internal_res,
+                                              const uint32_t *adc_external_res, const uint8_t io_state)
+{
+    uint8_t crc = 0;
+    uint8_t frame_next_wr = 0;
+    uint8_t wr_mid_byte_flag = 0;
+    uint64_t temp_timestamp = (uint64_t)esp_timer_get_time();
+    uint32_t timestamp_msb = (uint32_t)((temp_timestamp & 0x000000FFFFFFFF00) >> 4);
+    uint8_t timestamp_lsb = (uint8_t)(temp_timestamp & 0x000000000000000F);
+
+    for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
+    {
+        *(uint32_t *)(frame + frame_next_wr) |= adc_external_res[i];
+        frame_next_wr += 3;
+    }
+
+    // Store values of internal channels into frame
+    for (int i = 0; i < scientisst_device_settings.num_intern_active_chs; ++i)
+    {
+        if (!wr_mid_byte_flag)
+        {
+            *(uint16_t *)(frame + frame_next_wr) |= adc_internal_res[i];
+            ++frame_next_wr;
+            wr_mid_byte_flag = 1;
+        }
+        else
+        {
+            *(uint16_t *)(frame + frame_next_wr) |= adc_internal_res[i] << 4;
+            frame_next_wr += 2;
+            wr_mid_byte_flag = 0;
+        }
+    }
+
+    // Store IO states into frame
+    frame[scientisst_buffers.packet_size - 3] = io_state;
+
+    // Calculate CRC & store timestamp ---------------------------------------------------------------------------
+    *(uint8_t *)(frame + scientisst_buffers.packet_size - 5) = (uint8_t)((timestamp_lsb & 0x0F) << 4);
+    *(uint32_t *)(frame + scientisst_buffers.packet_size - 4) = timestamp_msb;
+
+    // calculate CRC (except last byte (seq+CRC) )
+    for (int i = 0; i < scientisst_buffers.packet_size - 5; ++i)
+    {
+        // calculate CRC nibble by nibble
+        CALC_BYTE_CRC(crc, frame[i], crc_table);
+    }
+
+    // calculate CRC for timestamp
+    crc = crc_table[crc] ^ (frame[scientisst_buffers.packet_size - 5] >> 4);
+    CALC_BYTE_CRC(crc, frame[scientisst_buffers.packet_size - 4], crc_table);
+    CALC_BYTE_CRC(crc, frame[scientisst_buffers.packet_size - 3], crc_table);
+    CALC_BYTE_CRC(crc, frame[scientisst_buffers.packet_size - 2], crc_table);
+    CALC_BYTE_CRC(crc, frame[scientisst_buffers.packet_size - 1], crc_table);
+
+    crc = crc_table[crc];
+
+    frame[scientisst_buffers.packet_size - 5] |= crc;
 }
 
 /**
