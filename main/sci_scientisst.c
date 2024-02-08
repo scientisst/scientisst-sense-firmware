@@ -92,10 +92,10 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
 #endif
 #endif
             .is_battery_threshold_inflated = 0,
-            .host_ip = "192.168.1.100",
-            .port_number = "8800",
-            .ssid = "riot",
-            .password = "",
+            .host_ip = CONFIG_WIFI_HOST_IP,
+            .port_number = CONFIG_PORT,
+            .ssid = CONFIG_WIFI_SSID,
+            .password = CONFIG_WIFI_PASSWORD,
         },
 }; ///< All device related variables
 
