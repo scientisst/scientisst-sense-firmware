@@ -16,6 +16,7 @@
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
 #include "esp_gap_bt_api.h"
+#include "esp_gap_ble_api.h"
 #include "esp_spp_api.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -26,12 +27,12 @@
 #define SEND_AFTER_C0NG_WRITE_FAILED 3
 ///< Marks send status to wait for congestion to clear and then send the rest of the data of a failed write
 #define SEND_AFTER_C0NG 2            ///< Marks send status to wait for congestion to clear and then send the data
-#define SPP_SERVER_NAME "SPP_SERVER" ///< Name of the bluetooth server
 
 DRAM_ATTR SemaphoreHandle_t bt_send_semaphore;
 ///< Semaphore to synchronize the send task with the event handler, wait for the write to complete and then send the next
 ///< buffer or wait for congestion to clear.
 DRAM_ATTR volatile uint16_t failed_write_bytes_sent_count = 0; ///< Number of bytes sent in a failed write
+DRAM_ATTR char sci_spp_server_name[42] = "SPP_SERVER_";
 
 /**
  * \brief Send data via Bluetooth.
@@ -107,7 +108,8 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_INIT_EVT");
         esp_bt_dev_set_device_name(scientisst_device_settings.device_name);
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
-        esp_spp_start_srv(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
+        strncat(sci_spp_server_name, scientisst_device_settings.device_name, strlen(sci_spp_server_name) - 1);
+        esp_spp_start_srv(ESP_SPP_SEC_NONE, ESP_SPP_ROLE_SLAVE, 0, sci_spp_server_name);
         ESP_LOGI("Init Bluetooth", "Device online with the name: %s", scientisst_device_settings.device_name);
         break;
     case ESP_SPP_SRV_OPEN_EVT: // Server connection open (first client connection)
@@ -239,26 +241,26 @@ static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param
     case ESP_BT_GAP_AUTH_CMPL_EVT: {
         if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS)
         {
-            DEBUG_PRINT_I("espSppCb", "authentication success: %s", param->auth_cmpl.device_name);
+            DEBUG_PRINT_I("espBtGapCb", "authentication success: %s", param->auth_cmpl.device_name);
             esp_log_buffer_hex("SPP_ACCEPTOR", param->auth_cmpl.bda, ESP_BD_ADDR_LEN);
         }
         else
         {
-            DEBUG_PRINT_E("espSppCb", "authentication failed, status:%d", param->auth_cmpl.stat);
+            DEBUG_PRINT_E("espBtGapCb", "authentication failed, status:%d", param->auth_cmpl.stat);
         }
         break;
     }
     case ESP_BT_GAP_PIN_REQ_EVT: {
-        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
+        DEBUG_PRINT_I("espBtGapCb", "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
         if (param->pin_req.min_16_digit)
         {
-            DEBUG_PRINT_I("espSppCb", "Input pin code: 0000 0000 0000 0000");
+            DEBUG_PRINT_I("espBtGapCb", "Input pin code: 0000 0000 0000 0000");
             esp_bt_pin_code_t pin_code = {0};
             esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
         }
         else
         {
-            DEBUG_PRINT_I("espSppCb", "Input pin code: 1234");
+            DEBUG_PRINT_I("espBtGapCb", "Input pin code: 1234");
             esp_bt_pin_code_t pin_code;
             pin_code[0] = '1';
             pin_code[1] = '2';
@@ -269,21 +271,19 @@ static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param
         break;
     }
 
-#if (CONFIG_BT_SSP_ENABLED == true)
     case ESP_BT_GAP_CFM_REQ_EVT:
-        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
+        DEBUG_PRINT_I("espBtGapCb", "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
         esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
         break;
     case ESP_BT_GAP_KEY_NOTIF_EVT:
-        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%d", param->key_notif.passkey);
+        DEBUG_PRINT_I("espBtGapCb", "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%d", param->key_notif.passkey);
         break;
     case ESP_BT_GAP_KEY_REQ_EVT:
-        DEBUG_PRINT_I("espSppCb", "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
+        DEBUG_PRINT_I("espBtGapCb", "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
         break;
-#endif
 
     default: {
-        DEBUG_PRINT_I("espSppCb", "event: %d", event);
+        DEBUG_PRINT_I("espBtGapCb", "event: %d", event);
         break;
     }
     }
@@ -302,6 +302,9 @@ static void espBtGapCb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param
 void initBt(void)
 {
     esp_err_t ret;
+    esp_bt_sp_param_t param_type_bt = ESP_BT_SP_IOCAP_MODE;
+    esp_ble_sm_param_t param_type_ble = ESP_BLE_SM_IOCAP_MODE;
+    esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_NONE;
 
     bt_send_semaphore = xSemaphoreCreateBinary();
     CHECK_NOT_NULL(bt_send_semaphore);
@@ -345,26 +348,32 @@ void initBt(void)
         return;
     }
 
+    if ((ret = esp_bt_gap_set_security_param(param_type_bt, &iocap, sizeof(uint8_t))) != ESP_OK)
+    {
+        DEBUG_PRINT_E("init", "%s change security params failed: %s", __func__, esp_err_to_name(ret));
+        return;
+    }
+
     if ((ret = esp_spp_init(ESP_SPP_MODE_CB)) != ESP_OK)
     {
         DEBUG_PRINT_E("init", "%s spp init failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
-#if (CONFIG_BT_SSP_ENABLED == true)
-    /* Set default parameters for Secure Simple Pairing */
-    esp_bt_sp_param_t param_type = ESP_BT_SP_IOCAP_MODE;
-    esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_IO;
-    esp_bt_gap_set_security_param(param_type, &iocap, sizeof(uint8_t));
-#endif
+    // Set device as having no I/O -> change SPP paring to just works
+    if ((ret = esp_bt_gap_set_security_param(param_type_bt, &iocap, sizeof(uint8_t))) != ESP_OK)
+    {
+        DEBUG_PRINT_E("init", "%s change security params failed: %s", __func__, esp_err_to_name(ret));
+        return;
+    }
 
     /*
      * Set default parameters for Legacy Pairing
      * Use variable pin, input pin code when pairing
      */
-    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
-    esp_bt_pin_code_t pin_code;
-    esp_bt_gap_set_pin(pin_type, 0, pin_code);
+    // esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
+    // esp_bt_pin_code_t pin_code;
+    // esp_bt_gap_set_pin(pin_type, 0, pin_code);
 
     DEBUG_PRINT_I("initBt", "Init Bluetooth completed");
 }
