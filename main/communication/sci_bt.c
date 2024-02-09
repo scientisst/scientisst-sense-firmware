@@ -16,7 +16,6 @@
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
 #include "esp_gap_bt_api.h"
-#include "esp_gap_ble_api.h"
 #include "esp_spp_api.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -303,7 +302,6 @@ void initBt(void)
 {
     esp_err_t ret;
     esp_bt_sp_param_t param_type_bt = ESP_BT_SP_IOCAP_MODE;
-    esp_ble_sm_param_t param_type_ble = ESP_BLE_SM_IOCAP_MODE;
     esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_NONE;
 
     bt_send_semaphore = xSemaphoreCreateBinary();
@@ -348,12 +346,6 @@ void initBt(void)
         return;
     }
 
-    if ((ret = esp_bt_gap_set_security_param(param_type_bt, &iocap, sizeof(uint8_t))) != ESP_OK)
-    {
-        DEBUG_PRINT_E("init", "%s change security params failed: %s", __func__, esp_err_to_name(ret));
-        return;
-    }
-
     if ((ret = esp_spp_init(ESP_SPP_MODE_CB)) != ESP_OK)
     {
         DEBUG_PRINT_E("init", "%s spp init failed: %s", __func__, esp_err_to_name(ret));
@@ -366,14 +358,6 @@ void initBt(void)
         DEBUG_PRINT_E("init", "%s change security params failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
-
-    /*
-     * Set default parameters for Legacy Pairing
-     * Use variable pin, input pin code when pairing
-     */
-    // esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
-    // esp_bt_pin_code_t pin_code;
-    // esp_bt_gap_set_pin(pin_type, 0, pin_code);
 
     DEBUG_PRINT_I("initBt", "Init Bluetooth completed");
 }

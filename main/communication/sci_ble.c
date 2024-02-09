@@ -17,6 +17,7 @@
 #include "esp_gap_ble_api.h"
 #include "esp_gatt_common_api.h"
 #include "esp_gatts_api.h"
+#include "esp_spp_api.h"
 #include "esp_system.h"
 
 #include "sci_com.h"
@@ -575,6 +576,8 @@ esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, const uint8_t *buff)
 void initBle(void)
 {
     esp_err_t ret;
+    esp_ble_sm_param_t param_type_ble = ESP_BLE_SM_IOCAP_MODE;
+    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
@@ -628,5 +631,11 @@ void initBle(void)
     if (local_mtu_ret)
     {
         DEBUG_PRINT_E("GATTS", "set local  MTU failed, error code = %x", local_mtu_ret);
+    }
+
+    if ((ret = esp_ble_gap_set_security_param(param_type_ble, &iocap, sizeof(uint8_t))) != ESP_OK)
+    {
+        DEBUG_PRINT_E("init", "%s change security params failed: %s", __func__, esp_err_to_name(ret));
+        return;
     }
 }
