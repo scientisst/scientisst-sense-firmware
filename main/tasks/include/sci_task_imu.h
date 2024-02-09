@@ -14,9 +14,14 @@
 
 typedef enum
 {
+    NO_IMU_DATA,
     EULER_ANGLES = 1,
     LINEAR_ACCELERATION,
     ANGULAR_VELOCITY,
+    TEMPERATURE,
+    GRAVITY_VECTOR,
+    MAGNETIC_FIELD,
+    ACCELERATION,
 } bno055_data_types_t;
 
 esp_err_t initIMU(void);

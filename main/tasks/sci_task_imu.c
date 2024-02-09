@@ -27,13 +27,45 @@ DRAM_ATTR static struct bno055_t BNO_handle = {.dev_addr = BNO055_I2C_ADDR1,
                                                .bus_read = &bno055I2CBusRead,
                                                .delay_msec = &bno055DelayMSec}; ///< BNO055 sensor handle
 DRAM_ATTR static uint16_t imuValues[6] = {1, 1, 1, 1, 1, 1};                    ///< Buffer to store IMU values
-#ifdef CONFIG_EULER_ANGLES_AND_LINEAR_ACCELERATION
 DRAM_ATTR static bno055_data_types_t bno055_data_to_acquire[2] = {
-    EULER_ANGLES, LINEAR_ACCELERATION}; ///< Data types to acquire from the sensor
+// IMU data AI1-AI3
+#if defined(CONFIG_IMU_H1_EULER_ANGLES)
+    EULER_ANGLES,
+#elif defined(CONFIG_IMU_H1_ANGULAR_VELOCITY)
+    ANGULAR_VELOCITY,
+#elif defined(CONFIG_IMU_H1_LINEAR_ACCELERATION)
+    LINEAR_ACCELERATION,
+#elif defined(CONFIG_IMU_H1_GRAVITY_VECTOR)
+    GRAVITY_VECTOR,
+#elif defined(CONFIG_IMU_H1_MAGNETIC_FIELD)
+    MAGNETIC_FIELD,
+#elif defined(CONFIG_IMU_H1_ACCELERATION)
+    ACCELERATION,
+#elif defined(CONFIG_IMU_H1_TEMPERATURE)
+    TEMPERATURE,
+#else
+    NO_IMU_DATA,
 #endif
-#ifdef CONFIG_ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
-DRAM_ATTR static bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCITY, LINEAR_ACCELERATION};
+
+// IMU data AI4-AI6
+#if defined(CONFIG_IMU_H2_EULER_ANGLES)
+    EULER_ANGLES,
+#elif defined(CONFIG_IMU_H2_ANGULAR_VELOCITY)
+    ANGULAR_VELOCITY,
+#elif defined(CONFIG_IMU_H2_LINEAR_ACCELERATION)
+    LINEAR_ACCELERATION,
+#elif defined(CONFIG_IMU_H2_GRAVITY_VECTOR)
+    GRAVITY_VECTOR,
+#elif defined(CONFIG_IMU_H2_MAGNETIC_FIELD)
+    MAGNETIC_FIELD,
+#elif defined(CONFIG_IMU_H2_ACCELERATION)
+    ACCELERATION,
+#elif defined(CONFIG_IMU_H2_TEMPERATURE)
+    TEMPERATURE,
+#else
+    NO_IMU_DATA,
 #endif
+}; ///< Data types to acquire from the sensor
 
 /**
  * \brief Main task for handling BNO055 sensor operations.
@@ -46,10 +78,15 @@ DRAM_ATTR static bno055_data_types_t bno055_data_to_acquire[2] = {ANGULAR_VELOCI
  */
 _Noreturn void IRAM_ATTR taskBno055(void)
 {
+    esp_err_t ret = BNO055_SUCCESS;
+
     struct bno055_euler_t euler_hrp;
     struct bno055_gyro_t gyro_xyz;
     struct bno055_linear_accel_t linear_acce_xyz;
-    esp_err_t ret = BNO055_SUCCESS;
+    struct bno055_gravity_t gravity_xyz;
+    struct bno055_mag_t mag_xyz;
+    struct bno055_accel_t accel_xyz;
+    int8_t temperature = 0;
 
     while (1)
     {
@@ -79,8 +116,32 @@ _Noreturn void IRAM_ATTR taskBno055(void)
                 imuValues[i * 3 + 1] = (gyro_xyz.y >> 4) & 0x0FFF;
                 imuValues[i * 3 + 2] = (gyro_xyz.z >> 4) & 0x0FFF;
                 break;
+            case GRAVITY_VECTOR: // In m/s^2, 12 bit resolution
+                ret += bno055_read_gravity_xyz(&gravity_xyz);
+                imuValues[i * 3] = (gravity_xyz.x >> 4) & 0x0FFF;
+                imuValues[i * 3 + 1] = (gravity_xyz.y >> 4) & 0x0FFF;
+                imuValues[i * 3 + 2] = (gravity_xyz.z >> 4) & 0x0FFF;
+                break;
+            case MAGNETIC_FIELD: // 12 bit resolution
+                ret += bno055_read_mag_xyz(&mag_xyz);
+                imuValues[i * 3] = (mag_xyz.x >> 4) & 0x0FFF;
+                imuValues[i * 3 + 1] = (mag_xyz.y >> 4) & 0x0FFF;
+                imuValues[i * 3 + 2] = (mag_xyz.z >> 4) & 0x0FFF;
+                break;
+            case ACCELERATION: // In m/s^2, 12 bit resolution
+                ret += bno055_read_accel_xyz(&accel_xyz);
+                imuValues[i * 3] = (accel_xyz.x >> 4) & 0x0FFF;
+                imuValues[i * 3 + 1] = (accel_xyz.y >> 4) & 0x0FFF;
+                imuValues[i * 3 + 2] = (accel_xyz.z >> 4) & 0x0FFF;
+                break;
+            case TEMPERATURE: // In degrees Celsius, 12 bit resolution
+                ret += bno055_read_temp_data(&temperature);
+                imuValues[i * 3] = (temperature >> 4) & 0x0FFF;
+                imuValues[i * 3 + 1] = 0;
+                imuValues[i * 3 + 2] = 0;
+                break;
+            case NO_IMU_DATA:
             default:
-                DEBUG_PRINT_E("IMU_TASK", "Invalid acquisition data type requested");
                 break;
             }
         }

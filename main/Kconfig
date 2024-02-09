@@ -1,24 +1,23 @@
 
 menu "SCIENTISST Configuration"
 
-# General Configuration
 choice
     prompt "Hardware version"
     default HARDWARE_VERSION_CORE
 
     config HARDWARE_VERSION_CORE
-        bool "Core version (default)"
+        bool "Core (default)"
         
     config HARDWARE_VERSION_NANO
-        bool "Nano version"
+        bool "Nano"
 
     config HARDWARE_VERSION_CARDIO
-        bool "Cardio version"
+        bool "Cardio"
 endchoice
 
 menu "Communication Configuration"
     choice
-        prompt "Default communication mode"
+        prompt "Communication mode"
         default DEFAULT_COM_MODE_BT
 
         config DEFAULT_COM_MODE_BT
@@ -110,26 +109,103 @@ menu "IMU Configuration"
             Enable or disable the IMU (Inertial Measurement Unit).
             If unsure, select 'n' to disable it.
 
-# IMU Data Acquisition Mode
-    choice IMU_DATA_ACQUISITION
-        prompt "IMU Data Acquisition Mode"
-        default EULER_ANGLES_AND_LINEAR_ACCELERATION
+# IMU Data Acquisition Modes
+    choice 
+        prompt "IMU Data channels AI1-AI3"
+        depends on IMU
+        default IMU_H1_NO_DATA
 
-        config EULER_ANGLES_AND_LINEAR_ACCELERATION
-            bool "Euler angles and linear acceleration"
+        config IMU_H1_NO_DATA
+            bool "No data"
             help
-                Select this mode to acquire Euler angles and linear acceleration data from the IMU.
+                No data on AI1-AI3
 
-        config ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
+        config IMU_H1_EULER_ANGLES
+            bool "Euler angles"
+            help
+                Select this mode to acquire Euler angles data from the IMU on AI1-AI3.
+
+        config IMU_H1_LINEAR_ACCELERATION
+            bool "Linear acceleration"
+            help
+                Select this mode to acquire linear acceleration data from the IMU on AI1-AI3.
+
+        config IMU_H1_ANGULAR_VELOCITY
             bool "Angular velocity and linear acceleration"
             help
-                Select this mode to acquire angular velocity and linear acceleration data from the IMU.
+                Select this mode to acquire angular velocity data from the IMU on AI1-AI3.
 
+        config IMU_H1_MAGNETIC_FIELD
+            bool "Magnetic field"
+            help
+                Select this mode to acquire magnetic field data from the IMU on AI1-AI3.
+
+        config IMU_H1_GRAVITY
+            bool "Gravity"
+            help
+                Select this mode to acquire gravity data from the IMU on AI1-AI3.
+
+        config IMU_H1_ACCELERATION
+            bool "Acceleration"
+            help
+                Select this mode to acquire acceleration data from the IMU on AI1-AI3.
+    
+        config IMU_H1_TEMPERATURE
+            bool "Temperature"
+            help
+                Select this mode to acquire temperature data from the IMU on AI1-AI3.
+    endchoice
+
+    choice 
+        prompt "IMU Data channels AI4-AI6"
+        depends on IMU
+        default IMU_H2_NO_DATA 
+
+        config IMU_H2_NO_DATA
+            bool "No data"
+            help
+                No data on AI4-AI6 
+
+        config IMU_H_EULER_ANGLES
+            bool "Euler angles"
+            help
+                Select this mode to acquire Euler angles data from the IMU on AI4-AI6.
+
+        config IMU_H2_LINEAR_ACCELERATION
+            bool "Linear acceleration"
+            help
+                Select this mode to acquire linear acceleration data from the IMU on AI4-AI6.
+
+        config IMU_H2_ANGULAR_VELOCITY
+            bool "Angular velocity and linear acceleration"
+            help
+                Select this mode to acquire angular velocity data from the IMU on AI4-AI6.
+
+        config IMU_H2_MAGNETIC_FIELD
+            bool "Magnetic field"
+            help
+                Select this mode to acquire magnetic field data from the IMU on AI1-AI3.
+
+        config IMU_H2_GRAVITY
+            bool "Gravity"
+            help
+                Select this mode to acquire gravity data from the IMU on AI1-AI3.
+
+        config IMU_H2_ACCELERATION
+            bool "Acceleration"
+            help
+                Select this mode to acquire acceleration data from the IMU on AI1-AI3.
+
+        config IMU_H2_TEMPERATURE
+            bool "Temperature"
+            help
+                Select this mode to acquire temperature data from the IMU on AI1-AI3.
     endchoice
 
 # IMU Calibration Behavior
-    choice IMU_CALIBRATION
+    choice
         prompt "IMU Calibration Behavior"
+        depends on IMU
         default ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
 
         config LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
@@ -141,7 +217,6 @@ menu "IMU Configuration"
             bool "Allow IMU acquisition while calibrating"
             help
                 Select this option to allow IMU data acquisition even when the device is in the process of calibrating.
-
     endchoice
 endmenu  # IMU Configuration
 
