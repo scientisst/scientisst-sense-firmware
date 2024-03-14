@@ -96,7 +96,11 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     esp_err_t res = ESP_OK;
     uint8_t channel_mask = 0;
+#ifdef CONFIG_NUMBER_CHANNELS_EXT_ADC
     uint32_t adc_ext_values[CONFIG_NUMBER_CHANNELS_EXT_ADC];
+#else
+    uint32_t adc_ext_values[2];
+#endif
 
     if (scientisst_device_settings.active_ext_chs[0] == 6 || scientisst_device_settings.active_ext_chs[1] == 6)
         channel_mask |= 0b01;
@@ -105,7 +109,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     res = getAdcExtValuesRaw(channel_mask, adc_ext_values);
     ESP_ERROR_CHECK_WITHOUT_ABORT(res);
-    for (uint8_t i = scientisst_device_settings.num_extern_active_chs - 1; i >= 0; --i)
+    for (int i = scientisst_device_settings.num_extern_active_chs - 1; i >= 0; --i)
     {
         *(uint32_t *)buffer_ptr = adc_ext_values[i];
         buffer_ptr += 3;
