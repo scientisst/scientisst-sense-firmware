@@ -105,7 +105,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     res = getAdcExtValuesRaw(channel_mask, adc_ext_values);
     ESP_ERROR_CHECK_WITHOUT_ABORT(res);
-    for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
+    for (uint8_t i = scientisst_device_settings.num_extern_active_chs - 1; i >= 0; --i)
     {
         *(uint32_t *)buffer_ptr = adc_ext_values[i];
         buffer_ptr += 3;
