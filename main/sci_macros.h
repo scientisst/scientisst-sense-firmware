@@ -124,6 +124,5 @@ typedef enum
 {
     API_MODE_BITALINO = 1,
     API_MODE_SCIENTISST = 2,
-    API_MODE_JSON = 3,
     API_MODE_SCIENTISST_V2 = 14,
 } api_mode_t;

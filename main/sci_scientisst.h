@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "cJSON.h"
 #include "esp_adc_cal.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -19,7 +18,7 @@
 
 typedef struct
 {
-    uint8_t api_mode;                                 ///< Mode of the API being used (e.g., BITalino, Scientisst, JSON).
+    uint8_t api_mode;                                 ///< Mode of the API being used (e.g.: BITalino, Scientisst).
     void (*select_ch_mask_func)(const uint8_t *buff); ///< Function pointer to process channel masks.
 } api_config_t;                                       ///< Structure holding the API configuration.
 
@@ -89,7 +88,6 @@ typedef struct
     uint8_t packet_size;     ///< Size of the frames (data packets).
     uint16_t send_threshold; ///< Threshold to trigger data transmission.
     FILE *sd_card_save_file; ///<  File pointer for data saving on the SD card.
-    cJSON *json;             ///< JSON object for JSON API mode.
 } scientisst_buffers_t;      ///< Structure holding the buffers and transmission parameters.
 
 // Global task handlers.

@@ -37,8 +37,6 @@ static void writeFrameScientisst(uint8_t *frame, const uint16_t *adc_internal_re
 static void writeFrameScientisst_v2(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                                     const uint8_t io_state, const uint8_t timestamp_lsb, const uint32_t timestamp_msb);
 static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res, const uint8_t io_state);
-static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                           const uint8_t io_state);
 static inline void writeFrame(uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
                               const uint8_t io_state, const uint8_t timestamp_lsb, const uint32_t timestamp_msb);
 
@@ -159,26 +157,26 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
         ESP_ERROR_CHECK_WITHOUT_ABORT(res);
     }
 #else
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST_V2)
-    {
-        uint64_t temp_timestamp = (uint64_t)esp_timer_get_time();
-        *timestamp_msb = (uint32_t)((temp_timestamp & 0x0000000FFFFFFFF0) >> 4);
-        *timestamp_lsb = (uint8_t)(temp_timestamp & 0x000000000000000F);
-    }
-    else if (scientisst_device_settings.num_extern_active_chs == 2)
+    if (scientisst_device_settings.num_extern_active_chs == 2)
     {
         uint64_t timestamp = (uint64_t)esp_timer_get_time() & 0x0000FFFFFFFFFFFF;
         adc_external_res[0] = (uint32_t)(timestamp & 0x0000000000FFFFFF);
         adc_external_res[1] = (uint32_t)((timestamp >> 24) & 0x0000000000FFFFFF);
     }
 #endif
+    if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST_V2)
+    {
+        uint64_t temp_timestamp = (uint64_t)esp_timer_get_time();
+        *timestamp_msb = (uint32_t)((temp_timestamp & 0x0000000FFFFFFFF0) >> 4);
+        *timestamp_lsb = (uint8_t)(temp_timestamp & 0x000000000000000F);
+    }
 }
 
 /**
  * \brief Based on API mode, selects the appropriate frame format and writes the frame in buffer.
  *
  * This function takes the raw sensor data and formats it into a frame structure
- * that's suitable for transmission, based on the current API mode (ScientISST, BITalino, or JSON).
+ * that's suitable for transmission, based on the current API mode (ScientISST, ScientISST_V2 or BITalino).
  *
  * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
  * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
@@ -199,9 +197,6 @@ static inline void IRAM_ATTR writeFrame(uint8_t *frame, const uint16_t *adc_inte
         break;
     case API_MODE_SCIENTISST_V2:
         writeFrameScientisst_v2(frame, adc_internal_res, adc_external_res, io_state, timestamp_lsb, timestamp_msb);
-        break;
-    case API_MODE_JSON:
-        writeFrameJSON(frame, adc_internal_res, adc_external_res, io_state);
         break;
     case API_MODE_BITALINO:
     default:
@@ -418,63 +413,4 @@ static void writeFrameBitalino(uint8_t *frame, const uint16_t *adc_internal_res,
 
     // store CRC and Seq in the last byte of the packet
     frame[scientisst_buffers.packet_size - 1] = crc;
-}
-
-/**
- * \brief Writes sensor data into a frame in the JSON format.
- *
- * This function formats and stores sensor data, including ADC readings and IO states, into a JSON structure.
- *
- * \param[in/out] frame Pointer to the frame buffer where the formatted data will be written.
- * \param[in] adc_internal_res Pointer to an array containing the internal ADC readings.
- * \param[in] adc_external_res Pointer to an array containing the external ADC readings, if applicable.
- * \param[in] io_state The current state of the IOs.
- *
- * \return None.
- *
- * \warning This API mode is not fully working.
- */
-static void writeFrameJSON(const uint8_t *frame, const uint16_t *adc_internal_res, const uint32_t *adc_external_res,
-                           const uint8_t io_state)
-{
-    char ch_str[10];
-    char value_str[10];
-    cJSON *item;
-
-    // Get and store the IO states into json
-    sprintf(value_str, "%01d", (io_state >> 7) & 0b1);
-    item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, "I1");
-    strcpy(item->valuestring, value_str);
-
-    sprintf(value_str, "%01d", (io_state >> 6) & 0b1);
-    item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, "I2");
-    strcpy(item->valuestring, value_str);
-
-    sprintf(value_str, "%01d", (io_state >> 5) & 0b1);
-    item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, "O1");
-    strcpy(item->valuestring, value_str);
-
-    sprintf(value_str, "%01d", (io_state >> 4) & 0b1);
-    item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, "O2");
-    strcpy(item->valuestring, value_str);
-
-    // Store values of channels into JSON object
-    for (int i = scientisst_device_settings.num_intern_active_chs - 1; i >= 0; --i)
-    {
-        sprintf(value_str, "%04d", adc_internal_res[i]);
-        sprintf(ch_str, "AI%d", scientisst_device_settings.active_internal_chs[i] + 1);
-        item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, ch_str);
-        strcpy(item->valuestring, value_str);
-    }
-
-    if (scientisst_device_settings.num_extern_active_chs > 0)
-    {
-        for (int i = scientisst_device_settings.num_extern_active_chs - 1; i >= 0; --i)
-        {
-            sprintf(value_str, "%08d", adc_external_res[i]);
-            sprintf(ch_str, "AX%d", scientisst_device_settings.active_ext_chs[i] + 1 - 6);
-            item = cJSON_GetObjectItemCaseSensitive(scientisst_buffers.json, ch_str);
-            strcpy(item->valuestring, value_str);
-        }
-    }
 }

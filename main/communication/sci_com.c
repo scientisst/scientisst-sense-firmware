@@ -28,7 +28,7 @@ static void triggerDAC(const uint8_t *buff);
 static void changeAPI(uint8_t mode);
 static void sendStatusPacket();
 static void sendFirmwareVersionPacket();
-static void selectChsFromMaskScientisstAndJson(const uint8_t *buff);
+static void selectChsFromMaskScientisst(const uint8_t *buff);
 static void setSampleRate(uint8_t *buff);
 static void startAcquisition(void);
 static uint8_t getPacketSize(void);
@@ -148,22 +148,12 @@ static void triggerDAC(const uint8_t *buff)
 }
 
 /**
- * \brief Changes the API mode
- *
- * This function changes the API mode and updates the functions that are used to
- * acquire data and select channels. Currently, the API modes are: Bitalino
- * (Legacy), Scientisst and JSON.
- */
-
-/**
  * \brief Change the API mode of the device.
  *
  * This function switches between different API modes available for the device. It affects the data frames' format.
- * Currently, the API modes are: Bitalino (Legacy), Scientisst and JSON.
+ * Currently, the API modes are: Bitalino (Legacy) and Scientisst.
  *
  * \param[in] mode The new API mode to switch to.
- *
- * \warning The JSON API mode is not fully working.
  *
  * \return None.
  */
@@ -178,17 +168,12 @@ static void changeAPI(uint8_t mode)
         break;
     case API_MODE_SCIENTISST:
         scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisst;
         DEBUG_PRINT_I("changeAPI", "API changed to ScientISST");
-        break;
-    case API_MODE_JSON:
-        scientisst_device_settings.api_config.api_mode = API_MODE_JSON;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
-        DEBUG_PRINT_I("changeAPI", "API changed to JSON");
         break;
     case API_MODE_SCIENTISST_V2:
         scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST_V2;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisst;
         DEBUG_PRINT_I("changeAPI", "API changed to ScientISST V2");
         break;
     default:
@@ -209,16 +194,11 @@ static uint8_t getPacketSize(void)
     uint8_t _packet_size = 0;
     // Table that has the packet size in function of the number of channels
     const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
-    char *json_str = cJSON_Print(scientisst_buffers.json);
 
     switch (scientisst_device_settings.api_config.api_mode)
     {
     case API_MODE_BITALINO:
         _packet_size = packet_size_num_chs[scientisst_device_settings.num_intern_active_chs];
-        break;
-    case API_MODE_JSON:
-        _packet_size = (uint8_t)strlen(json_str) + 1;
-        free((void *)json_str);
         break;
     case API_MODE_SCIENTISST_V2:
         _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
@@ -257,16 +237,14 @@ static uint8_t getPacketSize(void)
 /**
  * \brief Selects the active channels
  *
- * This function selects the active channels according to the received command for the ScientISST and JSON API modes.
+ * This function selects the active channels according to the received command for the ScientISSTAPI mode.
  *
  * \param[in] buff The received command
  *
  * \return None.
  */
-static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
+static void selectChsFromMaskScientisst(const uint8_t *buff)
 {
-    char aux_str[10];
-    char value_str[10];
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
 
     // Reset previous active chs
@@ -297,35 +275,6 @@ static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
         channel_number--;
     }
 
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
-    {
-        if (scientisst_buffers.json != NULL)
-        {
-            cJSON_Delete(scientisst_buffers.json);
-            scientisst_buffers.json = NULL;
-        }
-        scientisst_buffers.json = cJSON_CreateObject();
-
-        sprintf(value_str, "%04d", 4095);
-        for (int j = scientisst_device_settings.num_intern_active_chs - 1; j >= 0; j--)
-        {
-            sprintf(aux_str, "AI%d", scientisst_device_settings.active_internal_chs[j] + 1);
-            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
-        }
-
-        sprintf(value_str, "%08d", 16777215);
-        for (int j = scientisst_device_settings.num_extern_active_chs - 1; j >= 0; j--)
-        {
-            sprintf(aux_str, "AX%d", scientisst_device_settings.active_ext_chs[j] + 1 - 6);
-            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
-        }
-
-        // Add IO state json objects
-        cJSON_AddStringToObject(scientisst_buffers.json, "I1", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "I2", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "O1", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "O2", "0");
-    }
     scientisst_buffers.packet_size = getPacketSize();
 }
 
