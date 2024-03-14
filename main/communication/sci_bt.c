@@ -109,7 +109,7 @@ static void IRAM_ATTR espSppCb(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         strncat(sci_spp_server_name, scientisst_device_settings.device_name, strlen(sci_spp_server_name) - 1);
         esp_spp_start_srv(ESP_SPP_SEC_NONE, ESP_SPP_ROLE_SLAVE, 0, sci_spp_server_name);
-        ESP_LOGI("Init Bluetooth", "Device online with the name: %s", scientisst_device_settings.device_name);
+        ESP_LOGE("Init Bluetooth", "Device online with the name: %s", scientisst_device_settings.device_name);
         break;
     case ESP_SPP_SRV_OPEN_EVT: // Server connection open (first client connection)
         DEBUG_PRINT_I("espSppCb", "ESP_SPP_SRV_OPEN_EVT");
@@ -416,9 +416,9 @@ void getDeviceName(void)
     }
 
     // Make mac address human-readable
-    sprintf(mac_interface_str, "%x-%x-%x-%x-%x-%x", mac_interface[0], mac_interface[1], mac_interface[2], mac_interface[3],
+    sprintf(mac_interface_str, "%x:%x:%x:%x:%x:%x", mac_interface[0], mac_interface[1], mac_interface[2], mac_interface[3],
             mac_interface[4], mac_interface[5]);
-    sprintf(mac_bt_str, "%x-%x-%x-%x-%x-%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
+    sprintf(mac_bt_str, "%x:%x:%x:%x:%x:%x", mac_bt[0], mac_bt[1], mac_bt[2], mac_bt[3], mac_bt[4], mac_bt[5]);
 
     // Turn all characters of both mac address strings from lower case to upper case
     for (int pntr_idx = 0; pntr_idx < 2; pntr_idx++)
