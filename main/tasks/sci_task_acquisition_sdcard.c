@@ -269,17 +269,7 @@ static void startAcquisitionSDCard(void)
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate_hz);
     // Set led state to blink at live mode frequency
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
-
-    // Set live mode duty cycle for state led
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#ifndef CONFIG_HARDWARE_VERSION_CARDIO
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
-#endif
+    updateLEDStatusCode(LIVE_AQUISITION_SDCARD);
 
     scientisst_device_settings.op_mode = OP_MODE_LIVE;
 

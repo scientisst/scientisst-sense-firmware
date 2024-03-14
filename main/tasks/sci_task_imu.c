@@ -201,15 +201,24 @@ esp_err_t initIMU(void)
                   sys_calib_status);
 
 #ifdef CONFIG_LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
+    updateLEDStatusCode(CALIBRATING_IMU);
     while (accel_calib_status != 3 || gyro_calib_status != 3 || mag_calib_status != 3 || sys_calib_status != 3)
     {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         bno055_get_accel_calib_stat(&accel_calib_status);
         bno055_get_mag_calib_stat(&mag_calib_status);
         bno055_get_gyro_calib_stat(&gyro_calib_status);
         bno055_get_sys_calib_stat(&sys_calib_status);
         DEBUG_PRINT_W("IMU_TASK", "IMU not ready. Calibration status: %d %d %d %d", accel_calib_status, gyro_calib_status,
                       mag_calib_status, sys_calib_status);
+    }
+    if (scientisst_device_settings.op_mode == OP_MODE_IDLE)
+    {
+        updateLEDStatusCode(IDLE);
+    }
+    else if (scientisst_device_settings.op_mode == OP_MODE_LIVE)
+    {
+        updateLEDStatusCode(LIVE_AQUISITION);
     }
 #endif
 #ifdef CONFIG_ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING

@@ -71,7 +71,7 @@
 #define IMU_SDA_PIN SDA_IO
 #define IMU_SCL_PIN SCL_IO
 
-// Timers
+// LED Controller
 #define LEDC_LS_TIMER LEDC_TIMER_1 // Low speed timer
 #define LEDC_SPEED_MODE_USED LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL_R LEDC_CHANNEL_0
@@ -79,14 +79,32 @@
 #define LEDC_CHANNEL_B LEDC_CHANNEL_2
 #define LEDC_LIVE_DUTY 512 // Half the LEDC_TIMER_10_BIT duty_resolution resolution
 #define LEDC_IDLE_DUTY 921 // 90% the LEDC_TIMER_10_BIT duty_resolution resolution
+#define LEDC_OFF_DUTY 1024
+#define LEDC_FIXED_DUTY 0
 #define LEDC_LIVE_PWM_FREQ 4
 #define LEDC_IDLE_PWM_FREQ 1
+
+typedef enum
+{
+    IDLE = 0,
+    LIVE_AQUISITION,
+    LIVE_AQUISITION_SDCARD,
+    IDLE_SDCARD,
+    FORMATING_SDCARD,
+    CALIBRATING_IMU,
+    WIFI_CONNECTING,
+    WIFI_LOST_CONNECTION,
+    CONFIG_MODE,
+} sci_led_status_t;
 
 // ADC2
 #define DAC_CH DAC_CHANNEL_1 // GPIO25
 
 void gpioInit(void);
+
+// LED Controller
 void configLedController(void);
+void updateLEDStatusCode(sci_led_status_t new_status);
 
 // ADC EXT
 void gpioDrdyIsrHandler(void);

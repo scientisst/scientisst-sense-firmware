@@ -18,6 +18,8 @@
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
 
+#include "sci_gpio.h"
+
 #define SCI_WIFI_PASS "12345678"
 #define SCI_WIFI_CHANNEL 1 // Range: 1 to 13, default: 1
 #define SCI_MAX_STA_CONN 4 // Default: 4
@@ -121,17 +123,24 @@ static EventGroupHandle_t s_wifi_event_group;
  */
 static void eventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
+    static uint8_t connected_successfully_once = 0;
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
         esp_wifi_connect();
     }
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
+        if (connected_successfully_once)
+        {
+            updateLEDStatusCode(WIFI_LOST_CONNECTION);
+        }
         ESP_LOGE("wifi station", "retrying to connect to the AP...");
         esp_wifi_connect();
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
+        connected_successfully_once = 1;
+        updateLEDStatusCode(IDLE);
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI("wifi station", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
@@ -255,6 +264,7 @@ int wifiInit(uint8_t force_ap)
     }
     else
     {
+        updateLEDStatusCode(WIFI_CONNECTING);
         // Return result of attempt connection to saved SSID
         return wifiInitSta();
     }
