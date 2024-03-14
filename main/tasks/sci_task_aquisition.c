@@ -123,6 +123,7 @@ static void IRAM_ATTR getSensorData(uint8_t *io_state, uint16_t *adc_internal_re
                                     uint8_t *timestamp_lsb, uint32_t *timestamp_msb)
 {
     // Get the IO states
+    *io_state = 0;
     *io_state = (uint8_t)(gpio_get_level(I0_IO) << 7);
     *io_state |= (uint8_t)(gpio_get_level(I1_IO) << 6);
     *io_state |= (scientisst_device_settings.gpio_out_state[0] & 0b1) << 5;
@@ -257,7 +258,7 @@ static void IRAM_ATTR writeFrameScientisst_v2(uint8_t *frame, const uint16_t *ad
     }
 
     // Store IO states into frame
-    frame[scientisst_buffers.packet_size - 3] = io_state;
+    frame[scientisst_buffers.packet_size - 3] |= io_state & 0xF0;
 
     // Calculate CRC & store timestamp ---------------------------------------------------------------------------
     *(uint8_t *)(frame + scientisst_buffers.packet_size - 5) = (uint8_t)((timestamp_lsb & 0x0F) << 4);
@@ -326,7 +327,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
     }
 
     // Store IO states into frame
-    frame[scientisst_buffers.packet_size - 3] = io_state;
+    frame[scientisst_buffers.packet_size - 3] |= io_state & 0xF0;
 
     // Calculate CRC & SEQ Number---------------------------------------------------------
     // Store seq number
@@ -345,7 +346,7 @@ static void IRAM_ATTR writeFrameScientisst(uint8_t *frame, const uint16_t *adc_i
 
     crc = crc_table[crc];
 
-    frame[scientisst_buffers.packet_size - 2] |= crc;
+    frame[scientisst_buffers.packet_size - 2] |= crc & 0x0F;
 }
 
 /**
