@@ -28,7 +28,7 @@
  *
  * \return Never returns.
  */
-_Noreturn void IRAM_ATTR taskBatteryMonitor(void)
+_Noreturn void taskBatteryMonitor(void)
 {
     uint16_t battery; // Battery voltage in mV
     uint8_t bat_led_status_gpio = 0;

@@ -550,7 +550,7 @@ static void gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if
  *
  * \return ESP_OK - Success,  ESP_ERR - failure.
  */
-esp_err_t IRAM_ATTR sendBle(uint32_t fd, int len, const uint8_t *buff)
+esp_err_t sendBle(uint32_t fd, int len, const uint8_t *buff)
 {
     esp_err_t res;
 

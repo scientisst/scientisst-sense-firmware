@@ -216,7 +216,7 @@ esp_err_t IRAM_ATTR getAdcExtValuesRaw(uint8_t channels_mask, uint32_t values[2]
  *
  * \return uint8_t The command byte.
  */
-static inline uint8_t IRAM_ATTR mcpGetCmdByte(uint8_t addr, uint8_t cmd)
+static inline uint8_t mcpGetCmdByte(uint8_t addr, uint8_t cmd)
 {
     uint8_t cmd_byte = MCP_ADDR << 6;
 

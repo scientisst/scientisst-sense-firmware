@@ -78,7 +78,7 @@ int initUdpClient(const char *ip, const char *port)
  *
  * \return ESP_OK - the data was sent successfully,  ESP_FAIL - an error occurred during transmission.
  */
-esp_err_t IRAM_ATTR udpSend(uint32_t fd, int len, const uint8_t *buff)
+esp_err_t udpSend(uint32_t fd, int len, const uint8_t *buff)
 {
     int sent_bytes;
     if ((sent_bytes = sendto(fd, buff, len, 0, udp_server_addr->ai_addr, udp_server_addr->ai_addrlen)) != len)
