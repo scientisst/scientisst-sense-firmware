@@ -38,8 +38,8 @@ menu "Communication Configuration"
         config DEFAULT_COM_MODE_SERIAL
             bool "USB"
             
-        config DEFAULT_COM_MODE_WS_AP
-            bool "WebSocket Access Point"
+        # config DEFAULT_COM_MODE_WS_AP
+        #    bool "WebSocket Access Point"
     endchoice
 
 # Wi-Fi Configuration
