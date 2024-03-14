@@ -107,6 +107,7 @@ esp_err_t initSDCard(void)
     slot_config.gpio_cs = SD_CARD_CS;       // Set the CS pin
     slot_config.host_id = sd_spi_host.slot; // Set the SPI host
 
+    updateLEDStatusCode(FORMATING_SDCARD);
     ret = esp_vfs_fat_sdspi_mount(mount_point, &sd_spi_host, &slot_config, &mount_config, &card);
     if (ret != ESP_OK)
     {

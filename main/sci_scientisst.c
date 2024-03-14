@@ -8,6 +8,7 @@
 #include "sci_scientisst.h"
 
 #include <math.h>
+#include <string.h>
 #include <sys/cdefs.h>
 
 #include "nvs.h"
@@ -32,10 +33,11 @@
 #include "sci_timer.h"
 #include "sci_wifi.h"
 #include "sci_wifi_rest_server.h"
-#include "sci_ws.h"
+// #include "sci_ws.h"
 
 // Task priorities
-#define BT_SEND_PRIORITY 10 // MAX priority in ESP32 is 25
+// MAX priority in ESP32 is 25
+#define BT_SEND_PRIORITY 10
 #define BATTERY_PRIORITY 1
 #define WIFI_RCV_PRIORITY 1
 #define ACQ_ADC1_PRIORITY 10
@@ -87,15 +89,15 @@ DRAM_ATTR scientisst_device_t scientisst_device_settings = {
 #ifdef CONFIG_DEFAULT_COM_MODE_SERIAL
             .com_mode = COM_MODE_SERIAL,
 #endif
-#ifdef CONFIG_DEFAULT_COM_MODE_WS_AP
-            .com_mode = COM_MODE_WS_AP,
-#endif
+// #ifdef CONFIG_DEFAULT_COM_MODE_WS_AP
+//             .com_mode = COM_MODE_WS_AP,
+// #endif
 #endif
             .is_battery_threshold_inflated = 0,
-            .host_ip = "192.168.1.100",
-            .port_number = "8800",
-            .ssid = "riot",
-            .password = "",
+            .host_ip = CONFIG_WIFI_HOST_IP,
+            .port_number = CONFIG_PORT,
+            .ssid = CONFIG_WIFI_SSID,
+            .password = CONFIG_WIFI_PASSWORD,
         },
 }; ///< All device related variables
 
@@ -110,7 +112,6 @@ DMA_ATTR scientisst_buffers_t scientisst_buffers = {
     .packet_size = 0,
     .send_threshold = MAX_BUFFER_SIZE,
     .sd_card_save_file = NULL,
-    .json = NULL,
 }; ///< All buffer related variables
 
 static void allocateFrameBuffers(void)
@@ -174,8 +175,6 @@ void initScientisst(void)
     // Wait for IO initializations to settle
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    // Working version 3.3.0-750b400
-
     // Check if CONFIG pin is pressed on startup
     if (gpio_get_level(CONFIG_BTN_IO))
     {
@@ -207,6 +206,7 @@ void initScientisst(void)
     {
         DEBUG_PRINT_E("SD", "SD card initialization failed. Changing to BT mode.");
         scientisst_device_settings.op_settings.com_mode = COM_MODE_BT;
+        updateLEDStatusCode(IDLE_SDCARD);
     }
 #endif
 
@@ -264,17 +264,19 @@ void initScientisst(void)
         xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
                                 ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
         break;
-    case COM_MODE_WS_AP:
-        scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
-        allocateFrameBuffers();
-        startWebserver();
-        xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL, WIFI_RCV_PRIORITY,
-                                &rcv_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
-                                BT_SEND_PRIORITY, &send_task, 0);
-        xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
-                                ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
-        break;
+        // case COM_MODE_WS_AP:
+        //     scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE;
+        //     allocateFrameBuffers();
+        //     startWebserver();
+        //     xTaskCreatePinnedToCore((TaskFunction_t)&rxTask, "rxTask", DEFAULT_TASK_STACK_SIZE_MEDIUM, NULL,
+        //     WIFI_RCV_PRIORITY,
+        //                             &rcv_task, 0);
+        //     xTaskCreatePinnedToCore((TaskFunction_t)&sendTask, "sendTask", DEFAULT_TASK_STACK_SIZE_XLARGE, NULL,
+        //                             BT_SEND_PRIORITY, &send_task, 0);
+        //     xTaskCreatePinnedToCore((TaskFunction_t)&taskAcquisition, "taskAcquisition", DEFAULT_TASK_STACK_SIZE_MEDIUM,
+        //     NULL,
+        //                             ACQ_ADC1_PRIORITY, &acq_adc1_task, 1);
+        //     break;
 #ifdef CONFIG_SD_CARD
     case COM_MODE_SD_CARD:
         scientisst_buffers.frame_buffer_length_bytes = MAX_BUFFER_SIZE_SDCARD;
@@ -304,9 +306,7 @@ _Noreturn static void opModeConfig(void)
 {
     scientisst_device_settings.op_mode = OP_MODE_CONFIG;
     initRestServer();
-    gpio_set_level(STATE_LED_R_IO, 1);
-    gpio_set_level(STATE_LED_G_IO, 1);
-    gpio_set_level(STATE_LED_B_IO, 1);
+    updateLEDStatusCode(CONFIG_MODE);
 
     // Hang here until user successfully submits a new config in the web page
     while (1)

@@ -1,139 +1,241 @@
 
 menu "SCIENTISST Configuration"
 
-# General Configuration
-menu "General Configuration"
-
 choice
     prompt "Hardware version"
     default HARDWARE_VERSION_CORE
 
-config HARDWARE_VERSION_CORE
-    bool "Core version (default)"
-    
-config HARDWARE_VERSION_NANO
-    bool "Nano version"
+    config HARDWARE_VERSION_CORE
+        bool "Core (default)"
+        
+    config HARDWARE_VERSION_NANO
+        bool "Nano"
 
-config HARDWARE_VERSION_CARDIO
-    bool "Cardio version"
-
+    config HARDWARE_VERSION_CARDIO
+        bool "Cardio"
 endchoice
 
-choice
-    prompt "Default communication mode"
-    default DEFAULT_COM_MODE_BT
+menu "Communication Configuration"
+    choice
+        prompt "Communication mode"
+        default DEFAULT_COM_MODE_BT
 
-config DEFAULT_COM_MODE_BT
-    bool "Bluetooth (default)"
-    
-config DEFAULT_COM_MODE_BLE
-    bool "Bluetooth Low Energy"
-    
-config DEFAULT_COM_MODE_TCP_AP
-    bool "TCP Access Point"
-    
-config DEFAULT_COM_MODE_TCP_STA
-    bool "TCP Station"
-    
-config DEFAULT_COM_MODE_UDP_STA
-    bool "UDP Station"
-    
-config DEFAULT_COM_MODE_SERIAL
-    bool "USB"
-    
-config DEFAULT_COM_MODE_WS_AP
-    bool "WebSocket Access Point"
+        config DEFAULT_COM_MODE_BT
+            bool "Bluetooth (default)"
+            
+        config DEFAULT_COM_MODE_BLE
+            bool "Bluetooth Low Energy"
+            
+        config DEFAULT_COM_MODE_TCP_AP
+            bool "TCP Access Point"
+            
+        config DEFAULT_COM_MODE_TCP_STA
+            bool "TCP Station"
+            
+        config DEFAULT_COM_MODE_UDP_STA
+            bool "UDP Station"
+            
+        config DEFAULT_COM_MODE_SERIAL
+            bool "USB"
+            
+        # config DEFAULT_COM_MODE_WS_AP
+        #    bool "WebSocket Access Point"
+    endchoice
 
-endchoice
+# Wi-Fi Configuration
+    menu "Wi-Fi Configuration"
+        visible if (DEFAULT_COM_MODE_UDP_STA || DEFAULT_COM_MODE_TCP_STA)
 
+        config WIFI_SSID
+            string "Wi-Fi SSID"
+            default "riot"
+            help
+                Enter the SSID of the Wi-Fi network you want to connect to.
+
+        config WIFI_PASSWORD
+            string "Wi-Fi Password"
+            default ""
+            help
+                Enter the password for the Wi-Fi network.
+
+        config WIFI_HOST_IP
+            string "Host IP"
+            default "192.168.1.100"
+            help
+                Enter the IP of the host you want to connect to.
+
+        config PORT
+            string "Port"
+            default "8800"
+            help
+                Enter the port of the device should connect to.
+    endmenu  # Wi-Fi Configuration
+endmenu # Communication Configuration
+
+# External ADC Configuration
 config ADC_EXT
     bool "Enable external ADC"
     default n
-
-endmenu  # General Configuration
+    help
+        This option should only be enabled if an ext adc is present on the board.
 
 # SD Card Configuration
 menu "SD Card Configuration"
+    config SD_CARD
+        bool "Enable SD Card"
+        default n
 
-config SD_CARD
-    bool "Enable SD Card"
-    default n
+    config FORMAT_SDCARD_IF_MOUNT_FAILED
+        depends on SD_CARD
+        bool "Format SD Card if mount failed"
+        default n
 
-config FORMAT_SDCARD_IF_MOUNT_FAILED
-    bool "Format SD Card if mount failed"
-    default n
-
-config NUMBER_CHANNELS_EXT_ADC
-    int "Enter number of channels of external adc"
-    default 0
-    range 0 2
-    help
-      This option should only be diferent from 0 if an ext adc is present and working on the board.
+    config NUMBER_CHANNELS_EXT_ADC
+        depends on SD_CARD
+        int "Enter number of channels of external adc"
+        default 0
+        range 0 2
+        help
+            This option should be set to 0 unless an ext adc is present on the board and enabled.
 
 endmenu  # SD Card Configuration
 
-
 menu "IMU Configuration"
-
 # IMU enable/disable setting
-config IMU
-    bool "Enable IMU"
-    default n
-    help
-        Enable or disable the IMU (Inertial Measurement Unit).
-        If unsure, select 'n' to disable it.
+    config IMU
+        bool "Enable IMU"
+        default n
+        help
+            Enable or disable the IMU (Inertial Measurement Unit).
+            If unsure, select 'n' to disable it.
 
-# IMU Data Acquisition Mode
-choice IMU_DATA_ACQUISITION
-    prompt "IMU Data Acquisition Mode"
-    default EULER_ANGLES_AND_LINEAR_ACCELERATION
+# IMU Data Acquisition Modes
+    choice 
+        prompt "IMU Data channels AI1-AI3"
+        depends on IMU
+        default IMU_H1_NO_DATA
 
-config EULER_ANGLES_AND_LINEAR_ACCELERATION
-    bool "Euler angles and linear acceleration"
-    help
-        Select this mode to acquire Euler angles and linear acceleration data from the IMU.
+        config IMU_H1_NO_DATA
+            bool "No data"
+            help
+                No data on AI1-AI3
 
-config ANGULAR_VELOCITY_AND_LINEAR_ACCELERATION
-    bool "Angular velocity and linear acceleration"
-    help
-        Select this mode to acquire angular velocity and linear acceleration data from the IMU.
+        config IMU_H1_EULER_ANGLES
+            bool "Euler angles"
+            help
+                Select this mode to acquire Euler angles data from the IMU on AI1-AI3.
 
-endchoice
+        config IMU_H1_LINEAR_ACCELERATION
+            bool "Linear acceleration"
+            help
+                Select this mode to acquire linear acceleration data from the IMU on AI1-AI3.
+
+        config IMU_H1_ANGULAR_VELOCITY
+            bool "Angular velocity and linear acceleration"
+            help
+                Select this mode to acquire angular velocity data from the IMU on AI1-AI3.
+
+        config IMU_H1_MAGNETIC_FIELD
+            bool "Magnetic field"
+            help
+                Select this mode to acquire magnetic field data from the IMU on AI1-AI3.
+
+        config IMU_H1_GRAVITY
+            bool "Gravity"
+            help
+                Select this mode to acquire gravity data from the IMU on AI1-AI3.
+
+        config IMU_H1_ACCELERATION
+            bool "Acceleration"
+            help
+                Select this mode to acquire acceleration data from the IMU on AI1-AI3.
+    
+        config IMU_H1_TEMPERATURE
+            bool "Temperature"
+            help
+                Select this mode to acquire temperature data from the IMU on AI1-AI3.
+    endchoice
+
+    choice 
+        prompt "IMU Data channels AI4-AI6"
+        depends on IMU
+        default IMU_H2_NO_DATA 
+
+        config IMU_H2_NO_DATA
+            bool "No data"
+            help
+                No data on AI4-AI6 
+
+        config IMU_H_EULER_ANGLES
+            bool "Euler angles"
+            help
+                Select this mode to acquire Euler angles data from the IMU on AI4-AI6.
+
+        config IMU_H2_LINEAR_ACCELERATION
+            bool "Linear acceleration"
+            help
+                Select this mode to acquire linear acceleration data from the IMU on AI4-AI6.
+
+        config IMU_H2_ANGULAR_VELOCITY
+            bool "Angular velocity and linear acceleration"
+            help
+                Select this mode to acquire angular velocity data from the IMU on AI4-AI6.
+
+        config IMU_H2_MAGNETIC_FIELD
+            bool "Magnetic field"
+            help
+                Select this mode to acquire magnetic field data from the IMU on AI1-AI3.
+
+        config IMU_H2_GRAVITY
+            bool "Gravity"
+            help
+                Select this mode to acquire gravity data from the IMU on AI1-AI3.
+
+        config IMU_H2_ACCELERATION
+            bool "Acceleration"
+            help
+                Select this mode to acquire acceleration data from the IMU on AI1-AI3.
+
+        config IMU_H2_TEMPERATURE
+            bool "Temperature"
+            help
+                Select this mode to acquire temperature data from the IMU on AI1-AI3.
+    endchoice
 
 # IMU Calibration Behavior
-choice IMU_CALIBRATION
-    prompt "IMU Calibration Behavior"
-    default ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+    choice
+        prompt "IMU Calibration Behavior"
+        depends on IMU
+        default ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
 
-config LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
-    bool "Lock IMU acquisition until calibrated"
-    help
-        Select this option to lock IMU data acquisition until the device is calibrated.
+        config LOCK_IMU_ACQUISITION_UNTIL_CALIBRATED
+            bool "Lock IMU acquisition until calibrated"
+            help
+                Select this option to lock IMU data acquisition until the device is calibrated.
 
-config ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
-    bool "Allow IMU acquisition while calibrating"
-    help
-        Select this option to allow IMU data acquisition even when the device is in the process of calibrating.
-
-endchoice
-
+        config ALLOW_IMU_ACQUISITION_WHILE_CALIBRATING
+            bool "Allow IMU acquisition while calibrating"
+            help
+                Select this option to allow IMU data acquisition even when the device is in the process of calibrating.
+    endchoice
 endmenu  # IMU Configuration
 
-choice "Debug level"
-    prompt "Debug level/verbosity"
+# Debug level/verbosity
+choice 
+    prompt "Debug level"
     default SCI_DEBUG_WARNINGS_AND_ERRORS
 
-config SCI_DEBUG_NO_DEBUGGING
-    bool "0 - Nothing"
+    config SCI_DEBUG_NO_DEBUGGING
+        bool "0 - Nothing"
 
-config SCI_DEBUG_ERRORS
-    bool "1 - Print Errors"
+    config SCI_DEBUG_ERRORS
+        bool "1 - Print Errors"
 
-config SCI_DEBUG_WARNINGS_AND_ERRORS
-    bool "2 - Print Warnings and Errors (default)"
+    config SCI_DEBUG_WARNINGS_AND_ERRORS
+        bool "2 - Print Warnings and Errors (default)"
 
-config SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
-    bool "3 - Print Info, Warnings and Errors"
+    config SCI_DEBUG_INFO_WARNINGS_AND_ERRORS
+        bool "3 - Print Info, Warnings and Errors"
 
 endchoice
 
@@ -143,5 +245,6 @@ config PREVENT_ACQUISITION_ON_LOW_BATTERY
     help
         When on low battery, the sensor data has an increased error margin. This option forces the device to stop the acquisition and restart when that happens.
         It will become virtually unusable until it is charged above a certain threshold. Unfortunately, this only works for non-wifi modes.
+
 
 endmenu  # SCI Configuration

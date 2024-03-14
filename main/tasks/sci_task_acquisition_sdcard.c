@@ -96,7 +96,11 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
     // Get raw values from AX1 & AX2 (A6 and A7), store them in the frame
     esp_err_t res = ESP_OK;
     uint8_t channel_mask = 0;
+#ifdef CONFIG_NUMBER_CHANNELS_EXT_ADC
     uint32_t adc_ext_values[CONFIG_NUMBER_CHANNELS_EXT_ADC];
+#else
+    uint32_t adc_ext_values[2];
+#endif
 
     if (scientisst_device_settings.active_ext_chs[0] == 6 || scientisst_device_settings.active_ext_chs[1] == 6)
         channel_mask |= 0b01;
@@ -105,7 +109,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     res = getAdcExtValuesRaw(channel_mask, adc_ext_values);
     ESP_ERROR_CHECK_WITHOUT_ABORT(res);
-    for (uint8_t i = 0; i < scientisst_device_settings.num_extern_active_chs; ++i)
+    for (int i = scientisst_device_settings.num_extern_active_chs - 1; i >= 0; --i)
     {
         *(uint32_t *)buffer_ptr = adc_ext_values[i];
         buffer_ptr += 3;
@@ -265,17 +269,7 @@ static void startAcquisitionSDCard(void)
     // Init timer for adc task top start
     timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate_hz);
     // Set led state to blink at live mode frequency
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
-
-    // Set live mode duty cycle for state led
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#ifndef CONFIG_HARDWARE_VERSION_CARDIO
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
-#endif
+    updateLEDStatusCode(LIVE_AQUISITION_SDCARD);
 
     scientisst_device_settings.op_mode = OP_MODE_LIVE;
 

@@ -13,6 +13,7 @@
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
+#include "sci_macros.h"
 #include "sci_task_aquisition.h"
 #include "sci_timer.h"
 
@@ -27,7 +28,7 @@ static void triggerDAC(const uint8_t *buff);
 static void changeAPI(uint8_t mode);
 static void sendStatusPacket();
 static void sendFirmwareVersionPacket();
-static void selectChsFromMaskScientisstAndJson(const uint8_t *buff);
+static void selectChsFromMaskScientisst(const uint8_t *buff);
 static void setSampleRate(uint8_t *buff);
 static void startAcquisition(void);
 static uint8_t getPacketSize(void);
@@ -98,7 +99,7 @@ void processPacket(uint8_t *buff)
             }
             else if (buff[0] & 0b00110000) // Change API mode
             {
-                changeAPI((buff[0] & 0b00110000) >> 4);
+                changeAPI((buff[0] & 0b11110000) >> 4);
             }
         }
         else if (!cmd) // Set battery threshold
@@ -147,44 +148,38 @@ static void triggerDAC(const uint8_t *buff)
 }
 
 /**
- * \brief Changes the API mode
- *
- * This function changes the API mode and updates the functions that are used to
- * acquire data and select channels. Currently, the API modes are: Bitalino
- * (Legacy), Scientisst and JSON.
- */
-
-/**
  * \brief Change the API mode of the device.
  *
  * This function switches between different API modes available for the device. It affects the data frames' format.
- * Currently, the API modes are: Bitalino (Legacy), Scientisst and JSON.
+ * Currently, the API modes are: Bitalino (Legacy) and Scientisst.
  *
  * \param[in] mode The new API mode to switch to.
- *
- * \warning The JSON API mode is not fully working.
  *
  * \return None.
  */
 static void changeAPI(uint8_t mode)
 {
-    if (mode == API_MODE_BITALINO)
+    switch (mode)
     {
+    case API_MODE_BITALINO:
         scientisst_device_settings.api_config.api_mode = API_MODE_BITALINO;
         scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskBitalino;
-    }
-    else if (mode == API_MODE_SCIENTISST)
-    {
+        DEBUG_PRINT_I("changeAPI", "API changed to BITalino");
+        break;
+    case API_MODE_SCIENTISST:
         scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisst;
+        DEBUG_PRINT_I("changeAPI", "API changed to ScientISST");
+        break;
+    case API_MODE_SCIENTISST_V2:
+        scientisst_device_settings.api_config.api_mode = API_MODE_SCIENTISST_V2;
+        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisst;
+        DEBUG_PRINT_I("changeAPI", "API changed to ScientISST V2");
+        break;
+    default:
+        DEBUG_PRINT_E("changeAPI", "Invalid API mode");
+        return;
     }
-    else if (mode == API_MODE_JSON)
-    {
-        scientisst_device_settings.api_config.api_mode = API_MODE_JSON;
-        scientisst_device_settings.api_config.select_ch_mask_func = &selectChsFromMaskScientisstAndJson;
-    }
-
-    DEBUG_PRINT_I("changeAPI", "API changed to %d", mode);
 }
 
 /**
@@ -197,22 +192,32 @@ static void changeAPI(uint8_t mode)
 static uint8_t getPacketSize(void)
 {
     uint8_t _packet_size = 0;
+    // Table that has the packet size in function of the number of channels
+    const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
 
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_BITALINO)
+    switch (scientisst_device_settings.api_config.api_mode)
     {
-        // Table that has the packet size in function of the number of channels
-        const uint8_t packet_size_num_chs[DEFAULT_ADC_CHANNELS + 1] = {0, 3, 4, 6, 7, 7, 8};
-
+    case API_MODE_BITALINO:
         _packet_size = packet_size_num_chs[scientisst_device_settings.num_intern_active_chs];
-    }
-    else if (scientisst_device_settings.api_config.api_mode == API_MODE_SCIENTISST)
-    {
-        // Add 24bit channel's contribution to packet size
+        break;
+    case API_MODE_SCIENTISST_V2:
         _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
-
-        // Add 12bit channel's contribution to packet size
-        if (!(scientisst_device_settings.num_intern_active_chs % 2))
-        { // If it's an even number
+        if (!(scientisst_device_settings.num_intern_active_chs % 2)) // If it's an even number
+        {
+            _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
+        }
+        else
+        {
+            //-4 because 4 bits can go in the I/0 byte
+            _packet_size += (((scientisst_device_settings.num_intern_active_chs * 12) - 4) / 8);
+        }
+        _packet_size += 6; // for the I/Os and timestamp+crc bytes
+        break;
+    case API_MODE_SCIENTISST:
+    default:
+        _packet_size += 3 * scientisst_device_settings.num_extern_active_chs;
+        if (!(scientisst_device_settings.num_intern_active_chs % 2)) // If it's an even number
+        {
             _packet_size += ((scientisst_device_settings.num_intern_active_chs * 12) / 8);
         }
         else
@@ -221,13 +226,9 @@ static uint8_t getPacketSize(void)
             _packet_size += (((scientisst_device_settings.num_intern_active_chs * 12) - 4) / 8);
         }
         _packet_size += 3; // for the I/Os and seq+crc bytes
+        break;
     }
-    else if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
-    {
-        char *json_str = cJSON_Print(scientisst_buffers.json);
-        _packet_size = (uint8_t)strlen(json_str) + 1;
-        free((void *)json_str);
-    }
+
     DEBUG_PRINT_I("getPacketSize", "Packet size is %d bytes", _packet_size);
 
     return _packet_size;
@@ -236,16 +237,14 @@ static uint8_t getPacketSize(void)
 /**
  * \brief Selects the active channels
  *
- * This function selects the active channels according to the received command for the ScientISST and JSON API modes.
+ * This function selects the active channels according to the received command for the ScientISSTAPI mode.
  *
  * \param[in] buff The received command
  *
  * \return None.
  */
-static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
+static void selectChsFromMaskScientisst(const uint8_t *buff)
 {
-    char aux_str[10];
-    char value_str[10];
     int channel_number = DEFAULT_ADC_CHANNELS + 2;
 
     // Reset previous active chs
@@ -276,35 +275,6 @@ static void selectChsFromMaskScientisstAndJson(const uint8_t *buff)
         channel_number--;
     }
 
-    if (scientisst_device_settings.api_config.api_mode == API_MODE_JSON)
-    {
-        if (scientisst_buffers.json != NULL)
-        {
-            cJSON_Delete(scientisst_buffers.json);
-            scientisst_buffers.json = NULL;
-        }
-        scientisst_buffers.json = cJSON_CreateObject();
-
-        sprintf(value_str, "%04d", 4095);
-        for (int j = scientisst_device_settings.num_intern_active_chs - 1; j >= 0; j--)
-        {
-            sprintf(aux_str, "AI%d", scientisst_device_settings.active_internal_chs[j] + 1);
-            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
-        }
-
-        sprintf(value_str, "%08d", 16777215);
-        for (int j = scientisst_device_settings.num_extern_active_chs - 1; j >= 0; j--)
-        {
-            sprintf(aux_str, "AX%d", scientisst_device_settings.active_ext_chs[j] + 1 - 6);
-            cJSON_AddStringToObject(scientisst_buffers.json, aux_str, value_str);
-        }
-
-        // Add IO state json objects
-        cJSON_AddStringToObject(scientisst_buffers.json, "I1", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "I2", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "O1", "0");
-        cJSON_AddStringToObject(scientisst_buffers.json, "O2", "0");
-    }
     scientisst_buffers.packet_size = getPacketSize();
 }
 
@@ -437,17 +407,7 @@ static void startAcquisition(void)
     timerStart(TIMER_GROUP_MAIN, TIMER_IDX_MAIN, scientisst_device_settings.sample_rate_hz);
 
     // Set led state to blink at live mode frequency
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_LIVE_PWM_FREQ);
-
-    // Set live mode duty cycle for state led
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#ifndef CONFIG_HARDWARE_VERSION_CARDIO
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_LIVE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
-#endif
+    updateLEDStatusCode(LIVE_AQUISITION);
 
     DEBUG_PRINT_W("startAcquisition", "Acquisition started");
     scientisst_device_settings.op_mode = OP_MODE_LIVE;
@@ -465,16 +425,7 @@ void stopAcquisition(void)
 {
     timerPause(TIMER_GROUP_MAIN, TIMER_IDX_MAIN);
 
-    ledc_set_freq(LEDC_SPEED_MODE_USED, LEDC_LS_TIMER, LEDC_IDLE_PWM_FREQ);
-
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R, LEDC_IDLE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_R);
-#ifndef CONFIG_HARDWARE_VERSION_CARDIO
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G, LEDC_IDLE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_G);
-    ledc_set_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B, LEDC_IDLE_DUTY);
-    ledc_update_duty(LEDC_SPEED_MODE_USED, LEDC_CHANNEL_B);
-#endif
+    updateLEDStatusCode(IDLE);
 
     // Stop external
 #ifdef CONFIG_ADC_EXT

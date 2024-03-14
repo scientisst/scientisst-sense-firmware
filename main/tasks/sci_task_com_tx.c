@@ -14,6 +14,8 @@
 
 #include "sci_task_com_tx.h"
 
+#include <string.h>
+
 #include "esp_attr.h"
 
 #include "sci_ble.h"
@@ -21,7 +23,7 @@
 #include "sci_com.h"
 #include "sci_tcp_and_serial.h"
 #include "sci_udp.h"
-#include "sci_ws.h"
+// #include "sci_ws.h"
 
 static void sendData(esp_err_t (*tx_write_func)(uint32_t, int, const uint8_t *));
 
@@ -51,9 +53,9 @@ _Noreturn void IRAM_ATTR sendTask(void)
     case COM_MODE_UDP_STA:
         tx_write_func = &udpSend;
         break;
-    case COM_MODE_WS_AP:
-        tx_write_func = &wsSerialSend;
-        break;
+    // case COM_MODE_WS_AP:
+    //     tx_write_func = &wsSerialSend;
+    //     break;
     case COM_MODE_SERIAL:
         tx_write_func = &tcpSerialSend;
         break;
@@ -62,11 +64,9 @@ _Noreturn void IRAM_ATTR sendTask(void)
         break;
     case COM_MODE_BT:
     case COM_MODE_SD_CARD:
+    default:
         send_data_func = &sendDataBluetooth;
         break;
-    default:
-        DEBUG_PRINT_E("task_com_tx", "Invalid COM mode, cannot send data");
-        abort();
     }
 
     while (1)

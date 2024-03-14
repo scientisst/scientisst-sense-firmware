@@ -83,7 +83,6 @@ The firmware supports the following APIs:
 - **Scientisst API**: This is the recommended API, as it has more features and is the one currently maintained. It can
   be found at [Scientisst Python API](https://github.com/scientisst/scientisst-sense-api-python).
 - **Bitalino API**: (deprecated) This API is only supported for compatibility with the Bitalino API.
-- **JSON API**: (:warning: Currently not working).
 
 ## Repository structure
 
