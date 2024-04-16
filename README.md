@@ -65,7 +65,7 @@ The firmware supports the following communication modes:
   files. Check [SDCardBinaryFileFormat.md](docs/SDCardBinaryFileFormat.md) for more information about the binary file
   format. When using this mode, the device does not transmit the data to the API unless SD Card initialization fails.
   Then it acts uses Classic Bluetooth as a fallback. :warning: Only 2 modes are supported at the moment: all internal
-  channels at 2000Hz and all internal channels and 1 or 2 external channels at 100Hz.
+  channels at 1000Hz and all internal channels and 1 or 2 external channels at 100Hz.
 - **Web Socket - AP**: (:warning: Currently not working) The device acts as a Web Socket server and can be
   connected to a Web Socket client.
 
