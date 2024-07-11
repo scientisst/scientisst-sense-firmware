@@ -130,6 +130,7 @@ static uint8_t *IRAM_ATTR acquireChannelsSDCard(uint8_t *buffer_ptr)
 
     if ((crc_seq % 3000) == 0) // Every ~30 seconds force a sync so data is really stored on the SD card
     {
+        DEBUG_PRINT_I("acqAdc1", "Forcing sync");
         fsync(fileno(scientisst_buffers.sd_card_save_file));
     }
 #else
