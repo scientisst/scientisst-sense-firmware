@@ -19,9 +19,9 @@
 #define DEFAULT_TASK_STACK_SIZE_XLARGE 16384
 
 // Buffer management constants, defining limits and capacities.
-#define NUM_BUFFERS 50
+#define NUM_BUFFERS 8
 #define NUM_BUFFERS_SDCARD 16
-#define MAX_BUFFER_SIZE (ESP_SPP_MAX_MTU) ///< Synchronized with maximum MTU size for ESP.
+#define MAX_BUFFER_SIZE (8 * ESP_SPP_MAX_MTU) ///< Synchronized with maximum MTU size for ESP.
 #define MAX_BUFFER_SIZE_SDCARD (1024 * 7) ///< Specific buffer size for SD Card operations.
 
 #define GATTS_NOTIFY_LEN 517 ///< Maximum data length for BLE notifications.

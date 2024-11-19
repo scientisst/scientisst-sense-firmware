@@ -18,6 +18,8 @@
 #include "sci_adc_external.h"
 #include "sci_adc_internal.h"
 #include "sci_gpio.h"
+#include "sci_macros.h"
+#include "sci_scientisst.h"
 #include "sci_task_imu.h"
 #include "sci_timer.h"
 
@@ -61,7 +63,7 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
 
     while (1)
     {
-        if (!ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
+        if (!ulTaskNotifyTake(pdFALSE, portMAX_DELAY))
             continue;
 
         getSensorData(&io_state, adc_internal_res, adc_external_res, &timestamp_lsb, &timestamp_msb);
@@ -94,7 +96,11 @@ _Noreturn void IRAM_ATTR taskAcquisition(void)
             {
                 DEBUG_PRINT_E("taskAcquisition", "Sending buffer is full, cannot acquire");
                 xTaskNotifyGive(send_task);
-                vTaskDelay(50 / portTICK_PERIOD_MS);
+                vTaskDelay(5 / portTICK_PERIOD_MS);
+                if (scientisst_device_settings.op_mode != OP_MODE_LIVE)
+                {
+                    break;
+                }
             }
             scientisst_buffers.acq_curr_buff = acq_next_buff;
             scientisst_buffers.frame_buffer_write_idx = 0; // Reset write index
